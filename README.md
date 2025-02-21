@@ -1,16 +1,5 @@
 # Software Engineering II - Talent Management Platform for IT Professionals #
 
-## How to Run the Project
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/repository-name.git
-   ```
-2. Create a new branch for your feature:
-   ```bash
-   git checkout -b feature/login
-   ```
-
 ## Requirements ## 
 
  * You need to install the Microsoft .NET SDK 8 available at https://dotnet.microsoft.com/en-us/download
@@ -46,6 +35,36 @@
 
  * The docker compose containers for the frontend and api are not working yet!
 
+## Git commands:
+
+1. Clone the repository:
+```bash
+git clone https://github.com/your-username/repository-name.git
+```
+2. Create a new branch for your feature:
+```bash
+git checkout -b feature/login
+```
+3. Add your files and push them into github:
+```bash
+git add .
+git commit -m "Fix issue in login feature"
+git push origin feature/login
+```
+## Create a Pull Request (PR)
+
+1. Go to the GitHub repository.
+
+2. Click **"Compare & pull request"** for your branch (`feature/login`).
+
+3. Add a description of your changes.
+
+4. **Set the base branch** to `main` and the compare branch to `feature/login`.
+
+5. Click **"Create pull request"**.
+
+6. **Request a review**: Assign one person to review your PR.
+
 ## Useful links ##
- * [Trello Dashboard - Sprint](https://trello.com/b/5ubS10uf/es2-d2-tema-c)
+* [Trello Dashboard - Sprint](https://trello.com/b/5ubS10uf/es2-d2-tema-c)
 
