@@ -1,12 +1,5 @@
 # Software Engineering II - Talent Management Platform for IT Professionals #
 
-## Repository Structure
-
-- `/backend` - API source code
-- `/frontend` - User interface source code
-- `/tests` - Unit tests
-- `/scripts` - SQL scripts for database creation
-
 ## How to Run the Project
 
 1. Clone the repository:
@@ -25,7 +18,7 @@
 
 ## Basic Setup ## 
 
- * Fill .env file (you can copy or adapt from .env.sample if you want to run things locally) - DON'T PUSH YOUR **.ENV** FILE INTO MAIN BRANCH
+ * Fill .env file (you can copy or adapt from .env.sample if you want to run things locally) 
  * Run the database with Docker
  * Update the database by running the current migrations 
 
@@ -46,9 +39,13 @@
 
 ## Notes / Rules and Recommendations ##
 
- * Never push the .env file to git
+ * ⚠️ **Never push the .env file to git** 
  * `docker compose up --build database` will allow you to create a local database for you to work
 
 ## TODO ##
 
  * The docker compose containers for the frontend and api are not working yet!
+
+## Useful links ##
+ * [Trello Dashboard - Sprint](https://trello.com/b/5ubS10uf/es2-d2-tema-c)
+
