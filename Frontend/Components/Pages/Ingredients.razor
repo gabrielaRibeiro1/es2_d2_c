@@ -1,0 +1,56 @@
+﻿@page "/ingredients"
+@using Frontend.Helpers
+@using global::Helpers.Models
+@attribute [StreamRendering]
+@inject ApiHelper ApiHelper
+
+<PageTitle>Ingredients</PageTitle>
+
+<h1>Ingredients</h1>
+
+<p>This page lists all ingredients available for Pizzas.</p>
+
+@if (_ingredients == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Stock</th>
+            <th>Proteins</th>
+            <th>Fats</th>
+            <th>Carbohydrates</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var ingredient in _ingredients)
+        {
+            <tr>
+                <td>@ingredient.Id</td>
+                <td>@ingredient.Name</td>
+                <td>@ingredient.Stock</td>
+                <td>@ingredient.Proteins</td>
+                <td>@ingredient.Fats</td>
+                <td>@ingredient.Carbohydrates</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IngredientViewModel[]? _ingredients;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ingredients = await ApiHelper.GetFromApiAsync<IngredientViewModel[]>("ingredients");
+    }
+    
+}

@@ -1,0 +1,17 @@
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/bin/Debug/net8.0/ESOF WebApp DBLayer.deps.json
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/bin/Debug/net8.0/ESOF WebApp DBLayer.runtimeconfig.json
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/bin/Debug/net8.0/ESOF WebApp DBLayer.dll
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/bin/Debug/net8.0/ESOF WebApp DBLayer.pdb
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/bin/Debug/net8.0/Helpers.dll
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/bin/Debug/net8.0/Helpers.pdb
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.csproj.AssemblyReference.cache
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.GeneratedMSBuildEditorConfig.editorconfig
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.AssemblyInfoInputs.cache
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.AssemblyInfo.cs
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.csproj.CoreCompileInputs.cache
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.csproj.Up2Date
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/ESOF WebApp DBLayer.dll
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/refint/ESOF WebApp DBLayer.dll
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/ESOF WebApp DBLayer.pdb
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.genruntimeconfig.cache
+/Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/ref/ESOF WebApp DBLayer.dll
