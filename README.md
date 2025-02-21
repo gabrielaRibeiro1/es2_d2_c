@@ -1,4 +1,22 @@
-# Software Engineering II - Base Code #
+# Software Engineering II - Talent Management Platform for IT Professionals #
+
+## Repository Structure
+
+- `/backend` - API source code
+- `/frontend` - User interface source code
+- `/tests` - Unit tests
+- `/scripts` - SQL scripts for database creation
+
+## How to Run the Project
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/repository-name.git
+   ```
+2. Create a new branch for your feature:
+   ```bash
+   git checkout -b feature/login
+   ```
 
 ## Requirements ## 
 
@@ -7,7 +25,7 @@
 
 ## Basic Setup ## 
 
- * Fill .env file (you can copy or adapt from .env.sample if you want to run things locally)
+ * Fill .env file (you can copy or adapt from .env.sample if you want to run things locally) - DON'T PUSH YOUR **.ENV** FILE INTO MAIN BRANCH
  * Run the database with Docker
  * Update the database by running the current migrations 
 
