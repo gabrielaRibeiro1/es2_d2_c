@@ -39,7 +39,7 @@
 
 1. Clone the repository:
 ```bash
-git clone git@github.com:gabrielaRibeiro1/es2_d2_c.git
+git clone https://github.com/gabrielaRibeiro1/es2_d2_c.git
 ```
 2. Create a new branch for your feature:
 ```bash
