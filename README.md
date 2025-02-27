@@ -68,3 +68,5 @@ git push origin feature/login
 ## Useful links ##
 * [Trello Dashboard - Sprint](https://trello.com/b/5ubS10uf/es2-d2-tema-c)
 
+## Testing ##
+* João first commit
