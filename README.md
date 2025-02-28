@@ -72,3 +72,4 @@ git push origin feature/login
 * João first commit
 * Filipe first commit
 * Scrum Master first commit
+* Ana commit
