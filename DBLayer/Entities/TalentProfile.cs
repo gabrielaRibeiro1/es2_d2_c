@@ -20,5 +20,6 @@ public class TalentProfile
    
     
     public ICollection<Experience> Experience { get; set; }
-    
+    public ICollection<ProfileSkill> ProfileSkill { get; set; }
+
 }
