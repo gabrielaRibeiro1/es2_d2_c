@@ -5,9 +5,6 @@ namespace ESOF.WebApp.DBLayer.Entities;
 
 public class WorkSkill
 {
-    [Key]
-    public Guid WorkSkillID { get; set; }
-
     
     public Guid ProposalID  { get; set; }
     [ForeignKey("ProposalID")]
