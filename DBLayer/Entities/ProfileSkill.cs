@@ -5,9 +5,7 @@ namespace ESOF.WebApp.DBLayer.Entities;
 
 public class ProfileSkill
 {
-    [Key]
-    public Guid ProfileSkillID { get; set; }
-    
+   
     public Guid ProfileID  { get; set; }
     [ForeignKey("ProfileID")]
     public TalentProfile TalentProfile { get; set; }
