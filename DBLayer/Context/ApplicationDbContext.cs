@@ -50,6 +50,17 @@ public partial class ApplicationDbContext : DbContext
     public DbSet<OrderPizza> OrderPizzas { get; set; }
     public DbSet<Pizza> Pizzas { get; set; }
     public DbSet<PizzaIngredient> PizzaIngredients { get; set; }
+    
+    public DbSet<Experience> Experience { get; set; }
+    public DbSet<ProfileSkill> ProfileSkills { get; set; }
+    public DbSet<Role> Role { get; set; }
+    public DbSet<Skills> Skills { get; set; }
+    public DbSet<TalentProfile> TalentProfile { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<WorkProposals> WorkProposal { get; set; }
+    public DbSet<WorkSkill> WorkSkill { get; set; }
+
+    
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -58,31 +69,80 @@ public partial class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<PizzaIngredient>()
-            .HasKey(pi => new { pi.PizzaId, pi.IngredientId });
 
-        modelBuilder.Entity<PizzaIngredient>()
-            .HasOne(pi => pi.Pizza)
-            .WithMany(p => p.PizzaIngredients)
-            .HasForeignKey(pi => pi.PizzaId);
 
-        modelBuilder.Entity<PizzaIngredient>()
-            .HasOne(pi => pi.Ingredient)
-            .WithMany(i => i.PizzaIngredients)
-            .HasForeignKey(pi => pi.IngredientId);
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Role)
+            .WithMany(r => r.Users)
+            .HasForeignKey(u => u.RoleID);
+           
 
-        modelBuilder.Entity<OrderPizza>()
-            .HasKey(op => new { op.OrderId, op.PizzaId });
+        // User - TalentProfile (One-to-Many)
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.TalentProfile)
+            .WithOne(tp => tp.User)
+            .HasForeignKey(tp => tp.UserID);
 
-        modelBuilder.Entity<OrderPizza>()
-            .HasOne(op => op.Order)
-            .WithMany(o => o.OrderPizzas)
-            .HasForeignKey(op => op.OrderId);
+        // User - WorkProposals (One-to-Many)
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.WorkProposals)
+            .WithOne(wp => wp.User)
+            .HasForeignKey(wp => wp.UserID);
 
-        modelBuilder.Entity<OrderPizza>()
-            .HasOne(op => op.Pizza)
-            .WithMany(p => p.OrderPizzas)
-            .HasForeignKey(op => op.PizzaId);
+        // TalentProfile - Experience (One-to-Many)
+        modelBuilder.Entity<TalentProfile>()
+            .HasMany(tp => tp.Experience)
+            .WithOne(e => e.TalentProfile)
+            .HasForeignKey(e => e.ProfileID);
+         
+        // TalentProfile - ProfileSkill (One-to-Many)
+        modelBuilder.Entity<TalentProfile>()
+            .HasMany(tp => tp.ProfileSkill)
+            .WithOne(ps => ps.TalentProfile)
+            .HasForeignKey(ps => ps.ProfileID);
+          
+
+        // ProfileSkill - Skills (Many-to-One)
+        modelBuilder.Entity<ProfileSkill>()
+            .HasOne(ps => ps.Skills)
+            .WithMany() // Skills does not have ICollection<ProfileSkill>
+            .HasForeignKey(ps => ps.SkillID);
+           
+
+        // WorkProposals - WorkSkill (One-to-Many)
+        modelBuilder.Entity<WorkProposals>()
+            .HasOne(wp => wp.WorkSkill)
+            .WithMany()
+            .HasForeignKey(wp => wp.WorkSkillID);
+
+
+        modelBuilder.Entity<WorkSkill>()
+            .HasOne(ws => ws.Skills)
+            .WithMany() // Skills does not have ICollection<WorkSkill>
+            .HasForeignKey(ws => ws.SkillID);
+           
+
+        // WorkSkill - WorkProposals (Many-to-One)
+        modelBuilder.Entity<WorkSkill>()
+            .HasOne(ws => ws.WorkProposals)
+            .WithMany()
+            .HasForeignKey(ws => ws.ProposalID);
+           
+
+        // Skills - WorkSkill (One-to-Many)
+        modelBuilder.Entity<Skills>()
+            .HasOne(s => s.WorkSkill)
+            .WithMany()
+            .HasForeignKey(s => s.WorkSkillID);
+           
+
+        // Skills - ProfileSkill (One-to-Many)
+        modelBuilder.Entity<Skills>()
+            .HasOne(s => s.ProfileSkill)
+            .WithMany()
+            .HasForeignKey(s => s.ProfileSkillID);
+
+
     }
     
 }
