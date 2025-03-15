@@ -15,6 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frontend", "Frontend\Fronte
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Helpers", "Helpers\Helpers.csproj", "{B87DF5B0-8517-414E-B3A2-3799E668D423}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sprint Reports", "Sprint Reports", "{31BE9A67-EC33-4DEA-8EE0-51C5A52B83E4}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\Downloads\es2-d6-c-semana-inicial.pdf = ..\..\Downloads\es2-d6-c-semana-inicial.pdf
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

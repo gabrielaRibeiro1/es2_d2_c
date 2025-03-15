@@ -29,7 +29,7 @@
 ## Notes / Rules and Recommendations ##
 
  * ⚠️ **Never push the .env file to git** 
- * `docker compose up --build database` will allow you to create a local database for you to work
+ * `docker compose up --build database` will allow you to create a - **local database** - for you to work , you'll need to insert data into the database through a sql script.
 
 ## TODO ##
 
