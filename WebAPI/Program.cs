@@ -20,20 +20,4 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/ingredients", handler: () =>
-    {
-        var db = new ApplicationDbContext();
-        return db.Ingredients.Select(i => new IngredientViewModel
-        {
-            Id = i.IngredientId,
-            Name = i.Name,
-            Stock = i.Stock,
-            Proteins = i.Proteins,
-            Fats = i.Fats,
-            Carbohydrates = i.Carbohydrates
-        }).ToListAsync();
-    })
-    .WithName("GetIngredients")
-    .WithOpenApi();
-
 app.Run();

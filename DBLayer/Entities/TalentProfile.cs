@@ -1,25 +1,21 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ESOF.WebApp.DBLayer.Entities;
 
 public class TalentProfile
 {
     [Key]
-    public Guid ProfileID { get; set; }
+    public int profile_id { get; set; }
+    public string profile_name { get; set; }
+    public string country { get; set; }
+    public string email { get; set; }
+    public float price { get; set; }
+    public float privacy { get; set; }
     
-    public string Name { get; set; }
-    public string Country { get; set; }
-    public string Email { get; set; }
-    public float Price { get; set; }
-    public string Privacy { get; set; }
-
-    public Guid UserID { get; set; }
-    [ForeignKey("UserID")]
+    //many-to-one
+    public int fk_user_id { get; set; }
     public User User { get; set; }
-   
     
-    public ICollection<Experience> Experience { get; set; }
-    public ICollection<ProfileSkill> ProfileSkill { get; set; }
-
+    //one-to-many
+    public ICollection<Experience> Experiences { get; set; }
 }

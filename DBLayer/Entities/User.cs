@@ -1,22 +1,21 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ESOF.WebApp.DBLayer.Entities;
 
 public class User
 {
     [Key]
-    public Guid UserID { get; set; }
+    public int user_id { get; set; }
+    public string username { get; set; }
+    public string password { get; set; }
     
-    public string Username { get; set; }
-    
-    public string Password { get; set; }
-    
-    public Guid RoleID  { get; set; }
-    
-    [ForeignKey("RoleID")]
+    //many-to-one
+    public int fk_role_id { get; set; }
     public Role Role { get; set; }
-
-    public ICollection<TalentProfile> TalentProfile { get; set; }
-    public ICollection<WorkProposals> WorkProposals { get; set; }
+    
+    //one-to-many
+    public ICollection<WorkProposal> Proposals { get; set; }
+    public ICollection<TalentProfile> Profiles { get; set; }
+    public ICollection<UserSkill> UserSkills { get; set; }
+    
 }

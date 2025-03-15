@@ -43,106 +43,97 @@ public partial class ApplicationDbContext : DbContext
         : base(options)
     {
     }
-    
-    public DbSet<Customer> Customers { get; set; }
-    public DbSet<Ingredient> Ingredients { get; set; }
-    public DbSet<Order> Orders { get; set; }
-    public DbSet<OrderPizza> OrderPizzas { get; set; }
-    public DbSet<Pizza> Pizzas { get; set; }
-    public DbSet<PizzaIngredient> PizzaIngredients { get; set; }
-    
-    public DbSet<Experience> Experience { get; set; }
-    public DbSet<ProfileSkill> ProfileSkills { get; set; }
-    public DbSet<Role> Role { get; set; }
-    public DbSet<Skills> Skills { get; set; }
-    public DbSet<TalentProfile> TalentProfile { get; set; }
+
+    // DbSet properties representing tables
     public DbSet<User> Users { get; set; }
-    public DbSet<WorkProposals> WorkProposal { get; set; }
-    public DbSet<WorkSkill> WorkSkill { get; set; }
+    public DbSet<Role> Roles { get; set; }
+    public DbSet<Skill> Skills { get; set; }
+    public DbSet<TalentProfile> TalentProfiles { get; set; }
+    public DbSet<UserSkill> UserSkills { get; set; }
+    public DbSet<WorkProposal> WorkProposals { get; set; }
+    public DbSet<Experience> Experiences { get; set; }
 
-    
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        base.OnConfiguring(optionsBuilder);
-    }
-
+    // OnModelCreating for configuring relationships and keys
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // USERSKILL
+        modelBuilder.Entity<UserSkill>()
+            .HasKey(us => new { us.UserId, us.SkillId });
 
+        modelBuilder.Entity<UserSkill>()
+            .HasOne(u => u.User)
+            .WithMany(us => us.UserSkills)
+            .HasForeignKey(fk => fk.UserId);
+
+        modelBuilder.Entity<UserSkill>()
+            .HasOne(s => s.Skill)
+            .WithMany(su => su.UserSkills)
+            .HasForeignKey(fk => fk.SkillId);
+
+        // USER
+        modelBuilder.Entity<User>()
+            .HasKey(u => u.user_id);
 
         modelBuilder.Entity<User>()
             .HasOne(u => u.Role)
             .WithMany(r => r.Users)
-            .HasForeignKey(u => u.RoleID);
-           
+            .HasForeignKey(u => u.fk_role_id);
 
-        // User - TalentProfile (One-to-Many)
         modelBuilder.Entity<User>()
-            .HasMany(u => u.TalentProfile)
-            .WithOne(tp => tp.User)
-            .HasForeignKey(tp => tp.UserID);
-
-        // User - WorkProposals (One-to-Many)
-        modelBuilder.Entity<User>()
-            .HasMany(u => u.WorkProposals)
+            .HasMany(u => u.Proposals)
             .WithOne(wp => wp.User)
-            .HasForeignKey(wp => wp.UserID);
+            .HasForeignKey(wp => wp.fk_user_id);
 
-        // TalentProfile - Experience (One-to-Many)
+        // One-to-many relationship: User has many TalentProfiles
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Profiles)
+            .WithOne(tp => tp.User)
+            .HasForeignKey(tp => tp.fk_user_id);
+
+        // One-to-many relationship: User has many UserSkills
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.UserSkills)
+            .WithOne(us => us.User)
+            .HasForeignKey(us => us.UserId);
+
+        // SKILL
+        modelBuilder.Entity<Skill>()
+            .HasKey(s => s.skill_id);
+
+        modelBuilder.Entity<Skill>()
+            .HasMany(s => s.UserSkills)
+            .WithOne(us => us.Skill)
+            .HasForeignKey(us => us.SkillId);
+
+        // ROLE
+        modelBuilder.Entity<Role>()
+            .HasKey(r => r.role_id);
+
+        modelBuilder.Entity<Role>()
+            .HasMany(r => r.Users)
+            .WithOne(u => u.Role)
+            .HasForeignKey(u => u.fk_role_id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // TALENTPROFILE
         modelBuilder.Entity<TalentProfile>()
-            .HasMany(tp => tp.Experience)
-            .WithOne(e => e.TalentProfile)
-            .HasForeignKey(e => e.ProfileID);
-         
-        // TalentProfile - ProfileSkill (One-to-Many)
+            .HasKey(tp => tp.profile_id);
+
         modelBuilder.Entity<TalentProfile>()
-            .HasMany(tp => tp.ProfileSkill)
-            .WithOne(ps => ps.TalentProfile)
-            .HasForeignKey(ps => ps.ProfileID);
-          
-
-        // ProfileSkill - Skills (Many-to-One)
-        modelBuilder.Entity<ProfileSkill>()
-            .HasOne(ps => ps.Skills)
-            .WithMany() // Skills does not have ICollection<ProfileSkill>
-            .HasForeignKey(ps => ps.SkillID);
-           
-
-        // WorkProposals - WorkSkill (One-to-Many)
-        modelBuilder.Entity<WorkProposals>()
-            .HasOne(wp => wp.WorkSkill)
+            .HasOne(tp => tp.User)
             .WithMany()
-            .HasForeignKey(wp => wp.WorkSkillID);
+            .HasForeignKey(tp => tp.fk_user_id)
+            .OnDelete(DeleteBehavior.Restrict);
 
+        // EXPERIENCE
+        modelBuilder.Entity<Experience>()
+            .HasKey(e => e.experience_id);
 
-        modelBuilder.Entity<WorkSkill>()
-            .HasOne(ws => ws.Skills)
-            .WithMany() // Skills does not have ICollection<WorkSkill>
-            .HasForeignKey(ws => ws.SkillID);
-           
-
-        // WorkSkill - WorkProposals (Many-to-One)
-        modelBuilder.Entity<WorkSkill>()
-            .HasOne(ws => ws.WorkProposals)
-            .WithMany()
-            .HasForeignKey(ws => ws.ProposalID);
-           
-
-        // Skills - WorkSkill (One-to-Many)
-        modelBuilder.Entity<Skills>()
-            .HasOne(s => s.WorkSkill)
-            .WithMany()
-            .HasForeignKey(s => s.WorkSkillID);
-           
-
-        // Skills - ProfileSkill (One-to-Many)
-        modelBuilder.Entity<Skills>()
-            .HasOne(s => s.ProfileSkill)
-            .WithMany()
-            .HasForeignKey(s => s.ProfileSkillID);
-
-
+        modelBuilder.Entity<Experience>()
+            .HasOne(e => e.Profile)
+            .WithMany(tp => tp.Experiences)
+            .HasForeignKey(e => e.fk_profile_id)
+            .OnDelete(DeleteBehavior.Cascade);
     }
-    
+
 }
