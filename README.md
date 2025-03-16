@@ -29,7 +29,9 @@
 ## Notes / Rules and Recommendations ##
 
  * ⚠️ **Never push the .env file to git** 
- * `docker compose up --build database` will allow you to create a - **local database** - for you to work , you'll need to insert data into the database through a sql script.
+ * `docker compose up --build database` will allow you to create a - local database - for you to work - the credentials are in your env. file.
+ * <img width="302" alt="image" src="https://github.com/user-attachments/assets/32d0bb21-eb3c-4dfc-b112-893dd649914e" />
+ you'll need to insert data into the database through a sql script - just run insert_data.sql.
 
 ## TODO ##
 
