@@ -1,17 +1,19 @@
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
-using Microsoft.AspNetCore.Mvc;
+using ESOF.WebApp.DBLayer.Helpers;
+using Helpers.Models;
 using Microsoft.EntityFrameworkCore;
 
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Register ApplicationDbContext with the DI container
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-// 🔹 Register ApplicationDbContext with Dependency Injection
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
@@ -22,23 +24,43 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// ✅ Update route to inject `ApplicationDbContext`
-app.MapPost("/create_account", async (User user, [FromServices] ApplicationDbContext db) =>
+app.MapPost("/create_account", async (string username, string password, int fk_role_id, ApplicationDbContext db) =>
+{
+    // Step 1: Check if the password is provided
+    if (string.IsNullOrEmpty(password))
     {
-        var newUser = new User
-        {
-            username = user.username,
-            password = user.password, 
-            fk_role_id = user.fk_role_id
-        };
+        return Results.BadRequest("Password cannot be empty.");
+    }
 
-        db.Users.Add(newUser);
-        await db.SaveChangesAsync();
+    // Step 2: Generate the password hash and salt
+    PasswordHelper.CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
 
-        return Results.Created($"/users/{newUser.user_id}", newUser);
-    })
-    .WithName("CreateUser")
-    .WithOpenApi();
+    // Step 3: Ensure passwordHash and passwordSalt are not null
+    if (passwordHash == null || passwordSalt == null)
+    {
+        return Results.BadRequest("Error generating password hash and salt.");
+    }
+
+    // Step 4: Create the new user without storing the raw password, but with the hashed password and salt
+    var newUser = new User
+    {
+        username = username,  // Use the username directly
+        passwordHash = passwordHash, // Store hashed password (byte[])
+        passwordSalt = passwordSalt, // Store salt (byte[])
+        fk_role_id = fk_role_id  // Use fk_role_id directly
+    };
+
+    // Step 5: Save the new user to the database
+    db.Users.Add(newUser);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/users/{newUser.user_id}", newUser);
+});
+
+
+
+
 
 app.UseHttpsRedirection();
+
 app.Run();

@@ -75,6 +75,16 @@ public partial class ApplicationDbContext : DbContext
             .HasKey(u => u.user_id);
         
         modelBuilder.Entity<User>()
+            .Property(u => u.passwordHash)
+            .HasColumnType("bytea")
+            .IsRequired();
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.passwordSalt)
+            .HasColumnType("bytea")
+            .IsRequired();
+
+        modelBuilder.Entity<User>()
             .Property(u => u.user_id)
             .ValueGeneratedOnAdd();
 

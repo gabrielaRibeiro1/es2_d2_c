@@ -64,9 +64,6 @@ namespace ESOF.WebApp.DBLayer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("role_level")
-                        .HasColumnType("integer");
-
                     b.HasKey("role_id");
 
                     b.ToTable("Roles");
@@ -145,9 +142,13 @@ namespace ESOF.WebApp.DBLayer.Migrations
                     b.Property<int>("fk_role_id")
                         .HasColumnType("integer");
 
-                    b.Property<string>("password")
+                    b.Property<byte[]>("passwordHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("passwordSalt")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<string>("username")
                         .IsRequired()
