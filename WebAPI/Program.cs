@@ -1,7 +1,10 @@
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
+using ESOF.WebApp.DBLayer.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +41,29 @@ app.MapPost("/create_account", async (User user, [FromServices] ApplicationDbCon
         return Results.Created($"/users/{newUser.user_id}", newUser);
     })
     .WithName("CreateUser")
+    .WithOpenApi();
+
+app.MapGet("/login", async (string username, string password, [FromServices] ApplicationDbContext db) =>
+    {
+        var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+        if (user == null)
+        {
+            return Results.NotFound("Usuário não encontrado.");
+        }
+
+        // Verifica se a senha está correta
+        if (!PasswordHelper.VerifyPasswordNoHash(password, user.password))
+        {
+            return Results.Unauthorized();
+        }
+
+        return Results.Ok(new
+        {
+            Id = user.user_id,
+            Username = user.username
+        });
+    })
+    .WithName("LoginUser")
     .WithOpenApi();
 
 app.UseHttpsRedirection();
