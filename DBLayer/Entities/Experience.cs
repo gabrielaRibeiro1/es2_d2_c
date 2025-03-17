@@ -1,0 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace ESOF.WebApp.DBLayer.Entities;
+
+public class Experience
+{
+    [Key]
+    public int experience_id { get; set; }
+    public string company_name { get; set; }
+    public string start_year { get; set; }
+    public string end_year { get; set; }
+
+    //many-to-one
+    public int fk_profile_id { get; set; }
+    public TalentProfile Profile { get; set; }
+}
