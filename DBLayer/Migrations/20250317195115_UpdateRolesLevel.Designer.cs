@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ESOF.WebApp.DBLayer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250317182804_MigrationPK")]
-    partial class MigrationPK
+    [Migration("20250317195115_UpdateRolesLevel")]
+    partial class UpdateRolesLevel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -66,9 +66,6 @@ namespace ESOF.WebApp.DBLayer.Migrations
                     b.Property<string>("role")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("role_level")
-                        .HasColumnType("integer");
 
                     b.HasKey("role_id");
 
@@ -148,9 +145,13 @@ namespace ESOF.WebApp.DBLayer.Migrations
                     b.Property<int>("fk_role_id")
                         .HasColumnType("integer");
 
-                    b.Property<string>("password")
+                    b.Property<byte[]>("passwordHash")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("passwordSalt")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<string>("username")
                         .IsRequired()

@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ESOF.WebApp.DBLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate1 : Migration
+    public partial class UpdateUserMode : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -46,7 +46,8 @@ namespace ESOF.WebApp.DBLayer.Migrations
                     user_id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     username = table.Column<string>(type: "text", nullable: false),
-                    password = table.Column<string>(type: "text", nullable: false),
+                    passwordHash = table.Column<byte[]>(type: "bytea", nullable: false),
+                    passwordSalt = table.Column<byte[]>(type: "bytea", nullable: false),
                     fk_role_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
