@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ESOF.WebApp.DBLayer.Entities;
 
 public class TalentProfile
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int profile_id { get; set; }
     public string profile_name { get; set; }
     public string country { get; set; }

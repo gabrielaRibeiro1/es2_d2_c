@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ESOF.WebApp.DBLayer.Entities;
 
 public class Experience
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int experience_id { get; set; }
     public string company_name { get; set; }
     public string start_year { get; set; }

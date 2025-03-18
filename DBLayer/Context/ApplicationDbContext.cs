@@ -73,6 +73,20 @@ public partial class ApplicationDbContext : DbContext
         // USER
         modelBuilder.Entity<User>()
             .HasKey(u => u.user_id);
+        
+        modelBuilder.Entity<User>()
+            .Property(u => u.passwordHash)
+            .HasColumnType("bytea")
+            .IsRequired();
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.passwordSalt)
+            .HasColumnType("bytea")
+            .IsRequired();
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.user_id)
+            .ValueGeneratedOnAdd();
 
         modelBuilder.Entity<User>()
             .HasOne(u => u.Role)
@@ -99,6 +113,10 @@ public partial class ApplicationDbContext : DbContext
         // SKILL
         modelBuilder.Entity<Skill>()
             .HasKey(s => s.skill_id);
+        
+        modelBuilder.Entity<Skill>()
+            .Property(u => u.skill_id)
+            .ValueGeneratedOnAdd();
 
         modelBuilder.Entity<Skill>()
             .HasMany(s => s.UserSkills)
@@ -108,6 +126,10 @@ public partial class ApplicationDbContext : DbContext
         // ROLE
         modelBuilder.Entity<Role>()
             .HasKey(r => r.role_id);
+        
+        modelBuilder.Entity<Role>()
+            .Property(u => u.role_id)
+            .ValueGeneratedOnAdd();
 
         modelBuilder.Entity<Role>()
             .HasMany(r => r.Users)
@@ -118,6 +140,10 @@ public partial class ApplicationDbContext : DbContext
         // TALENTPROFILE
         modelBuilder.Entity<TalentProfile>()
             .HasKey(tp => tp.profile_id);
+        
+        modelBuilder.Entity<TalentProfile>()
+            .Property(u => u.profile_id)
+            .ValueGeneratedOnAdd();
 
         modelBuilder.Entity<TalentProfile>()
             .HasOne(tp => tp.User)
@@ -128,6 +154,10 @@ public partial class ApplicationDbContext : DbContext
         // EXPERIENCE
         modelBuilder.Entity<Experience>()
             .HasKey(e => e.experience_id);
+        
+        modelBuilder.Entity<Experience>()
+            .Property(u => u.experience_id)
+            .ValueGeneratedOnAdd();
 
         modelBuilder.Entity<Experience>()
             .HasOne(e => e.Profile)

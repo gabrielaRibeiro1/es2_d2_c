@@ -1,10 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ESOF.WebApp.DBLayer.Entities;
 
 public class WorkProposal
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    
     public int proposal_id { get; set; }
     public string proposal_name { get; set; }
     public string category { get; set; }
