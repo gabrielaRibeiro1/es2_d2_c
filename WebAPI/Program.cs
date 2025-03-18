@@ -57,9 +57,25 @@ app.MapPost("/create_account", async (string username, string password, int fk_r
     return Results.Created($"/users/{newUser.user_id}", newUser);
 });
 
+app.MapPost("/login", async (string username, string password, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+        return Results.Unauthorized();
 
+    // Verify the password
+    if (!PasswordHelper.VerifyPassword(password, user.passwordHash, user.passwordSalt))
+        return Results.Unauthorized();
 
-
+    // Return user info upon successful login
+    return Results.Ok(new
+    {
+        user.user_id,
+        user.username,
+        user.fk_role_id
+    });
+});
 
 app.UseHttpsRedirection();
 
