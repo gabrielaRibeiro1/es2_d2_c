@@ -1,0 +1,54 @@
+﻿@using Frontend.Helpers
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ApiAuthenticationStateProvider AuthStateProvider
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+<p class="text-danger">@errorMessage</p>
+}
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label>Usuário</label>
+        <InputText @bind-Value="loginModel.Username" class="form-control" />
+    </div>
+
+    <div>
+        <label>Senha</label>
+        <InputText @bind-Value="loginModel.Password" class="form-control" type="password" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Entrar</button>
+</EditForm>
+
+@code {
+private LoginModel loginModel = new();
+private string errorMessage = string.Empty;
+
+private async Task HandleLogin()
+{
+var response = await Http.PostAsJsonAsync("login", loginModel);
+
+if (response.IsSuccessStatusCode)
+{
+AuthStateProvider.NotifyUserAuthentication(loginModel.Username);
+Navigation.NavigateTo("/");
+}
+else
+{
+errorMessage = "Usuário ou senha inválidos.";
+}
+}
+
+private class LoginModel
+{
+public string Username { get; set; } = string.Empty;
+public string Password { get; set; } = string.Empty;
+}
+}
