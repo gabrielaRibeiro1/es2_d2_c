@@ -33,3 +33,57 @@
 /Users/luisteofilo/Downloads/estg-esof2-master/Frontend/obj/Debug/net8.0/Frontend.pdb
 /Users/luisteofilo/Downloads/estg-esof2-master/Frontend/obj/Debug/net8.0/Frontend.genruntimeconfig.cache
 /Users/luisteofilo/Downloads/estg-esof2-master/Frontend/obj/Debug/net8.0/ref/Frontend.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\appsettings.Development.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\appsettings.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Frontend.staticwebassets.runtime.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Frontend.exe
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Frontend.deps.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Frontend.runtimeconfig.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Frontend.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Frontend.pdb
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\DotNetEnv.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Sprache.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Helpers.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Helpers.pdb
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.csproj.AssemblyReference.cache
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.AssemblyInfoInputs.cache
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.AssemblyInfo.cs
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.csproj.CoreCompileInputs.cache
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.sourcelink.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\staticwebassets.build.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\staticwebassets.development.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\staticwebassets\msbuild.Frontend.Microsoft.AspNetCore.StaticWebAssets.props
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\staticwebassets\msbuild.build.Frontend.props
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.Frontend.props
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.Frontend.props
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\staticwebassets.pack.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\scopedcss\Components\Layout\MainLayout.razor.rz.scp.css
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\scopedcss\Components\Layout\NavMenu.razor.rz.scp.css
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\scopedcss\bundle\Frontend.styles.css
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\scopedcss\projectbundle\Frontend.bundle.scp.css
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.csproj.Up2Date
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\refint\Frontend.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.pdb
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.genruntimeconfig.cache
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\ref\Frontend.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\obj\Debug\net8.0\Frontend.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\ESOF WebApp WebAPI.deps.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\ESOF WebApp WebAPI.runtimeconfig.json
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\ESOF WebApp WebAPI.exe
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Microsoft.AspNetCore.OpenApi.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Abstractions.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Microsoft.OpenApi.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Npgsql.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Npgsql.EntityFrameworkCore.PostgreSQL.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Swashbuckle.AspNetCore.Swagger.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\ESOF WebApp DBLayer.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\ESOF WebApp WebAPI.dll
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\ESOF WebApp DBLayer.pdb
+C:\Users\filip\RiderProjects\es2_d2_c\Frontend\bin\Debug\net8.0\ESOF WebApp WebAPI.pdb

@@ -2,7 +2,7 @@
   "version": 3,
   "targets": {
     "net8.0": {
-      "DotNetEnv/3.0.0": {
+      "DotNetEnv/3.1.1": {
         "type": "package",
         "dependencies": {
           "Microsoft.Extensions.Configuration": "1.1.2",
@@ -2224,15 +2224,16 @@
     }
   },
   "libraries": {
-    "DotNetEnv/3.0.0": {
-      "sha512": "ddE17PtN+lijtSQH9NYk9vzCikHs1wPhiVxgwvLrWFPru0kYvh+8nSbjo18iZYFOznu83g5zrKrYYKHf3iK1vw==",
+    "DotNetEnv/3.1.1": {
+      "sha512": "o4SqUVCq0pqHF/HYsZk6k22XGIVmvsDVo+Dy7l0ubq9uQ45JkXswrMRJmYvhGLXWFYF0M5OupMonytB+0zvpGQ==",
       "type": "package",
-      "path": "dotnetenv/3.0.0",
+      "path": "dotnetenv/3.1.1",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "LICENSE",
-        "dotnetenv.3.0.0.nupkg.sha512",
+        "README.md",
+        "dotnetenv.3.1.1.nupkg.sha512",
         "dotnetenv.nuspec",
         "lib/netstandard1.3/DotNetEnv.dll"
       ]
@@ -6913,7 +6914,7 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "DotNetEnv >= 3.0.0",
+      "DotNetEnv >= 3.1.1",
       "Helpers >= 1.0.0",
       "Microsoft.EntityFrameworkCore >= 8.0.7",
       "Microsoft.EntityFrameworkCore.Design >= 8.0.7",
@@ -6921,19 +6922,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/gabrielaribeiro/.nuget/packages/": {}
+    "C:\\Users\\filip\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj",
+      "projectUniqueName": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\DBLayer.csproj",
       "projectName": "ESOF WebApp DBLayer",
-      "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj",
-      "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
-      "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/obj/",
+      "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\DBLayer.csproj",
+      "packagesPath": "C:\\Users\\filip\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\filip\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -6945,8 +6946,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
-              "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj"
+            "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj": {
+              "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj"
             }
           }
         }
@@ -6955,6 +6956,11 @@
         "warnAsError": [
           "NU1605"
         ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -6963,7 +6969,7 @@
         "dependencies": {
           "DotNetEnv": {
             "target": "Package",
-            "version": "[3.0.0, )"
+            "version": "[3.1.1, )"
           },
           "Microsoft.EntityFrameworkCore": {
             "target": "Package",
@@ -6996,7 +7002,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
