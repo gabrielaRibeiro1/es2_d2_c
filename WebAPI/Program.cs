@@ -77,6 +77,86 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
     });
 });
 
+app.MapDelete("/delete_user/{username}", async (string username, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Remove user from database
+    db.Users.Remove(user);
+    await db.SaveChangesAsync();
+
+    return Results.Ok("User deleted successfully.");
+});
+app.MapPut("/update_user/{username}", async (string username, string? newPassword, int? newRoleId, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Update password if provided
+    if (!string.IsNullOrEmpty(newPassword))
+    {
+        PasswordHelper.CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
+        user.passwordHash = passwordHash;
+        user.passwordSalt = passwordSalt;
+    }
+
+    // Update role if provided
+    if (newRoleId.HasValue)
+    {
+        user.fk_role_id = newRoleId.Value;
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok("User updated successfully.");
+});
+
+
+app.MapPost("/logout", () =>
+{
+    // Logout logic (if using sessions or tokens, invalidate them here)
+    return Results.Ok("User logged out successfully.");
+});
+
+
+app.MapGet("/get_user/{username}", async (string username, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Return user info
+    return Results.Ok(new
+    {
+        user.user_id,
+        user.username,
+        user.fk_role_id
+    });
+});
+
+app.MapGet("/get_all_users", async (ApplicationDbContext db) =>
+{
+    var users = await db.Users.Select(u => new
+    {
+        u.user_id,
+        u.username,
+        u.fk_role_id
+    }).ToListAsync();
+    
+    return Results.Ok(users);
+});
+
 app.UseHttpsRedirection();
 
 app.Run();
