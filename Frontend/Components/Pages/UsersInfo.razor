@@ -1,0 +1,52 @@
+﻿@page "/user-info"
+@using Frontend.Helpers
+@using global::Helpers.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ApiHelper ApiHelper
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>User Info</PageTitle>
+
+<h1>User Info</h1>
+
+@if (_user == null)
+{
+    <p>
+        <em>Loading...</em>
+    </p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Username</th>
+            <th>Role</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>@_user.UserId</td>
+            <td>@_user.Username</td>
+            <td>@_user.RoleId</td>
+        </tr>
+        </tbody>
+    </table>
+}
+
+@code {
+    private UserViewModel? _user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity is { IsAuthenticated: true })
+        {
+            string username = user.Identity.Name;
+            _user = await ApiHelper.GetFromApiAsync<UserViewModel>($"get_user/{username}");
+        }
+    }
+}
