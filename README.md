@@ -75,4 +75,3 @@ git push origin feature/login
 * Filipe first commit
 * Scrum Master first commit
 * Ana commit
-* O Ribeiro é o maior
