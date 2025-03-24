@@ -9,11 +9,9 @@
 
 <h1>User Info</h1>
 
-@if (_user == null)
+@if (_users == null)
 {
-    <p>
-        <em>Loading...</em>
-    </p>
+    <p><em>Loading...</em></p>
 }
 else
 {
@@ -26,17 +24,20 @@ else
         </tr>
         </thead>
         <tbody>
-        <tr>
-            <td>@_user.UserId</td>
-            <td>@_user.Username</td>
-            <td>@_user.RoleId</td>
-        </tr>
+        @foreach (var user in _users)
+        {
+            <tr>
+                <td>@user.UserId</td>
+                <td>@user.Username</td>
+                <td>@user.RoleId</td>
+            </tr>
+        }
         </tbody>
     </table>
 }
 
 @code {
-    private UserViewModel? _user;
+    private List<UserViewModel>? _users;
 
     protected override async Task OnInitializedAsync()
     {
@@ -45,8 +46,7 @@ else
         
         if (user.Identity is { IsAuthenticated: true })
         {
-            string username = user.Identity.Name;
-            _user = await ApiHelper.GetFromApiAsync<UserViewModel>($"get_user/{username}");
+            _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
         }
     }
 }
