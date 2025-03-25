@@ -1,9 +1,10 @@
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
+using ESOF.WebApp.WebAPI.Models;
 using Helpers.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+
 
 app.MapPost("/create_account", async (string username, string password, int fk_role_id, ApplicationDbContext db) =>
 {
@@ -57,18 +60,21 @@ app.MapPost("/create_account", async (string username, string password, int fk_r
     return Results.Created($"/users/{newUser.user_id}", newUser);
 });
 
-app.MapPost("/login", async (string username, string password, ApplicationDbContext db) =>
+
+
+app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext db) =>
 {
-    // Find user by username
-    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    // Verificar se login está a ser recebido corretamente
+    Console.WriteLine($"Username: {login.Username}");
+    Console.WriteLine($"Password: {login.Password}");
+
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == login.Username);
     if (user == null)
         return Results.Unauthorized();
 
-    // Verify the password
-    if (!PasswordHelper.VerifyPassword(password, user.passwordHash, user.passwordSalt))
+    if (!PasswordHelper.VerifyPassword(login.Password, user.passwordHash, user.passwordSalt))
         return Results.Unauthorized();
 
-    // Return user info upon successful login
     return Results.Ok(new
     {
         user.user_id,
@@ -76,6 +82,7 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
         user.fk_role_id
     });
 });
+
 
 app.UseHttpsRedirection();
 

@@ -21,7 +21,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
         try
         {
-            var response = await _httpClient.GetAsync("http://localhost:7103/login");
+            var response = await _httpClient.GetAsync("https://localhost:7103/login");
             if (response.IsSuccessStatusCode)
             {
                 var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
@@ -44,6 +44,31 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
         return new AuthenticationState(user);
     }
 
+    
+    
+    
+    
+    public async Task<bool> LoginAsync(LoginModel login)
+    {
+        var response = await _httpClient.PostAsJsonAsync("login", login);
+        if (response.IsSuccessStatusCode)
+        {
+            // Se a API retornar informações do usuário, você pode usá-las aqui
+            var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
+            NotifyUserAuthentication(userInfo.Username);
+            return true;
+        }
+        return false;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
     public void NotifyUserAuthentication(string username)
     {
         var identity = new ClaimsIdentity(new[]
@@ -65,5 +90,11 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
     {
         public string Username { get; set; }
         public int RoleId { get; set; }
+    }
+    
+    
+    public class LoginModel {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }

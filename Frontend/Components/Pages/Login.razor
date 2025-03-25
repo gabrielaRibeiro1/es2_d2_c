@@ -11,7 +11,9 @@
 <p class="text-danger">@errorMessage</p>
 }
 
-<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="loginForm">
+
+    
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -29,26 +31,20 @@
 </EditForm>
 
 @code {
-    private LoginModel loginModel = new();
+    private ApiAuthenticationStateProvider.LoginModel loginModel = new();
     private string errorMessage = string.Empty;
 
     private async Task HandleLogin()
     {
-        var response = await Http.PostAsJsonAsync("login", loginModel);
+        bool success = await AuthStateProvider.LoginAsync(loginModel);
 
-        if (response.IsSuccessStatusCode)
+        if (success)
         {
-            AuthStateProvider.NotifyUserAuthentication(loginModel.Username);
             Navigation.NavigateTo("/");
         }
         else
         {
             errorMessage = "Usuário ou senha inválidos.";
         }
-    }
-
-    private class LoginModel {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
     }
 }
