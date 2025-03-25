@@ -1,8 +1,10 @@
 ﻿@page "/ingredients"
 @using Frontend.Helpers
 @using global::Helpers.Models
+@using Microsoft.AspNetCore.Authorization
 @attribute [StreamRendering]
 @inject ApiHelper ApiHelper
+@attribute [Authorize]
 
 <PageTitle>Ingredients</PageTitle>
 

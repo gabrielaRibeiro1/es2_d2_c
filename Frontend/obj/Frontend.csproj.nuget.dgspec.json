@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/Frontend/Frontend.csproj": {}
+    "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Frontend\\Frontend.csproj": {}
   },
   "projects": {
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/Frontend/Frontend.csproj": {
+    "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Frontend\\Frontend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Frontend/Frontend.csproj",
+        "projectUniqueName": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Frontend\\Frontend.csproj",
         "projectName": "Frontend",
-        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Frontend/Frontend.csproj",
-        "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
-        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Frontend/obj/",
+        "projectPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Frontend\\Frontend.csproj",
+        "packagesPath": "C:\\Users\\ana_l\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Frontend\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\ana_l\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -26,8 +26,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
-                "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj"
+              "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj": {
+                "projectPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj"
               }
             }
           }
@@ -66,21 +66,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.407/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
+    "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj",
+        "projectUniqueName": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj",
         "projectName": "Helpers",
-        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj",
-        "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
-        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/obj/",
+        "projectPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj",
+        "packagesPath": "C:\\Users\\ana_l\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\ana_l\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -125,7 +125,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.407/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

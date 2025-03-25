@@ -21,7 +21,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
         try
         {
-            var response = await _httpClient.GetAsync("api/auth/me"); // Criamos um endpoint `me`
+            var response = await _httpClient.GetAsync("http://localhost:7103/login");
             if (response.IsSuccessStatusCode)
             {
                 var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
@@ -34,6 +34,7 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
                 user = new ClaimsPrincipal(identity);
             }
+            Console.WriteLine($"{response}");
         }
         catch (Exception ex)
         {

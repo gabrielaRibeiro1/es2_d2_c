@@ -15,3 +15,21 @@
 /Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/ESOF WebApp DBLayer.pdb
 /Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.genruntimeconfig.cache
 /Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/ref/ESOF WebApp DBLayer.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\bin\Debug\net8.0\ESOF WebApp DBLayer.deps.json
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\bin\Debug\net8.0\ESOF WebApp DBLayer.runtimeconfig.json
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\bin\Debug\net8.0\ESOF WebApp DBLayer.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\bin\Debug\net8.0\ESOF WebApp DBLayer.pdb
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\bin\Debug\net8.0\Helpers.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\bin\Debug\net8.0\Helpers.pdb
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.csproj.AssemblyReference.cache
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.AssemblyInfoInputs.cache
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.AssemblyInfo.cs
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.csproj.CoreCompileInputs.cache
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.sourcelink.json
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.csproj.Up2Date
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\ESOF WebApp DBLayer.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\refint\ESOF WebApp DBLayer.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\ESOF WebApp DBLayer.pdb
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.genruntimeconfig.cache
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\DBLayer\obj\Debug\net8.0\ref\ESOF WebApp DBLayer.dll

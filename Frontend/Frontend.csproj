@@ -21,4 +21,8 @@
       <ProjectReference Include="..\Helpers\Helpers.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Components\Tools\" />
+    </ItemGroup>
+
 </Project>
