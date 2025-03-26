@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
@@ -5,6 +6,8 @@ using ESOF.WebApp.WebAPI.Models;
 using Helpers.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,14 +19,35 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        // Exemplo de configuração
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            // IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("sua-chave-secreta"))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 
 
@@ -65,16 +89,18 @@ app.MapPost("/create_account", async (string username, string password, int fk_r
 app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext db) =>
 {
     // Verificar se login está a ser recebido corretamente
-    Console.WriteLine($"Username: {login.Username}");
-    Console.WriteLine($"Password: {login.Password}");
+  
 
     var user = await db.Users.FirstOrDefaultAsync(u => u.username == login.Username);
     if (user == null)
         return Results.Unauthorized();
+    Console.WriteLine($"Username: {login.Username}");
+    Console.WriteLine($"Password: {login.Password}");
 
     if (!PasswordHelper.VerifyPassword(login.Password, user.passwordHash, user.passwordSalt))
         return Results.Unauthorized();
-
+    
+    
     return Results.Ok(new
     {
         user.user_id,
@@ -83,6 +109,22 @@ app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext d
     });
 });
 
+
+
+// endpoint para retornar dados do user loggado
+app.MapGet("/me", (HttpContext httpContext) =>
+    {
+        var user = httpContext.User;
+        if (user?.Identity?.IsAuthenticated == true)
+        {
+            // Extraia os dados do usuário dos Claims
+            var username = user.Identity.Name;
+            var roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
+            return Results.Ok(new { Username = username, RoleId = roleClaim });
+        }
+        return Results.Unauthorized();
+    })
+    .RequireAuthorization();
 
 app.UseHttpsRedirection();
 

@@ -110,3 +110,12 @@ C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\obj\Debug
 C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\obj\Debug\net8.0\ESOF WebApp WebAPI.pdb
 C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\obj\Debug\net8.0\WebAPI.genruntimeconfig.cache
 C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\obj\Debug\net8.0\ref\ESOF WebApp WebAPI.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\Microsoft.Bcl.Memory.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\ana_l\OneDrive\Ambiente de Trabalho\ES2_FINAL\es2_d2_c\WebAPI\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll

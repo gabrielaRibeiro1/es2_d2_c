@@ -1,4 +1,7 @@
-﻿namespace Frontend.Helpers;
+﻿using System.Text;
+using Frontend.Components.Pages;
+
+namespace Frontend.Helpers;
 
 using System.Security.Claims;
 using System.Text.Json;
@@ -17,11 +20,18 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        var user = new ClaimsPrincipal(new ClaimsIdentity()); // Usuário não autenticado por padrão
+        var user = new ClaimsPrincipal(new ClaimsIdentity()); 
 
         try
         {
-            var response = await _httpClient.GetAsync("https://localhost:7103/login");
+            var dados = new {username = "ana", password= "1234"};
+            var json = JsonSerializer.Serialize(dados);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("https://localhost:7103/login", content);
+        //   var response = await _httpClient.GetAsync("https://localhost:7103/login");
+        
+
             if (response.IsSuccessStatusCode)
             {
                 var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
@@ -43,10 +53,6 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 
         return new AuthenticationState(user);
     }
-
-    
-    
-    
     
     public async Task<bool> LoginAsync(LoginModel login)
     {
@@ -60,14 +66,6 @@ public class ApiAuthenticationStateProvider : AuthenticationStateProvider
         }
         return false;
     }
-    
-    
-    
-    
-    
-    
-    
-    
     
     public void NotifyUserAuthentication(string username)
     {
