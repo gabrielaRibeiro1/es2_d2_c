@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ESOF WebApp DBLayer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9afc9a4c584153c880abafc8726e06d78f1aa4e2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7ae1b58c5db7f18884aefa375a11e182893cf59b")]
 [assembly: System.Reflection.AssemblyProductAttribute("ESOF WebApp DBLayer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ESOF WebApp DBLayer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -18,7 +18,7 @@ else
     <table class="table">
         <thead>
         <tr>
-            <th>Id</th>
+          
             <th>Username</th>
             <th>Role</th>
         </tr>
@@ -27,7 +27,7 @@ else
         @foreach (var user in _users)
         {
             <tr>
-                <td>@user.UserId</td>
+                
                 <td>@user.Username</td>
                 <td>@user.RoleId</td>
             </tr>
@@ -41,12 +41,10 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+     
         
-        if (user.Identity is { IsAuthenticated: true })
-        {
+        
             _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
-        }
+        
     }
 }
