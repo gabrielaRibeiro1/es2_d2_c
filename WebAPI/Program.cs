@@ -77,6 +77,71 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
     });
 });
 
+// CREATE WORK PROPOSAL
+app.MapPost("/work_proposals", async (string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
+{
+    var workProposal = new WorkProposal
+    {
+        proposal_name = proposalName,
+        category = category,
+        necessary_skills = necessarySkills,
+        years_of_experience = yearsOfExperience,
+        description = description,
+        total_hours = totalHours,
+        fk_user_id = fkUserId,
+    };
+
+    db.WorkProposals.Add(workProposal);
+    await db.SaveChangesAsync();
+    return Results.Created($"/work_proposals/{workProposal.proposal_id}", workProposal);
+});
+
+// GET ALL WORK PROPOSALS
+app.MapGet("/work_proposals", async (ApplicationDbContext db) =>
+{
+    var workProposals = await db.WorkProposals.ToListAsync();
+    return Results.Ok(workProposals);
+});
+
+// GET WORK PROPOSAL BY ID
+app.MapGet("/work_proposal/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var workProposal = await db.WorkProposals.FindAsync(id);
+    return workProposal == null ? Results.NotFound() : Results.Ok(workProposal);
+});
+
+// UPDATE WORK PROPOSAL
+app.MapPut("/work_proposal/{id}", async (int id, string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
+{
+    var existingProposal = await db.WorkProposals.FindAsync(id);
+    if (existingProposal == null)
+        return Results.NotFound("Perfil não encontrado.");
+
+    existingProposal.proposal_name = proposalName;
+    existingProposal.category = category;
+    existingProposal.necessary_skills = necessarySkills;
+    existingProposal.years_of_experience = yearsOfExperience;
+    existingProposal.description = description;
+    existingProposal.total_hours = totalHours;
+    existingProposal.fk_user_id = fkUserId;
+
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existingProposal);
+});
+
+// DELETE WORK PROPOSAL
+app.MapDelete("/work_proposals/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var workProposal = await db.WorkProposals.FindAsync(id);
+    if (workProposal == null) return Results.NotFound();
+
+    db.WorkProposals.Remove(workProposal);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+
 app.UseHttpsRedirection();
 
 app.Run();
