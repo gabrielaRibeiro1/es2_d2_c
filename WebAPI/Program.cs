@@ -77,6 +77,80 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
     });
 });
 
+// CRUD TalentProfiles
+app.MapGet("/talent_profiles", async (ApplicationDbContext db) =>
+{
+    var talentProfiles = await db.TalentProfiles.ToListAsync();
+    return Results.Ok(talentProfiles);
+});
+
+app.MapGet("/talent_profiles/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var talentProfile = await db.TalentProfiles.FindAsync(id);
+    return talentProfile == null ? Results.NotFound() : Results.Ok(talentProfile);
+});
+
+app.MapPost("/talent_profiles", async (
+    string profile_name,
+    string country,
+    string email,
+    float price,
+    float privacy,
+    int fk_user_id,
+    ApplicationDbContext db) =>
+{
+    var talentProfile = new TalentProfile
+    {
+        profile_name = profile_name,
+        country = country,
+        email = email,
+        price = price,
+        privacy = privacy,
+        fk_user_id = fk_user_id,
+    };
+
+    db.TalentProfiles.Add(talentProfile);
+    await db.SaveChangesAsync();
+    return Results.Created($"/talent_profiles/{talentProfile.profile_id}", talentProfile);
+});
+
+app.MapPut("/talent_profiles/{id}", async (
+    int id,
+    string profile_name,
+    string country,
+    string email,
+    float price,
+    float privacy,
+    int fk_user_id,
+    ApplicationDbContext db) =>
+{
+    var existingProfile = await db.TalentProfiles.FindAsync(id);
+    if (existingProfile == null)
+        return Results.NotFound("Perfil não encontrado.");
+
+    // Atualiza apenas os campos permitidos
+    existingProfile.profile_name = profile_name;
+    existingProfile.country = country;
+    existingProfile.email = email;
+    existingProfile.price = price;
+    existingProfile.privacy = privacy;
+    existingProfile.fk_user_id = fk_user_id;
+
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existingProfile);
+});
+
+app.MapDelete("/talent_profiles/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var talentProfile = await db.TalentProfiles.FindAsync(id);
+    if (talentProfile == null) return Results.NotFound();
+    
+    db.TalentProfiles.Remove(talentProfile);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
 app.UseHttpsRedirection();
 
 app.Run();
