@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/WebAPI/WebAPI.csproj": {}
+    "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\WebAPI\\WebAPI.csproj": {}
   },
   "projects": {
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj": {
+    "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\DBLayer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj",
+        "projectUniqueName": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\DBLayer.csproj",
         "projectName": "ESOF WebApp DBLayer",
-        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj",
-        "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
-        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/obj/",
+        "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\DBLayer.csproj",
+        "packagesPath": "C:\\Users\\filip\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\filip\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -26,8 +26,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
-                "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj"
+              "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj": {
+                "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj"
               }
             }
           }
@@ -36,6 +36,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -44,7 +49,7 @@
           "dependencies": {
             "DotNetEnv": {
               "target": "Package",
-              "version": "[3.0.0, )"
+              "version": "[3.1.1, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
@@ -77,21 +82,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
+    "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj",
+        "projectUniqueName": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj",
         "projectName": "Helpers",
-        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj",
-        "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
-        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/obj/",
+        "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj",
+        "packagesPath": "C:\\Users\\filip\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\filip\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -109,6 +114,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -136,21 +146,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/WebAPI/WebAPI.csproj": {
+    "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\WebAPI\\WebAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/WebAPI/WebAPI.csproj",
+        "projectUniqueName": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\WebAPI\\WebAPI.csproj",
         "projectName": "ESOF WebApp WebAPI",
-        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/WebAPI/WebAPI.csproj",
-        "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
-        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/WebAPI/obj/",
+        "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\WebAPI\\WebAPI.csproj",
+        "packagesPath": "C:\\Users\\filip\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\WebAPI\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\filip\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -162,8 +172,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj": {
-                "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj"
+              "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\DBLayer.csproj": {
+                "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\DBLayer\\DBLayer.csproj"
               }
             }
           }
@@ -172,6 +182,11 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
@@ -220,7 +235,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
