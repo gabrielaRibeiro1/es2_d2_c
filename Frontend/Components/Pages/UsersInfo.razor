@@ -1,4 +1,5 @@
 ﻿@page "/user-info"
+@inject IJSRuntime JSRuntime
 @using Frontend.Helpers
 @using global::Helpers.Models
 @using Microsoft.AspNetCore.Components.Authorization
@@ -7,7 +8,11 @@
 
 <PageTitle>User Info</PageTitle>
 
+
 <h1>User Info</h1>
+
+
+<button class="btn btn-primary mb-3">Add User</button>
 
 @if (_users == null)
 {
@@ -21,6 +26,8 @@ else
           
             <th>Username</th>
             <th>Role</th>
+            <th>Actions</th>
+            
         </tr>
         </thead>
         <tbody>
@@ -29,7 +36,19 @@ else
             <tr>
                 
                 <td>@user.Username</td>
-                <td>@user.RoleId</td>
+                <td>@user.fk_role_id</td>
+                
+                <td>
+                    <div class="d-flex gap-2"> 
+                        <button class="btn btn-secondary btn-sm" >
+                            <i class="bi bi-pencil"></i> 
+                        </button>
+                        <button class="btn btn-danger btn-sm" >
+                            <i class="bi bi-trash" @onclick="() => DeleteUserById(user.UserId)"></i> 
+                        </button>
+                    </div>
+                </td>
+                
             </tr>
         }
         </tbody>
@@ -38,13 +57,38 @@ else
 
 @code {
     private List<UserViewModel>? _users;
+ 
 
     protected override async Task OnInitializedAsync()
     {
-     
-        
         
             _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
         
+    }
+    
+    
+    
+    
+    private async Task DeleteUserById(int userId)
+    {
+        try
+        {
+            bool success = await ApiHelper.DeleteFromApiAsync($"delete_user_by_id/{userId}");
+
+            if (success)
+            {
+                _users.RemoveAll(u => u.UserId == userId);
+                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("alert", "Usuário deletado com sucesso!");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Erro ao excluir usuário.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro: {ex.Message}");
+        }
     }
 }

@@ -122,7 +122,7 @@ app.MapPut("/update_user/{username}", async (string username, string? newPasswor
 
 app.MapPost("/logout", () =>
 {
-    // Logout logic (if using sessions or tokens, invalidate them here)
+   
     return Results.Ok("User logged out successfully.");
 });
 
@@ -145,17 +145,71 @@ app.MapGet("/get_user/{username}", async (string username, ApplicationDbContext 
     });
 });
 
+
+
 app.MapGet("/get_all_users", async (ApplicationDbContext db) =>
 {
-    var users = await db.Users.Select(u => new
-    {
-        u.user_id,
-        u.username,
-        u.fk_role_id
-    }).ToListAsync();
-    
+    var users = await db.Users
+        .Join(db.Roles, 
+            u => u.fk_role_id,   // fk_role_id da tabela Users
+            r => r.role_id,           // id da tabela Roles
+            (u, r) => new        // Resultado do Join
+            {
+                u.user_id,
+                u.username,
+                u.fk_role_id,
+                RoleName = r.role  
+            })
+        .ToListAsync();
+
     return Results.Ok(users);
 });
+
+
+
+app.MapDelete("/delete_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
+{
+    // Encontrar usuário pelo ID
+    var user = await db.Users.FindAsync(id);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Remover usuário do banco de dados
+    db.Users.Remove(user);
+    await db.SaveChangesAsync();
+
+    return Results.Ok($"User with ID {id} deleted successfully.");
+});
+
+app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? newRoleId, ApplicationDbContext db) =>
+{
+    // Localiza o usuário pelo ID
+    var user = await db.Users.FirstOrDefaultAsync(u => u.user_id == id);
+    if (user == null)
+    {
+        return Results.NotFound("Usuário não encontrado.");
+    }
+
+    // Atualiza a senha, se fornecida
+    if (!string.IsNullOrEmpty(newPassword))
+    {
+        PasswordHelper.CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
+        user.passwordHash = passwordHash;
+        user.passwordSalt = passwordSalt;
+    }
+
+    // Atualiza a role, se fornecida
+    if (newRoleId.HasValue)
+    {
+        user.fk_role_id = newRoleId.Value;
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok("Usuário atualizado com sucesso.");
+});
+
 
 app.UseHttpsRedirection();
 
