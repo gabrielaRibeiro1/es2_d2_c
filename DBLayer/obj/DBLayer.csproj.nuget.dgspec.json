@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\DBLayer\\DBLayer.csproj": {}
+    "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\DBLayer\\DBLayer.csproj": {
+    "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\DBLayer\\DBLayer.csproj",
+        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj",
         "projectName": "ESOF WebApp DBLayer",
-        "projectPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\DBLayer\\DBLayer.csproj",
-        "packagesPath": "C:\\Users\\ana_l\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\DBLayer\\obj\\",
+        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj",
+        "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
+        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ana_l\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -26,8 +26,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj": {
-                "projectPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj"
+              "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
+                "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj"
               }
             }
           }
@@ -44,7 +44,7 @@
           "dependencies": {
             "DotNetEnv": {
               "target": "Package",
-              "version": "[3.1.1, )"
+              "version": "[3.0.0, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
@@ -77,21 +77,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.407/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj": {
+    "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj",
+        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj",
         "projectName": "Helpers",
-        "projectPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\Helpers.csproj",
-        "packagesPath": "C:\\Users\\ana_l\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ana_l\\OneDrive\\Ambiente de Trabalho\\ES2_FINAL\\es2_d2_c\\Helpers\\obj\\",
+        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj",
+        "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
+        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\ana_l\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -136,7 +136,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.407/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
