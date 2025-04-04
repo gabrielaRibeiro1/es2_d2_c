@@ -1,18 +1,22 @@
 ﻿@page "/update-user-info"
 @using Frontend.Helpers
-@using Frontend.Models
 @using global::Helpers.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject ApiHelper ApiHelper
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Update User Info</PageTitle>
-
 @if (_user == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
-    <EditForm Model="_user" >
+    <EditForm Model="_user" OnValidSubmit="UpdateUser">
+        <div class="mb-3">
+            <label for="username">Username:</label>
+            <InputText id="username" @bind-Value="_user.Username" class="form-control" />
+        </div>
 
         <div class="mb-3">
             <label for="password">Password:</label>
@@ -29,9 +33,40 @@ else
 }
 
 @code {
-    private UserUpdateModel? _user;
+    private UserEditModel? _user;
 
-    
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity is { IsAuthenticated: true })
+        {
+            string username = user.Identity.Name;
+            _user = await ApiHelper.GetFromApiAsync<UserEditModel>($"get_user/{username}");
+        }
     }
 
+    private async Task UpdateUser()
+    {
+        var result = await ApiHelper.PutToApiAsync("update_user", _user);
 
+        if (result)
+        {
+            // Handle success (e.g., show a success message or redirect)
+            Console.WriteLine("User updated successfully!");
+        }
+        else
+        {
+            // Handle error
+            Console.WriteLine("Failed to update user.");
+        }
+    }
+
+    public class UserEditModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public int RoleId { get; set; }
+    }
+}

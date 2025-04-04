@@ -30,11 +30,5 @@ public class ApiHelper(HttpClient httpClient)
         }
     }
 
-    public async Task<bool> DeleteFromApiAsync(string endpoint)
-    {
-        var response = await httpClient.DeleteAsync(endpoint);
-        return response.IsSuccessStatusCode;
-    }
-
 
 }
