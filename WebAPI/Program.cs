@@ -77,6 +77,65 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
     });
 });
 
+// Endpoint to create a skill
+app.MapPost("/skills", async (string name, string area, ApplicationDbContext db) => 
+{
+    var skill = new Skill 
+    {
+        name = name,
+        area = area
+    };
+
+    db.Skills.Add(skill);
+    await db.SaveChangesAsync();
+
+    return Results.Ok($"Skill '{name}' criada com sucesso!");
+});
+
+// Endpoint to get all skills
+app.MapGet("/skills", async (ApplicationDbContext db) =>
+{
+    return await db.Skills.Select(s => new { s.skill_id, s.name, s.area }).ToListAsync();
+});
+
+// Endpoint to get a skill by ID
+app.MapGet("/skills/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var skill = await db.Skills.Where(s => s.skill_id == id)
+        .Select(s => new { s.skill_id, s.name, s.area })
+        .FirstOrDefaultAsync();
+    return skill == null ? Results.NotFound() : Results.Ok(skill);
+});
+
+// Endpoint to update a skill
+app.MapPut("/skills/{id}", async (
+    int id,                      
+    string name,                 
+    string area,                 
+    ApplicationDbContext db
+) =>
+{
+    var skill = await db.Skills.FindAsync(id);
+    if (skill == null)
+        return Results.NotFound("Skill não encontrada!");
+
+    // Update name and area
+    skill.name = name;
+    skill.area = area;
+
+    await db.SaveChangesAsync();
+    return Results.Ok($"Skill {id} atualizada: Nome='{name}', Área='{area}'");
+});
+
+// Endpoint to delete a skill
+app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var skill = await db.Skills.FindAsync(id);
+    if (skill == null)
+        return Results.NotFound();
+
+    db.Skills.Remove(skill);
+
 // CREATE WORK PROPOSAL
 app.MapPost("/work_proposals", async (string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
 {
@@ -140,7 +199,6 @@ app.MapDelete("/work_proposals/{id}", async (int id, ApplicationDbContext db) =>
     await db.SaveChangesAsync();
     return Results.NoContent();
 });
-
 
 app.UseHttpsRedirection();
 
