@@ -135,6 +135,9 @@ app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
         return Results.NotFound();
 
     db.Skills.Remove(skill);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}); 
 
 // CREATE WORK PROPOSAL
 app.MapPost("/work_proposals", async (string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
