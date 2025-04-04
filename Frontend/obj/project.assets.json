@@ -4760,19 +4760,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\filip\\.nuget\\packages\\": {}
+    "/Users/gabrielaribeiro/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Frontend\\Frontend.csproj",
+      "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Frontend/Frontend.csproj",
       "projectName": "Frontend",
-      "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Frontend\\Frontend.csproj",
-      "packagesPath": "C:\\Users\\filip\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Frontend\\obj\\",
+      "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Frontend/Frontend.csproj",
+      "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
+      "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Frontend/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\filip\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -4784,8 +4784,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj": {
-              "projectPath": "C:\\Users\\filip\\RiderProjects\\es2_d2_c\\Helpers\\Helpers.csproj"
+            "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
+              "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj"
             }
           }
         }
@@ -4794,11 +4794,6 @@
         "warnAsError": [
           "NU1605"
         ]
-      },
-      "restoreAuditProperties": {
-        "enableAudit": "true",
-        "auditLevel": "low",
-        "auditMode": "direct"
       }
     },
     "frameworks": {
@@ -4829,7 +4824,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.301/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

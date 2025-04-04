@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ESOF WebApp WebAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9c56b30305592020a7914eba8efd6b585a0644a2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
 [assembly: System.Reflection.AssemblyProductAttribute("ESOF WebApp WebAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ESOF WebApp WebAPI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -15,21 +15,3 @@
 /Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/ESOF WebApp DBLayer.pdb
 /Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/DBLayer.genruntimeconfig.cache
 /Users/luisteofilo/Downloads/base-codigo-epoca-normal (1)/DBLayer/obj/Debug/net8.0/ref/ESOF WebApp DBLayer.dll
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\bin\Debug\net8.0\ESOF WebApp DBLayer.deps.json
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\bin\Debug\net8.0\ESOF WebApp DBLayer.runtimeconfig.json
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\bin\Debug\net8.0\ESOF WebApp DBLayer.dll
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\bin\Debug\net8.0\ESOF WebApp DBLayer.pdb
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\bin\Debug\net8.0\Helpers.dll
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\bin\Debug\net8.0\Helpers.pdb
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.csproj.AssemblyReference.cache
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.AssemblyInfoInputs.cache
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.AssemblyInfo.cs
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.csproj.CoreCompileInputs.cache
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.sourcelink.json
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.csproj.Up2Date
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\ESOF WebApp DBLayer.dll
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\refint\ESOF WebApp DBLayer.dll
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\ESOF WebApp DBLayer.pdb
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\DBLayer.genruntimeconfig.cache
-C:\Users\filip\RiderProjects\es2_d2_c\DBLayer\obj\Debug\net8.0\ref\ESOF WebApp DBLayer.dll
