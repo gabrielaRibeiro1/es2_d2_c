@@ -110,7 +110,7 @@ app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext d
 });
 
 
-
+   
 // endpoint para retornar dados do user loggado
 app.MapGet("/me", (HttpContext httpContext) =>
     {
