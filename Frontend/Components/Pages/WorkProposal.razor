@@ -1,0 +1,80 @@
+﻿@page "/WorkProposal"
+
+@inject HttpClient Http
+
+<h3>Work Proposals</h3>
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <p style="color: green;">@_message</p>
+}
+
+<EditForm Model="_proposal" OnValidSubmit="SubmitProposal" FormName="WorkProposalForm">
+    <DataAnnotationsValidator />
+
+    <div>
+        <label>Proposal Name:</label>
+        <InputText @bind-Value="_proposal.ProposalName" required />
+    </div>
+
+    <div>
+        <label>Category:</label>
+        <InputText @bind-Value="_proposal.Category" required />
+    </div>
+
+    <div>
+        <label>Necessary Skills:</label>
+        <InputText @bind-Value="_proposal.NecessarySkills" required />
+    </div>
+
+    <div>
+        <label>Years of Experience:</label>
+        <InputText @bind-Value="_proposal.YearsOfExperience" required />
+    </div>
+
+    <div>
+        <label>Description:</label>
+        <InputTextArea @bind-Value="_proposal.Description" required />
+    </div>
+
+    <div>
+        <label>Total Hours:</label>
+        <InputText @bind-Value="_proposal.TotalHours" required />
+    </div>
+
+    <div>
+        <label>User ID:</label>
+        <InputNumber @bind-Value="_proposal.FkUserId" required />
+    </div>
+
+    <button type="submit">Submit</button>
+</EditForm>
+
+@code {
+    private WorkProposalModel _proposal = new WorkProposalModel();
+    private string _message = string.Empty;
+
+    private async Task SubmitProposal()
+    {
+        var response = await Http.PostAsJsonAsync("/work_proposals", _proposal);
+        if (response.IsSuccessStatusCode)
+        {
+            _message = "Proposal created successfully!";
+        }
+        else
+        {
+            _message = "Failed to create proposal.";
+        }
+    }
+
+    private class WorkProposalModel
+    {
+        public string ProposalName { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string NecessarySkills { get; set; } = string.Empty;
+        public string YearsOfExperience { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string TotalHours { get; set; } = string.Empty;
+        public int FkUserId { get; set; }
+    }
+}
