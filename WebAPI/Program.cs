@@ -1,8 +1,10 @@
+
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
 using Helpers.Models;
 using Microsoft.EntityFrameworkCore;
+using SeuProjeto.Factories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -77,6 +79,7 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
     });
 });
 
+
 // CRUD TalentProfiles
 app.MapGet("/talent_profiles", async (ApplicationDbContext db) =>
 {
@@ -147,6 +150,261 @@ app.MapDelete("/talent_profiles/{id}", async (int id, ApplicationDbContext db) =
     if (talentProfile == null) return Results.NotFound();
     
     db.TalentProfiles.Remove(talentProfile);
+=======
+
+app.MapDelete("/delete_user/{username}", async (string username, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Remove user from database
+    db.Users.Remove(user);
+    await db.SaveChangesAsync();
+
+    return Results.Ok("User deleted successfully.");
+});
+
+app.MapPut("/update_user/{username}", async (string username, string? newPassword, int? newRoleId, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Update password if provided
+    if (!string.IsNullOrEmpty(newPassword))
+    {
+        PasswordHelper.CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
+        user.passwordHash = passwordHash;
+        user.passwordSalt = passwordSalt;
+    }
+
+    // Update role if provided
+    if (newRoleId.HasValue)
+    {
+        user.fk_role_id = newRoleId.Value;
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok("User updated successfully.");
+});
+
+app.MapPost("/logout", () =>
+{
+   
+    return Results.Ok("User logged out successfully.");
+});
+
+app.MapGet("/get_user/{username}", async (string username, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Return user info
+    return Results.Ok(new
+    {
+        user.user_id,
+        user.username,
+        user.fk_role_id
+    });
+});
+
+app.MapGet("/get_all_users", async (ApplicationDbContext db) =>
+{
+    var users = await db.Users
+        .Join(db.Roles, 
+            u => u.fk_role_id,   // fk_role_id da tabela Users
+            r => r.role_id,           // id da tabela Roles
+            (u, r) => new        // Resultado do Join
+            {
+                u.user_id,
+                u.username,
+                u.fk_role_id,
+                RoleName = r.role  
+            })
+        .ToListAsync();
+
+    return Results.Ok(users);
+});
+
+app.MapDelete("/delete_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
+{
+    // Encontrar usuário pelo ID
+    var user = await db.Users.FindAsync(id);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Remover usuário do banco de dados
+    db.Users.Remove(user);
+    await db.SaveChangesAsync();
+
+    return Results.Ok($"User with ID {id} deleted successfully.");
+});
+
+app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? newRoleId, ApplicationDbContext db) =>
+{
+    // Localiza o usuário pelo ID
+    var user = await db.Users.FirstOrDefaultAsync(u => u.user_id == id);
+    if (user == null)
+    {
+        return Results.NotFound("Usuário não encontrado.");
+    }
+
+    // Atualiza a senha, se fornecida
+    if (!string.IsNullOrEmpty(newPassword))
+    {
+        PasswordHelper.CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
+        user.passwordHash = passwordHash;
+        user.passwordSalt = passwordSalt;
+    }
+
+    // Atualiza a role, se fornecida
+    if (newRoleId.HasValue)
+    {
+        user.fk_role_id = newRoleId.Value;
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok("Usuário atualizado com sucesso.");
+});
+
+
+// Endpoint to create a skill
+app.MapPost("/skills", async (string name, string area, ApplicationDbContext db) => 
+{
+    var skill = new Skill 
+    {
+        name = name,
+        area = area
+    };
+
+    db.Skills.Add(skill);
+    await db.SaveChangesAsync();
+
+    return Results.Ok($"Skill '{name}' criada com sucesso!");
+});
+
+// Endpoint to get all skills
+app.MapGet("/skills", async (ApplicationDbContext db) =>
+{
+    return await db.Skills.Select(s => new { s.skill_id, s.name, s.area }).ToListAsync();
+});
+
+// Endpoint to get a skill by ID
+app.MapGet("/skills/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var skill = await db.Skills.Where(s => s.skill_id == id)
+        .Select(s => new { s.skill_id, s.name, s.area })
+        .FirstOrDefaultAsync();
+    return skill == null ? Results.NotFound() : Results.Ok(skill);
+});
+
+// Endpoint to update a skill
+app.MapPut("/skills/{id}", async (
+    int id,                      
+    string name,                 
+    string area,                 
+    ApplicationDbContext db
+) =>
+{
+    var skill = await db.Skills.FindAsync(id);
+    if (skill == null)
+        return Results.NotFound("Skill não encontrada!");
+
+    // Update name and area
+    skill.name = name;
+    skill.area = area;
+
+    await db.SaveChangesAsync();
+    return Results.Ok($"Skill {id} atualizada: Nome='{name}', Área='{area}'");
+});
+
+// Endpoint to delete a skill
+app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var skill = await db.Skills.FindAsync(id);
+    if (skill == null)
+        return Results.NotFound();
+
+    db.Skills.Remove(skill);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}); 
+
+
+// CREATE WORK PROPOSAL
+app.MapPost("/work_proposals", async (string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
+{
+    var workProposal = new WorkProposal
+    {
+        proposal_name = proposalName,
+        category = category,
+        necessary_skills = necessarySkills,
+        years_of_experience = yearsOfExperience,
+        description = description,
+        total_hours = totalHours,
+        fk_user_id = fkUserId,
+    };
+
+    db.WorkProposals.Add(workProposal);
+    await db.SaveChangesAsync();
+    return Results.Created($"/work_proposals/{workProposal.proposal_id}", workProposal);
+});
+
+// GET ALL WORK PROPOSALS
+app.MapGet("/work_proposals", async (ApplicationDbContext db) =>
+{
+    var workProposals = await db.WorkProposals.ToListAsync();
+    return Results.Ok(workProposals);
+});
+
+// GET WORK PROPOSAL BY ID
+app.MapGet("/work_proposal/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var workProposal = await db.WorkProposals.FindAsync(id);
+    return workProposal == null ? Results.NotFound() : Results.Ok(workProposal);
+});
+
+// UPDATE WORK PROPOSAL
+app.MapPut("/work_proposal/{id}", async (int id, string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
+{
+    var existingProposal = await db.WorkProposals.FindAsync(id);
+    if (existingProposal == null)
+        return Results.NotFound("Perfil não encontrado.");
+
+    existingProposal.proposal_name = proposalName;
+    existingProposal.category = category;
+    existingProposal.necessary_skills = necessarySkills;
+    existingProposal.years_of_experience = yearsOfExperience;
+    existingProposal.description = description;
+    existingProposal.total_hours = totalHours;
+    existingProposal.fk_user_id = fkUserId;
+
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existingProposal);
+});
+
+// DELETE WORK PROPOSAL
+app.MapDelete("/work_proposals/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var workProposal = await db.WorkProposals.FindAsync(id);
+    if (workProposal == null) return Results.NotFound();
+
+    db.WorkProposals.Remove(workProposal);
+
     await db.SaveChangesAsync();
     return Results.NoContent();
 });
