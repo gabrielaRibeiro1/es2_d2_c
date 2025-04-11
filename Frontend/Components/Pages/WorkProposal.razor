@@ -1,58 +1,129 @@
 ﻿@page "/WorkProposal"
+@using Frontend.Helpers
 
 @inject HttpClient Http
+@inject ApiHelper ApiHelper
 
-<h3>Work Proposals</h3>
+<h2 class="titles">Work Proposals</h2>
+<!-- Linha separadora -->
+<hr class="separator" />
 
-@if (!string.IsNullOrEmpty(_message))
-{
-    <p style="color: green;">@_message</p>
-}
+<div>
+    <h4 class="titles">All Work Proposals</h4>
+    @if (_workProposals is null)
+    {
+        <p>Loading proposals...</p>
+    }
+    else if (_workProposals.Count == 0)
+    {
+        <p>No proposals found.</p>
+    }
+    else
+    {
+        <table class="wptable">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Skills</th>
+                <th>Experience</th>
+                <th>Description</th>
+                <th>Hours</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var proposal in _workProposals)
+            {
+                <tr>
+                    <td>@proposal["proposal_name"]</td>
+                    <td>@proposal["category"]</td>
+                    <td>@proposal["necessary_skills"]</td>
+                    <td>@proposal["years_of_experience"]</td>
+                    <td>@proposal["description"]</td>
+                    <td>@proposal["total_hours"]</td>
+                </tr>
+            }
+            </tbody>
 
-<EditForm Model="_proposal" OnValidSubmit="SubmitProposal" FormName="WorkProposalForm">
-    <DataAnnotationsValidator />
+        </table>
+    }
+</div>
 
-    <div>
-        <label>Proposal Name:</label>
-        <InputText @bind-Value="_proposal.ProposalName" required />
-    </div>
+<!-- Linha separadora -->
+<hr class="separator" />
 
-    <div>
-        <label>Category:</label>
-        <InputText @bind-Value="_proposal.Category" required />
-    </div>
+<div class="outlined-section">
+    <h4>Create Work Proposal</h4>
+    
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p style="color: green;">@_message</p>
+    }
+    
+    <EditForm Model="_proposal" OnValidSubmit="SubmitProposal" FormName="WorkProposalForm">
+        <DataAnnotationsValidator />
 
-    <div>
-        <label>Necessary Skills:</label>
-        <InputText @bind-Value="_proposal.NecessarySkills" required />
-    </div>
+        <div>
+            <label>Proposal Name:</label>
+            <InputText @bind-Value="_proposal.ProposalName" required />
+        </div>
 
-    <div>
-        <label>Years of Experience:</label>
-        <InputText @bind-Value="_proposal.YearsOfExperience" required />
-    </div>
+        <div>
+            <label>Category:</label>
+            <InputText @bind-Value="_proposal.Category" required />
+        </div>
 
-    <div>
-        <label>Description:</label>
-        <InputTextArea @bind-Value="_proposal.Description" required />
-    </div>
+        <div>
+            <label>Necessary Skills:</label>
+            <InputText @bind-Value="_proposal.NecessarySkills" required />
+        </div>
 
-    <div>
-        <label>Total Hours:</label>
-        <InputText @bind-Value="_proposal.TotalHours" required />
-    </div>
+        <div>
+            <label>Years of Experience:</label>
+            <InputText @bind-Value="_proposal.YearsOfExperience" required />
+        </div>
 
-    <div>
-        <label>User ID:</label>
-        <InputNumber @bind-Value="_proposal.FkUserId" required />
-    </div>
+        <div>
+            <label>Description:</label>
+            <InputTextArea @bind-Value="_proposal.Description" required />
+        </div>
 
-    <button type="submit">Submit</button>
-</EditForm>
+        <div>
+            <label>Total Hours:</label>
+            <InputText @bind-Value="_proposal.TotalHours" required />
+        </div>
+
+        <div>
+            <label>User ID:</label>
+            <InputNumber @bind-Value="_proposal.FkUserId" required />
+        </div>
+
+        <button type="submit">Submit</button>
+    </EditForm>
+</div>
 
 @code {
-    private WorkProposalModel _proposal = new WorkProposalModel();
+    private WorkProposalModel _proposal = new();
+    private List<Dictionary<string, object>> _workProposals = new List<Dictionary<string, object>>();
     private string _message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProposals();
+    }
+
+    private async Task LoadProposals()
+    {
+        try
+        {
+            // Usando o ApiHelper para buscar os dados, sem a necessidade de um modelo
+            _workProposals = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/work_proposals");
+        }
+        catch (Exception ex)
+        {
+            _message = "Error loading proposals.";
+        }
+    }
 
     private async Task SubmitProposal()
     {
@@ -60,6 +131,8 @@
         if (response.IsSuccessStatusCode)
         {
             _message = "Proposal created successfully!";
+            _proposal = new(); // Reset form
+            await LoadProposals(); // Refresh table
         }
         else
         {
@@ -78,3 +151,103 @@
         public int FkUserId { get; set; }
     }
 }
+
+<style>
+    .titles {
+        margin-left: 10px;
+    }
+    .wptable {
+        max-width: 1200px;
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    hr.separator {
+        border: 0;
+        height: 2px;
+        background-color: #ccc;
+        margin: 30px 0;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #f0f0f0;
+    }
+
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #ccc;
+    }
+
+    th {
+        background-color: #d3d3d3;
+        font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+        background-color: #e0e0e0;
+    }
+
+    tr:hover {
+        background-color: #d1d1d1;
+    }
+    
+    .outlined-section {
+        border: 2px solid #ccc;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #f9f9f9;
+        max-width: 600px;
+        width: 100%;
+        margin: 20px;
+    }
+
+    label {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    input[type="text"], input[type="number"], textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-bottom: 15px;
+        font-size: 14px;
+        background-color: #fff;
+        box-sizing: border-box;
+    }
+
+    button {
+        padding: 10px 20px;
+        background-color: #f4442e;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #e33a24;
+    }
+
+    /* Estilo para o texto de sucesso */
+    .message {
+        color: green;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    
+    textarea {
+        resize: vertical;
+    }
+</style>
