@@ -1,10 +1,8 @@
-
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
 using Helpers.Models;
 using Microsoft.EntityFrameworkCore;
-using SeuProjeto.Factories;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -148,9 +146,11 @@ app.MapDelete("/talent_profiles/{id}", async (int id, ApplicationDbContext db) =
 {
     var talentProfile = await db.TalentProfiles.FindAsync(id);
     if (talentProfile == null) return Results.NotFound();
-    
+
     db.TalentProfiles.Remove(talentProfile);
-=======
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
 
 app.MapDelete("/delete_user/{username}", async (string username, ApplicationDbContext db) =>
 {
