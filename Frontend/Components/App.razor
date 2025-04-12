@@ -15,7 +15,24 @@
 </head>
 
 <body>
+<button id="test-btn" onclick="alert('HTML events work!')">Test HTML Events</button>
 <Routes/>
+<script>
+    console.log("Testing Blazor prerequisites...");
+    window.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded, waiting for Blazor...");
+    });
+
+    // Test if SignalR loads
+    setTimeout(function() {
+        console.log("SignalR available:", typeof window.signalR !== 'undefined');
+        console.log("Blazor available:", typeof window.Blazor !== 'undefined');
+
+        if (typeof window.Blazor === 'undefined') {
+            console.error("CRITICAL: Blazor not initialized after timeout!");
+        }
+    }, 5000);
+</script>
 <script src="_framework/blazor.web.js"></script>
 </body>
 
