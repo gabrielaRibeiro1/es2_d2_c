@@ -1,0 +1,19 @@
+﻿@page "/minimal"
+
+
+@rendermode InteractiveServer
+
+<h3>Minimal Test</h3>
+
+<p>Count: @count</p>
+
+<button @onclick="Increment">Click Me</button>
+
+@code {
+    private int count = 0;
+
+    private void Increment()
+    {
+        count++;
+    }
+}
