@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject ApiAuthenticationStateProvider AuthStateProvider
+@rendermode InteractiveServer
 
 <h3>Login</h3>
 
@@ -41,6 +42,7 @@
         if (success)
         {
             Navigation.NavigateTo("/");
+            errorMessage = ("WORKING");
         }
         else
         {
