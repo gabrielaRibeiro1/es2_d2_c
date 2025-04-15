@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ESOF.WebApp.DBLayer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250412145729_UpdateDBSchemaTP")]
-    partial class UpdateDBSchemaTP
+    [Migration("20250415183852_UpdateDBdeleteLogin")]
+    partial class UpdateDBdeleteLogin
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -200,13 +200,11 @@ namespace ESOF.WebApp.DBLayer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("total_hours")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("total_hours")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("years_of_experience")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("years_of_experience")
+                        .HasColumnType("integer");
 
                     b.HasKey("proposal_id");
 

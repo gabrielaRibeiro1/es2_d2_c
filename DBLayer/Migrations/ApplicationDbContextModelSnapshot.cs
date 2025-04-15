@@ -197,13 +197,11 @@ namespace ESOF.WebApp.DBLayer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("total_hours")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("total_hours")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("years_of_experience")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("years_of_experience")
+                        .HasColumnType("integer");
 
                     b.HasKey("proposal_id");
 
