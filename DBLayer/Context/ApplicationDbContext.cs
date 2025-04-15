@@ -147,8 +147,9 @@ public partial class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<TalentProfile>()
             .HasOne(tp => tp.User)
-            .WithMany()
+            .WithMany(u => u.Profiles)
             .HasForeignKey(tp => tp.fk_user_id)
+            .HasConstraintName("FK_TalentProfiles_Users_fk_user_id")
             .OnDelete(DeleteBehavior.Restrict);
 
         // EXPERIENCE
