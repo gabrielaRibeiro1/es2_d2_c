@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ESOF.WebApp.DBLayer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250415184221_UpdateDB")]
+    [Migration("20250415185606_UpdateDB")]
     partial class UpdateDB
     {
         /// <inheritdoc />
