@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ESOF.WebApp.DBLayer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250415183852_UpdateDBdeleteLogin")]
-    partial class UpdateDBdeleteLogin
+    [Migration("20250415184221_UpdateDB")]
+    partial class UpdateDB
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

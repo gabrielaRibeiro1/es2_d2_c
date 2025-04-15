@@ -21,4 +21,5 @@ public class User
     public ICollection<TalentProfile> Profiles { get; set; }
     public ICollection<UserSkill> UserSkills { get; set; }
     
+       
 }
