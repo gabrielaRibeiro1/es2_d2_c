@@ -1,3 +1,4 @@
+using ESOF.Factories;
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
@@ -169,17 +170,22 @@ app.MapGet("/get_all_users", async (ApplicationDbContext db) =>
 
 app.MapDelete("/delete_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
 {
+    Console.WriteLine($"Muhhhh {id}");
     // Encontrar usuário pelo ID
     var user = await db.Users.FindAsync(id);
     if (user == null)
     {
+        Console.WriteLine("user not found");
         return Results.NotFound("User not found.");
     }
+    Console.WriteLine("found");
 
     // Remover usuário do banco de dados
     db.Users.Remove(user);
+    Console.WriteLine("removed");
     await db.SaveChangesAsync();
 
+    Console.WriteLine($"done {id}");
     return Results.Ok($"User with ID {id} deleted successfully.");
 });
 
@@ -210,7 +216,24 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
     return Results.Ok("Usuário atualizado com sucesso.");
 });
 
-
+app.MapPost("/create_account_factory", async (string username, string password, int fk_role_id, ApplicationDbContext db) =>
+{
+    try
+    {
+        
+        var newUser = UserFactory.CreateUser(username, password, fk_role_id);
+        
+        
+        db.Users.Add(newUser);
+        await db.SaveChangesAsync();
+        
+        return Results.Created($"/users/{newUser.user_id}", newUser);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+});
 app.UseHttpsRedirection();
 
 app.Run();

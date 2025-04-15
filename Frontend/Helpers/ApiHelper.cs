@@ -17,7 +17,7 @@ public class ApiHelper(HttpClient httpClient)
         }
     }
     
-    public async Task<bool> PutToApiAsync<T>(string url, T data)
+    public async Task<bool> PostToApiAsync<T>(string url, T data)
     {
         try
         {
@@ -35,6 +35,8 @@ public class ApiHelper(HttpClient httpClient)
         var response = await httpClient.DeleteAsync(endpoint);
         return response.IsSuccessStatusCode;
     }
+    
+    
 
 
 }
