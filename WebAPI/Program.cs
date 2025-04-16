@@ -170,7 +170,7 @@ app.MapGet("/get_all_users", async (ApplicationDbContext db) =>
 
 app.MapDelete("/delete_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
 {
-    Console.WriteLine($"Muhhhh {id}");
+    
     // Encontrar usuário pelo ID
     var user = await db.Users.FindAsync(id);
     if (user == null)
@@ -216,24 +216,9 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
     return Results.Ok("Usuário atualizado com sucesso.");
 });
 
-app.MapPost("/create_account_factory", async (string username, string password, int fk_role_id, ApplicationDbContext db) =>
-{
-    try
-    {
-        
-        var newUser = UserFactory.CreateUser(username, password, fk_role_id);
-        
-        
-        db.Users.Add(newUser);
-        await db.SaveChangesAsync();
-        
-        return Results.Created($"/users/{newUser.user_id}", newUser);
-    }
-    catch (ArgumentException ex)
-    {
-        return Results.BadRequest(ex.Message);
-    }
-});
+
+
+
 app.UseHttpsRedirection();
 
 app.Run();

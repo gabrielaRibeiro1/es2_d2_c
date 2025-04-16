@@ -43,13 +43,15 @@ else
                 
                 <td>@user.Username</td>
                 <td>@user.User_id</td>
-                <td>@user.fk_role_id</td>
+                <td>@user.RoleName</td>
 
                 <td>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-secondary btn-sm">
+                        
+                        <NavLink class="btn btn-secondary btn-sm"
+                          href="/update-user-info/{user.User_id}">
                             <i class="bi bi-pencil"></i>
-                        </button>
+                        </NavLink>
                         <button class="btn btn-danger btn-sm" @onclick="() => DeleteUserById(user.User_id)">
                             <i class="bi bi-trash"></i>
                         </button>

@@ -5,13 +5,18 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ApiHelper ApiHelper
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+@using System.Net.Http
+@using System.Net.Http.Json
+@inject HttpClient Http
+
 
 <PageTitle>Add User</PageTitle>
 
 
 <h1>Add User</h1>
 
-<EditForm Model="@userModel" OnValidSubmit="HandleValidSubmit"  @formname="AdduserForm">
+<EditForm Model="@userModel" OnValidSubmit="HandleValidSubmit" >
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -21,16 +26,21 @@
     </div>
 
     <div class="form-group">
-        <label for="password">Senha:</label>
+        <label for="password">Pasword::</label>
         <InputText id="password" type="password" class="form-control" @bind-Value="userModel.Password" />
     </div>
 
     <div class="form-group">
-        <label for="role">Role (ID):</label>
-        <InputNumber id="role" class="form-control" @bind-Value="userModel.RoleId" />
+        <label for="role">Role:</label>
+        <InputSelect id="role" class="form-control" @bind-Value="userModel.RoleId">
+            <option value="1">Admin</option>
+            <option value="2">UserManager</option>
+            <option value="3">User</option>
+        </InputSelect>
     </div>
 
-    <button type="submit" class="btn btn-primary mt-2">Salvar</button>
+
+    <button type="submit" class="btn btn-primary mt-2">Save</button>
 </EditForm>
 
 @if (!string.IsNullOrEmpty(successMessage))
@@ -44,6 +54,7 @@
 
 @code {
     private UserAddModel userModel = new UserAddModel();
+    
     private string successMessage;
     private string errorMessage;
 
