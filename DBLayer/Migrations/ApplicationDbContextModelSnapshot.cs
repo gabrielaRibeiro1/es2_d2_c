@@ -97,6 +97,10 @@ namespace ESOF.WebApp.DBLayer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("profile_id"));
 
+                    b.Property<string>("category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("country")
                         .IsRequired()
                         .HasColumnType("text");
