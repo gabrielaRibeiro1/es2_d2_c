@@ -345,7 +345,7 @@ app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
 
 
 // CREATE WORK PROPOSAL
-app.MapPost("/work_proposals", async (string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
+app.MapPost("/work_proposals", async (string proposalName, string category, string necessarySkills, int yearsOfExperience, string description, int totalHours, int fkUserId, ApplicationDbContext db) =>
 {
     var workProposal = new WorkProposal
     {
@@ -378,7 +378,7 @@ app.MapGet("/work_proposal/{id}", async (int id, ApplicationDbContext db) =>
 });
 
 // UPDATE WORK PROPOSAL
-app.MapPut("/work_proposal/{id}", async (int id, string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
+app.MapPut("/work_proposal/{id}", async (int id, string proposalName, string category, string necessarySkills, int yearsOfExperience, string description, int totalHours, int fkUserId, ApplicationDbContext db) =>
 {
     var existingProposal = await db.WorkProposals.FindAsync(id);
     if (existingProposal == null)
