@@ -216,6 +216,25 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
     return Results.Ok("Usuário atualizado com sucesso.");
 });
 
+app.MapGet("/get_user_by_id/{id:int}", 
+    async (int id, ApplicationDbContext db) =>
+    {
+        // Tenta encontrar pelo PK (assume que user_id é a chave primária)
+        var user = await db.Users.FindAsync(id);
+        if (user == null)
+        {
+            return Results.NotFound(new { message = "User not found." });
+        }
+
+        // Retorna apenas os campos necessários
+        return Results.Ok(new
+        {
+            user.user_id,
+            user.username,
+            user.fk_role_id
+        });
+    });
+
 
 
 

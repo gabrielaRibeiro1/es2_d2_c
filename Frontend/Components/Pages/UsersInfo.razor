@@ -47,9 +47,9 @@ else
 
                 <td>
                     <div class="d-flex gap-2">
-                        
+
                         <NavLink class="btn btn-secondary btn-sm"
-                          href="/update-user-info/{user.User_id}">
+                                 href="@($"update-user-info/{user.User_id}")">
                             <i class="bi bi-pencil"></i>
                         </NavLink>
                         <button class="btn btn-danger btn-sm" @onclick="() => DeleteUserById(user.User_id)">

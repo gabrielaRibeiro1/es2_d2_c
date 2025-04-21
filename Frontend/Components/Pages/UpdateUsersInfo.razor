@@ -3,7 +3,9 @@
 @using Frontend.Models
 @using global::Helpers.Models
 @inject ApiHelper ApiHelper
+@inject NavigationManager NavigationManager
 @rendermode InteractiveServer
+
 <PageTitle>Update User Info</PageTitle>
 
 @if (_user == null)
@@ -29,6 +31,7 @@ else
         </div>
 
         <button type="submit" class="btn btn-primary">Update</button>
+        <button type="button" class="btn btn-secondary ms-2" @onclick="GoBack">Cancelar</button>
     </EditForm>
 }
 
@@ -38,6 +41,16 @@ else
 
     private UserUpdateModel? _user;
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Busca o usuário específico pela API
+        _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
+    }
+    
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("user-info");
+    }
     
     }
 
