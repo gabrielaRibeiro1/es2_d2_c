@@ -69,15 +69,16 @@
             bool success = await ApiHelper.PostToApiAsync2("/add_user", userModel);
             if (success)
             {
-                successMessage = "Usuário inserido com sucesso!";
+                successMessage = "User sucessfully added!";
                 errorMessage = null;
-                // Opcionalmente, limpe o formulário para uma nova inserção.
+             
                 userModel = new UserAddModel();
+           
             }
             else
             {
                 successMessage = null;
-                errorMessage = "Erro ao inserir usuário.";
+                errorMessage = "Error!";
             }
         }
         catch (Exception ex)

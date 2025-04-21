@@ -89,11 +89,11 @@ else
             {
                 _users.RemoveAll(u => u.User_id == userId);
                 StateHasChanged();
-                await JSRuntime.InvokeVoidAsync("alert", "Usuário deletado com sucesso!");
+                await JSRuntime.InvokeVoidAsync("alert", "User deleted sucessfully!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Erro ao excluir usuário.");
+                await JSRuntime.InvokeVoidAsync("alert", "Error!");
             }
         }
         catch (Exception ex)
