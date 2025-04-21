@@ -4,6 +4,7 @@
 @using global::Helpers.Models
 @inject ApiHelper ApiHelper
 @inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Forms
 @rendermode InteractiveServer
 
 <PageTitle>Update User Info</PageTitle>
@@ -14,15 +15,20 @@
 }
 else
 {
-    <EditForm Model="_user" >
+    <EditForm Model="_user" OnValidSubmit="HandleValidSubmit" >
 
         <div class="mb-3">
-            <label for="password">Password:</label>
-            <InputText id="password" @bind-Value="_user.Password" type="password" class="form-control" />
+            <label for="username">Username</label>
+            <InputText id="username" @bind-Value="_user.Username" class="form-control" Disabled="true" />
         </div>
 
-        <div class="form-group">
-            <label for="role">Role:</label>
+        <div class="mb-3">
+            <label for="password">New Password</label>
+            <InputText id="password" @bind-Value="_user.Password" type="password" class="form-control" placeholder="Leave blank to keep current" />
+        </div>
+
+        <div class="mb-3">
+            <label for="role">Role</label>
             <InputSelect id="role" class="form-control" @bind-Value="_user.RoleId">
                 <option value="1">Admin</option>
                 <option value="2">UserManager</option>
@@ -30,26 +36,51 @@ else
             </InputSelect>
         </div>
 
-        <button type="submit" class="btn btn-primary">Update</button>
-        <button type="button" class="btn btn-secondary ms-2" @onclick="GoBack">Cancelar</button>
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+        <div class="alert alert-danger">@_errorMessage</div>
+        }
+
+        <button type="submit" class="btn btn-primary" @onclick="HandleValidSubmit">Update</button>
+        <NavLink  class="btn btn-secondary ms-2" href="user-info">
+            Cancel
+        </NavLink>
+       
     </EditForm>
 }
 
 @code {
     [Parameter]
     public int UserId { get; set; }
+    private string? _errorMessage;
 
     private UserUpdateModel? _user;
 
     protected override async Task OnInitializedAsync()
     {
-        // Busca o usuário específico pela API
+        
         _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
     }
     
-    private void GoBack()
+    private async Task HandleValidSubmit()
     {
-        NavigationManager.NavigateTo("user-info");
+        try
+        {
+            // Usa o método do ApiHelper que faz PUT como JSON
+            var success = await ApiHelper.PostToApiAsync("update_user/" + UserId, _user!);
+            if (success)
+            {
+                NavigationManager.NavigateTo("user-info");
+            }
+            else
+            {
+                _errorMessage = "Falha ao atualizar o usuário.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
     }
     
     }

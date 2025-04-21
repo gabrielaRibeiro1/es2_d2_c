@@ -41,6 +41,9 @@
 
 
     <button type="submit" class="btn btn-primary mt-2">Save</button>
+    <NavLink  class="btn btn-secondary ms-2" href="user-info">
+        Cancel
+    </NavLink>
 </EditForm>
 
 @if (!string.IsNullOrEmpty(successMessage))
@@ -63,7 +66,7 @@
         try
         {
             // Aqui estamos utilizando o método PutToApiAsync do seu ApiHelper.
-            bool success = await ApiHelper.PostToApiAsync("/create_account", userModel);
+            bool success = await ApiHelper.PostToApiAsync2("/add_user", userModel);
             if (success)
             {
                 successMessage = "Usuário inserido com sucesso!";

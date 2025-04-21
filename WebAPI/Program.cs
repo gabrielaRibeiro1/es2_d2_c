@@ -180,7 +180,6 @@ app.MapDelete("/delete_user_by_id/{id:int}", async (int id, ApplicationDbContext
     }
     Console.WriteLine("found");
 
-    // Remover usuário do banco de dados
     db.Users.Remove(user);
     Console.WriteLine("removed");
     await db.SaveChangesAsync();
@@ -191,7 +190,7 @@ app.MapDelete("/delete_user_by_id/{id:int}", async (int id, ApplicationDbContext
 
 app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? newRoleId, ApplicationDbContext db) =>
 {
-    // Localiza o usuário pelo ID
+    
     var user = await db.Users.FirstOrDefaultAsync(u => u.user_id == id);
     if (user == null)
     {
@@ -205,7 +204,7 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
         user.passwordHash = passwordHash;
         user.passwordSalt = passwordSalt;
     }
-
+    
     // Atualiza a role, se fornecida
     if (newRoleId.HasValue)
     {
@@ -235,7 +234,32 @@ app.MapGet("/get_user_by_id/{id:int}",
         });
     });
 
+app.MapPost("/add_user", async (UserAddModel model, ApplicationDbContext db) =>
+    {
+        if (string.IsNullOrEmpty(model.Password))
+            return Results.BadRequest("Password cannot be empty.");
 
+        PasswordHelper.CreatePasswordHash(model.Password, out byte[] passwordHash, out byte[] passwordSalt);
+        if (passwordHash == null || passwordSalt == null)
+            return Results.BadRequest("Error generating password hash and salt.");
+
+        var newUser = new User
+        {
+            username      = model.Username,
+            passwordHash  = passwordHash,
+            passwordSalt  = passwordSalt,
+            fk_role_id    = model.RoleId
+        };
+
+        db.Users.Add(newUser);
+        await db.SaveChangesAsync();
+
+        return Results.Created($"/users/{newUser.user_id}", newUser);
+    })
+    .WithName("AddUser")
+    .Accepts<UserAddModel>("application/json")
+    .Produces<User>(StatusCodes.Status201Created)
+    .Produces(StatusCodes.Status400BadRequest);
 
 
 app.UseHttpsRedirection();

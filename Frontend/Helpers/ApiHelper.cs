@@ -36,6 +36,21 @@ public class ApiHelper(HttpClient httpClient)
         return response.IsSuccessStatusCode;
     }
     
+    public async Task<bool> PostToApiAsync2<T>(string url, T data)
+    {
+        try
+        {
+            // mudou de PutAsJsonAsync para PostAsJsonAsync
+            var response = await httpClient.PostAsJsonAsync(url, data);
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException e)
+        {
+            throw new ApplicationException($"Error posting data to {url}: {e.Message}");
+        }
+    }
+
+    
     
 
 
