@@ -1,5 +1,6 @@
 ﻿@page "/WorkProposal"
 
+@using System.Text.Json
 @using Frontend.Helpers
 
 @rendermode InteractiveServer
@@ -39,21 +40,39 @@
             <tbody>
             @foreach (var proposal in _workProposals)
             {
+                int currentId = ((JsonElement)proposal["proposal_id"]).GetInt32();
+                bool isEditingRow = currentId == _editingRowId;
+
                 <tr>
-                    <td>@proposal["proposal_name"]</td>
-                    <td>@proposal["category"]</td>
-                    <td>@proposal["necessary_skills"]</td>
-                    <td>@proposal["years_of_experience"]</td>
-                    <td>@proposal["description"]</td>
-                    <td>@proposal["total_hours"]</td>
-                    <td>
-                        <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
-                        <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
-                    </td>
+                    @if (isEditingRow)
+                    {
+                        <td><input @bind="_editingProposal.proposal_name" /></td>
+                        <td><input @bind="_editingProposal.category" /></td>
+                        <td><input @bind="_editingProposal.necessary_skills" /></td>
+                        <td><input @bind="_editingProposal.years_of_experience" /></td>
+                        <td><input @bind="_editingProposal.description" /></td>
+                        <td><input @bind="_editingProposal.total_hours" /></td>
+                        <td>
+                            <button class="btn btn-success" @onclick="UpdateProposal">Save</button>
+                            <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                        </td>
+                    }
+                    else
+                    {
+                        <td>@proposal["proposal_name"]</td>
+                        <td>@proposal["category"]</td>
+                        <td>@proposal["necessary_skills"]</td>
+                        <td>@proposal["years_of_experience"]</td>
+                        <td>@proposal["description"]</td>
+                        <td>@proposal["total_hours"]</td>
+                        <td>
+                            <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
+                            <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
+                        </td>
+                    }
                 </tr>
             }
             </tbody>
-
         </table>
     }
 </div>
@@ -108,7 +127,7 @@
             <InputNumber @bind-Value="_proposal.fk_user_id" class="form-control"  required/>
         </div>
 
-        <button type="submit">Submit</button>
+        <button class="btn btn-primary" type="submit">Criar</button>
     </EditForm>
 </div>
 
@@ -116,6 +135,8 @@
     private WorkProposalModel _proposal = new();
     private List<Dictionary<string, object>> _workProposals = new();
     private string _message = string.Empty;
+    private int _editingRowId = -1;
+    private WorkProposalModel _editingProposal = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -169,6 +190,7 @@
 
     private class WorkProposalModel
     {
+        public int proposal_id { get; set; }
         public string proposal_name { get; set; } = string.Empty;
         public string category { get; set; } = string.Empty;
         public string necessary_skills { get; set; } = string.Empty;
@@ -180,16 +202,83 @@
     
     private void EditProposal(Dictionary<string, object> proposal)
     {
-        // Lógica para editar a proposta (ainda não implementada)
-        Console.WriteLine("Edit proposal (not implemented yet).");
+        _editingRowId = ((JsonElement)proposal["proposal_id"]).GetInt32();
+        _editingProposal = new WorkProposalModel
+        {
+            proposal_id = _editingRowId,  // Certifica-te de que este ID está correto
+            proposal_name = proposal["proposal_name"].ToString() ?? "",
+            category = proposal["category"].ToString() ?? "",
+            necessary_skills = proposal["necessary_skills"].ToString() ?? "",
+            years_of_experience = proposal["years_of_experience"].ToString() ?? "",
+            description = proposal["description"].ToString() ?? "",
+            total_hours = proposal["total_hours"].ToString() ?? "",
+            fk_user_id = proposal.TryGetValue("fk_user_id", out var fkUser) ? ((JsonElement)fkUser).GetInt32() : 0
+        };
+    }
+
+    private async Task UpdateProposal()
+    {
+        try
+        {
+            // Certifica-te de que estás a usar o PUT, que é o método de atualização
+            var response = await ApiHelper.PutToApiAsync<WorkProposalModel, WorkProposalModel>(
+                $"/work_proposals/{_editingProposal.proposal_id}", _editingProposal);
+
+            if (response != null)
+            {
+                _message = "Proposal updated successfully!";
+                _editingRowId = -1;
+                _editingProposal = new();
+                await LoadProposals();  // Recarregar as propostas após atualização
+            }
+            else
+            {
+                _message = "Failed to update proposal.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error updating proposal: {ex.Message}";
+        }
+    }
+    private void CancelEdit()
+    {
+        _editingRowId = -1;
+        _editingProposal = new();
     }
     
-    private void DeleteProposal(Dictionary<string, object> proposal)
+    private async Task DeleteProposal(Dictionary<string, object> proposal)
     {
-        // Lógica para deletar a proposta (ainda não implementada)
-        Console.WriteLine("Delete proposal (not implemented yet).");
+        try
+        {
+            if (proposal.TryGetValue("proposal_id", out var idObj) && idObj is not null)
+            {
+                int id = ((JsonElement)idObj).GetInt32();
+                var success = await ApiHelper.DeleteFromApiAsync($"/work_proposals/{id}");
+
+                if (success)
+                {
+                    _message = "Proposal deleted successfully.";
+                    await LoadProposals(); // Atualiza a lista
+                }
+                else
+                {
+                    _message = "Failed to delete proposal.";
+                }
+            }
+            else
+            {
+                _message = "Invalid proposal ID.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error deleting proposal: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
+        }
     }
 }
+
 
 <style>
     .titles {
