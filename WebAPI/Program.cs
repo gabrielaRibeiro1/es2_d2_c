@@ -345,22 +345,25 @@ app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
 
 
 // CREATE WORK PROPOSAL
-app.MapPost("/work_proposals", async (string proposalName, string category, string necessarySkills, string yearsOfExperience, string description, string totalHours, int fkUserId, ApplicationDbContext db) =>
+app.MapPost("/work_proposals", async (WorkProposal workProposal, ApplicationDbContext db) =>
 {
-    var workProposal = new WorkProposal
+    if (workProposal == null)
     {
-        proposal_name = proposalName,
-        category = category,
-        necessary_skills = necessarySkills,
-        years_of_experience = yearsOfExperience,
-        description = description,
-        total_hours = totalHours,
-        fk_user_id = fkUserId,
-    };
+        return Results.BadRequest("Proposal data is missing.");
+    }
 
-    db.WorkProposals.Add(workProposal);
-    await db.SaveChangesAsync();
-    return Results.Created($"/work_proposals/{workProposal.proposal_id}", workProposal);
+    try
+    {
+        db.WorkProposals.Add(workProposal);
+        await db.SaveChangesAsync();
+        return Results.Created($"/work_proposals/{workProposal.proposal_id}", workProposal);
+    }
+    catch (Exception ex)
+    {
+        // Log any error that occurs
+        Console.WriteLine($"Error creating proposal: {ex.Message}");
+        return Results.StatusCode(500);
+    }
 });
 
 // GET ALL WORK PROPOSALS

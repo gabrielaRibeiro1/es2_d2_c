@@ -1,8 +1,12 @@
 ﻿@page "/WorkProposal"
+
 @using Frontend.Helpers
+
+@rendermode InteractiveServer
 
 @inject HttpClient Http
 @inject ApiHelper ApiHelper
+@inject IJSRuntime JSRuntime
 
 <h2 class="titles">Work Proposals</h2>
 <!-- Linha separadora -->
@@ -29,6 +33,7 @@
                 <th>Experience</th>
                 <th>Description</th>
                 <th>Hours</th>
+                <th>Actions</th>
             </tr>
             </thead>
             <tbody>
@@ -41,6 +46,10 @@
                     <td>@proposal["years_of_experience"]</td>
                     <td>@proposal["description"]</td>
                     <td>@proposal["total_hours"]</td>
+                    <td>
+                        <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
+                    </td>
                 </tr>
             }
             </tbody>
@@ -62,40 +71,41 @@
     
     <EditForm Model="_proposal" OnValidSubmit="SubmitProposal" FormName="WorkProposalForm">
         <DataAnnotationsValidator />
-
+        <ValidationSummary />
+        
         <div>
             <label>Proposal Name:</label>
-            <InputText @bind-Value="_proposal.ProposalName" required />
+            <InputText @bind-Value="_proposal.proposal_name"  class="form-control" required/>
         </div>
 
         <div>
             <label>Category:</label>
-            <InputText @bind-Value="_proposal.Category" required />
+            <InputText @bind-Value="_proposal.category" class="form-control"  required/>
         </div>
 
         <div>
             <label>Necessary Skills:</label>
-            <InputText @bind-Value="_proposal.NecessarySkills" required />
+            <InputText @bind-Value="_proposal.necessary_skills" class="form-control"  required/>
         </div>
 
         <div>
             <label>Years of Experience:</label>
-            <InputText @bind-Value="_proposal.YearsOfExperience" required />
+            <InputText @bind-Value="_proposal.years_of_experience" class="form-control"  required/>
         </div>
 
         <div>
             <label>Description:</label>
-            <InputTextArea @bind-Value="_proposal.Description" required />
+            <InputTextArea @bind-Value="_proposal.description" class="form-control"  required/>
         </div>
 
         <div>
             <label>Total Hours:</label>
-            <InputText @bind-Value="_proposal.TotalHours" required />
+            <InputText @bind-Value="_proposal.total_hours" class="form-control"  required/>
         </div>
 
         <div>
             <label>User ID:</label>
-            <InputNumber @bind-Value="_proposal.FkUserId" required />
+            <InputNumber @bind-Value="_proposal.fk_user_id" class="form-control"  required/>
         </div>
 
         <button type="submit">Submit</button>
@@ -104,7 +114,7 @@
 
 @code {
     private WorkProposalModel _proposal = new();
-    private List<Dictionary<string, object>> _workProposals = new List<Dictionary<string, object>>();
+    private List<Dictionary<string, object>> _workProposals = new();
     private string _message = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -127,28 +137,57 @@
 
     private async Task SubmitProposal()
     {
-        var response = await Http.PostAsJsonAsync("/work_proposals", _proposal);
-        if (response.IsSuccessStatusCode)
+        if (string.IsNullOrWhiteSpace(_proposal.proposal_name))
         {
-            _message = "Proposal created successfully!";
-            _proposal = new(); // Reset form
-            await LoadProposals(); // Refresh table
+            throw new NotSupportedException("HELP!");
         }
-        else
+        try
         {
-            _message = "Failed to create proposal.";
+            var response = await ApiHelper.PostToApiAsync<WorkProposalModel, WorkProposalModel>("/work_proposals", _proposal);
+
+            if (response != null)
+            {
+                _message = "Proposal created successfully!";
+                _proposal = new(); // Reset form
+                await LoadProposals(); // Refresh table
+            }
+            else
+            {
+                _message = "Failed to create proposal.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = $"Error creating proposal: {ex.Message}";
+            Console.WriteLine($"Error: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+            }
         }
     }
 
     private class WorkProposalModel
     {
-        public string ProposalName { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public string NecessarySkills { get; set; } = string.Empty;
-        public string YearsOfExperience { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string TotalHours { get; set; } = string.Empty;
-        public int FkUserId { get; set; }
+        public string proposal_name { get; set; } = string.Empty;
+        public string category { get; set; } = string.Empty;
+        public string necessary_skills { get; set; } = string.Empty;
+        public string years_of_experience { get; set; } = string.Empty;
+        public string description { get; set; } = string.Empty;
+        public string total_hours { get; set; } = string.Empty;
+        public int fk_user_id { get; set; }
+    }
+    
+    private void EditProposal(Dictionary<string, object> proposal)
+    {
+        // Lógica para editar a proposta (ainda não implementada)
+        Console.WriteLine("Edit proposal (not implemented yet).");
+    }
+    
+    private void DeleteProposal(Dictionary<string, object> proposal)
+    {
+        // Lógica para deletar a proposta (ainda não implementada)
+        Console.WriteLine("Delete proposal (not implemented yet).");
     }
 }
 
