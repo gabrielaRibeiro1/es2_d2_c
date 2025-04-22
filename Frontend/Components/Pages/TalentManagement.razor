@@ -1,7 +1,11 @@
 ﻿@page "/talent-management"
+@using Microsoft.AspNetCore.Components.Web
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
+@inject ApiHelper apiHelper
 @using System.ComponentModel.DataAnnotations
+@using Frontend.Helpers
+@rendermode InteractiveServer
 
 <h3>Gestão de Talentos</h3>
 
@@ -12,32 +16,64 @@
         <EditForm Model="@newTalent" OnValidSubmit="@CreateTalent" FormName="createTalentForm">
             <DataAnnotationsValidator />
             <ValidationSummary />
-
             <div class="form-group">
-                <label>Nome *</label>
-                <InputText @bind-Value="newTalent.profile_name" class="form-control" />
+                <label for="profileName">Nome *</label>
+                <InputText id="profileName"
+                           @bind-Value="newTalent.profile_name"
+                           class="form-control"
+                           aria-label="Nome completo do talento"
+                           aria-required="true"
+                           placeholder="Digite o nome completo" />
                 <ValidationMessage For="@(() => newTalent.profile_name)" />
             </div>
 
             <div class="form-group">
-                <label>Email *</label>
-                <InputText @bind-Value="newTalent.email" class="form-control" />
+                <label for="email">Email *</label>
+                <InputText id="email"
+                           @bind-Value="newTalent.email"
+                           class="form-control"
+                           aria-label="Endereço de email"
+                           aria-required="true"
+                           placeholder="exemplo@email.com"
+                           type="email" />
                 <ValidationMessage For="@(() => newTalent.email)" />
             </div>
 
             <div class="form-group">
-                <label>País</label>
-                <InputText @bind-Value="newTalent.country" class="form-control" />
+                <label for="country">País</label>
+                <InputText id="country"
+                           @bind-Value="newTalent.country"
+                           class="form-control"
+                           aria-label="País de origem"
+                           placeholder="Digite o país" />
             </div>
 
             <div class="form-group">
-                <label>Preço</label>
-                <InputNumber @bind-Value="newTalent.price" class="form-control" />
+                <label for="price">Preço (€)</label>
+                <InputNumber id="price"
+                             @bind-Value="newTalent.price"
+                             class="form-control"
+                             aria-label="Valor do serviço"
+                             placeholder="0,00" />
             </div>
 
             <div class="form-group">
-                <label>Privacidade (0=Público, 1=Privado)</label>
-                <InputNumber @bind-Value="newTalent.privacy" class="form-control" min="0" max="1" step="1" />
+                <label for="privacy">Privacidade (0=Público, 1=Privado)</label>
+                <InputNumber id="privacy"
+                             @bind-Value="newTalent.privacy"
+                             class="form-control"
+                             aria-label="Nível de privacidade"
+                             min="0"
+                             max="1"
+                             step="1" />
+            </div>
+
+            <div class="form-group">
+                <label for="fk_user_id">ID do Usuário</label>
+                <InputNumber id="fk_user_id"
+                             @bind-Value="newTalent.fk_user_id"
+                             class="form-control"
+                             aria-label="ID do usuário associado" />
             </div>
 
             <button type="submit" class="btn btn-success mt-3" disabled="@isLoading">
@@ -56,6 +92,10 @@
             {
             <div class="alert alert-danger mt-3">@errorMessage</div>
             }
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+            <div class="alert alert-success mt-3">@successMessage</div>
+            }
         </EditForm>
     </div>
 </div>
@@ -70,14 +110,15 @@
         <th>País</th>
         <th>Preço</th>
         <th>Privacidade</th>
-        <th class="text-center" style="width:150px;">Ações</th>
+        <th>ID Usuário</th>
+        <th>Ações</th>
     </tr>
     </thead>
     <tbody>
     @if (isLoading && talents == null)
     {
     <tr>
-        <td colspan="6" class="text-center text-muted">
+        <td colspan="7" class="text-center text-muted">
             <span class="spinner-border spinner-border-sm" role="status"></span>
             Carregando...
         </td>
@@ -86,7 +127,7 @@
     else if (talents == null || !talents.Any())
     {
     <tr>
-        <td colspan="6" class="text-center text-muted">Nenhum talento encontrado</td>
+        <td colspan="7" class="text-center text-muted">Nenhum talento encontrado</td>
     </tr>
     }
     else
@@ -99,16 +140,13 @@
         <td>@talent.country</td>
         <td>@talent.price.ToString("0.00")</td>
         <td>@(talent.privacy == 1 ? "Privado" : "Público")</td>
-        <td class="text-center">
-            <button @onclick="() => EditTalent(talent)"
-                    class="btn btn-sm btn-warning mr-1"
-                    title="Editar">
-                <span class="oi oi-pencil"></span>
+        <td>@talent.fk_user_id</td>
+        <td>
+            <button @onclick="@(() => EditTalent(talent))" class="btn btn-sm btn-primary mr-2">
+                <span class="oi oi-pencil"></span> Editar
             </button>
-            <button @onclick="() => DeleteTalent(talent.profile_id)"
-                    class="btn btn-sm btn-danger"
-                    title="Remover">
-                <span class="oi oi-trash"></span>
+            <button @onclick="@(() => DeleteTalent(talent.profile_id))" class="btn btn-sm btn-danger">
+                <span class="oi oi-trash"></span> Excluir
             </button>
         </td>
     </tr>
@@ -117,251 +155,147 @@
     </tbody>
 </table>
 
-@if (isEditing)
-{
-<div class="modal" style="display:block; background:rgba(0,0,0,0.5);">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Editar Talento</h5>
-                <button type="button" class="close" @onclick="CancelEdit">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <EditForm Model="@currentEditTalent" OnValidSubmit="@UpdateTalent">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-
-                    <div class="form-group">
-                        <label>Nome *</label>
-                        <InputText @bind-Value="currentEditTalent.profile_name" class="form-control" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Email *</label>
-                        <InputText @bind-Value="currentEditTalent.email" class="form-control" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>País</label>
-                        <InputText @bind-Value="currentEditTalent.country" class="form-control" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Preço</label>
-                        <InputNumber @bind-Value="currentEditTalent.price" class="form-control" />
-                    </div>
-
-                    <div class="form-group">
-                        <label>Privacidade</label>
-                        <InputNumber @bind-Value="currentEditTalent.privacy" class="form-control" min="0" max="1" step="1" />
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" disabled="@isLoading">
-                        @if (isLoading)
-                        {
-                        <span class="spinner-border spinner-border-sm" role="status"></span>
-                        <span> Guardando...</span>
-                        }
-                        else
-                        {
-                        <span>Guardar Alterações</span>
-                        }
-                    </button>
-                </EditForm>
-            </div>
-        </div>
-    </div>
-</div>
-}
-
 @code {
-private List<TalentProfile> talents;
-private TalentProfile newTalent = new();
-private TalentProfile currentEditTalent = new();
-private bool isEditing = false;
-private bool isLoading = false;
-private string errorMessage = string.Empty;
+    private List<TalentProfile>? talents;
+    private TalentProfile newTalent = new();
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
 
-protected override async Task OnInitializedAsync()
-{
-await LoadTalents();
-}
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTalents();
+    }
 
-private async Task LoadTalents()
-{
-try
-{
-isLoading = true;
-StateHasChanged();
+    private async Task LoadTalents()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
 
-var response = await Http.GetAsync("/talent_profiles");
+            var response = await Http.GetAsync("/talent_profiles");
 
-if (response.IsSuccessStatusCode)
-{
-talents = await response.Content.ReadFromJsonAsync<List<TalentProfile>>();
-}
-else
-{
-errorMessage = $"Erro ao carregar: {response.StatusCode}";
-await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-}
-}
-catch (Exception ex)
-{
-errorMessage = $"Erro: {ex.Message}";
-await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-}
-finally
-{
-isLoading = false;
-StateHasChanged();
-}
-}
+            if (response.IsSuccessStatusCode)
+            {
+                talents = await response.Content.ReadFromJsonAsync<List<TalentProfile>>();
+                errorMessage = string.Empty;
+            }
+            else
+            {
+                errorMessage = $"Erro ao carregar: {response.StatusCode}";
+                await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+            await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
 
-private async Task CreateTalent()
-{
-try
-{
-isLoading = true;
-errorMessage = string.Empty;
-StateHasChanged();
+    private async Task CreateTalent()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            StateHasChanged();
 
-var response = await Http.PostAsJsonAsync("/talent_profiles", newTalent);
+            var response = await Http.PostAsJsonAsync("/talent_profiles", newTalent);
 
-if (response.IsSuccessStatusCode)
-{
-newTalent = new TalentProfile();
-await LoadTalents();
-}
-else
-{
-errorMessage = await response.Content.ReadAsStringAsync();
-if (string.IsNullOrEmpty(errorMessage))
-{
-errorMessage = $"Erro: {response.StatusCode}";
-}
-await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-}
-}
-catch (Exception ex)
-{
-errorMessage = $"Erro: {ex.Message}";
-await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-}
-finally
-{
-isLoading = false;
-StateHasChanged();
-}
-}
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Talento criado com sucesso!";
+                await LoadTalents();
+                newTalent = new TalentProfile();
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = $"Erro: {response.StatusCode}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
 
-private void EditTalent(TalentProfile talent)
-{
-currentEditTalent = new TalentProfile
-{
-profile_id = talent.profile_id,
-profile_name = talent.profile_name,
-email = talent.email,
-country = talent.country,
-price = talent.price,
-privacy = talent.privacy,
-fk_user_id = talent.fk_user_id,
-user_id = talent.user_id
-};
-isEditing = true;
-}
+    private async Task EditTalent(TalentProfile talent)
+    {
+// Preenche o formulário com os dados do talento selecionado
+        newTalent = talent;
+        successMessage = "Edite os dados acima";
+        StateHasChanged();
+    }
 
-private async Task UpdateTalent()
-{
-try
-{
-isLoading = true;
-errorMessage = string.Empty;
-StateHasChanged();
+    private async Task DeleteTalent(int profileId)
+    {
+        try
+        {
+            if (await JSRuntime.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este talento?"))
+            {
+                isLoading = true;
+                StateHasChanged();
 
-var response = await Http.PutAsJsonAsync($"/talent_profiles/{currentEditTalent.profile_id}", currentEditTalent);
+                var response = await Http.DeleteAsync($"/talent_profiles/{profileId}");
 
-if (response.IsSuccessStatusCode)
-{
-isEditing = false;
-await LoadTalents();
-}
-else
-{
-errorMessage = await response.Content.ReadAsStringAsync();
-await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-}
-}
-catch (Exception ex)
-{
-errorMessage = $"Erro: {ex.Message}";
-await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-}
-finally
-{
-isLoading = false;
-StateHasChanged();
-}
-}
+                if (response.IsSuccessStatusCode)
+                {
+                    successMessage = "Talento excluído com sucesso!";
+                    await LoadTalents();
+                }
+                else
+                {
+                    errorMessage = await response.Content.ReadAsStringAsync();
+                    if (string.IsNullOrEmpty(errorMessage))
+                    {
+                        errorMessage = $"Erro ao excluir: {response.StatusCode}";
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
 
-private void CancelEdit()
-{
-isEditing = false;
-errorMessage = string.Empty;
-}
+    public class TalentProfile
+    {
+        public int profile_id { get; set; }
 
-private async Task DeleteTalent(int id)
-{
-try
-{
-isLoading = true;
-errorMessage = string.Empty;
-StateHasChanged();
+        [Required(ErrorMessage = "Nome é obrigatório")]
+        public string profile_name { get; set; } = string.Empty;
 
-var response = await Http.DeleteAsync($"/talent_profiles/{id}");
+        [Required(ErrorMessage = "Email é obrigatório")]
+        [EmailAddress(ErrorMessage = "Formato de email inválido")]
+        public string email { get; set; } = string.Empty;
 
-if (response.IsSuccessStatusCode)
-{
-await LoadTalents();
-}
-else
-{
-errorMessage = await response.Content.ReadAsStringAsync();
-await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-}
-}
-catch (Exception ex)
-{
-errorMessage = $"Erro: {ex.Message}";
-await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-}
-finally
-{
-isLoading = false;
-StateHasChanged();
-}
-}
+        public string? country { get; set; }
+        public float price { get; set; }
+        public float privacy { get; set; }
+        public int fk_user_id { get; set; }
+        public int user_id { get; set; }
+    }
 
-public class TalentProfile
-{
-public int profile_id { get; set; }
-
-[Required(ErrorMessage = "Nome é obrigatório")]
-public string profile_name { get; set; }
-
-[Required(ErrorMessage = "Email é obrigatório")]
-[EmailAddress(ErrorMessage = "Formato de email inválido")]
-public string email { get; set; }
-
-public string country { get; set; }
-public float price { get; set; }
-
-[Range(0, 1, ErrorMessage = "Privacidade deve ser 0 (Público) ou 1 (Privado)")]
-public float privacy { get; set; }
-
-public int fk_user_id { get; set; }
-public int user_id { get; set; }
-}
 }
