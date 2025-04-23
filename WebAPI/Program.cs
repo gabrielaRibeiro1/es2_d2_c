@@ -1,7 +1,8 @@
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
-using Helpers.Models;
+using ESOF.WebApp.Services.Reports;
+
 using Microsoft.EntityFrameworkCore;
 
 
@@ -11,7 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add services to the container.
+builder.Services.AddScoped<CategoryCountryReport>();
+builder.Services.AddScoped<SkillReport>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -408,6 +410,28 @@ app.MapDelete("/work_proposals/{id}", async (int id, ApplicationDbContext db) =>
     await db.SaveChangesAsync();
     return Results.NoContent();
 });
+
+app.MapGet("/reports/category-country", async (ApplicationDbContext db) =>
+    {
+        var report = new CategoryCountryReport(db).GenerateReport();
+        return Results.Ok(report);
+    })
+    .WithName("GetCategoryCountryReport")
+    .WithSummary("Obtém o preço médio mensal por categoria e país.")
+    .WithDescription("Baseado em 176 horas por mês, agrupa talentos por categoria e país.")
+    .Produces<Dictionary<string, float>>(StatusCodes.Status200OK);
+
+app.MapGet("/reports/skill", async (ApplicationDbContext db) =>
+    {
+        var report = new SkillReport(db).GenerateReport();
+        return Results.Ok(report);
+    })
+    .WithName("GetSkillReport")
+    .WithSummary("Obtém o preço médio mensal por skill.")
+    .WithDescription("Baseado em 176 horas por mês, agrupa talentos pelas suas skills.")
+    .Produces<Dictionary<string, float>>(StatusCodes.Status200OK);
+
+
 
 app.UseHttpsRedirection();
 
