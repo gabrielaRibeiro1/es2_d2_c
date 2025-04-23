@@ -2,6 +2,7 @@ using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
 using Helpers.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -282,19 +283,14 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
 
 
 // Endpoint to create a skill
-app.MapPost("/skills", async (string name, string area, ApplicationDbContext db) => 
+app.MapPost("/skills", async ([FromBody] Skill skill, ApplicationDbContext db) =>
 {
-    var skill = new Skill 
-    {
-        name = name,
-        area = area
-    };
-
     db.Skills.Add(skill);
     await db.SaveChangesAsync();
 
-    return Results.Ok($"Skill '{name}' criada com sucesso!");
+    return Results.Ok($"Skill '{skill.name}' criada com sucesso!");
 });
+
 
 // Endpoint to get all skills
 app.MapGet("/skills", async (ApplicationDbContext db) =>
@@ -312,24 +308,20 @@ app.MapGet("/skills/{id}", async (int id, ApplicationDbContext db) =>
 });
 
 // Endpoint to update a skill
-app.MapPut("/skills/{id}", async (
-    int id,                      
-    string name,                 
-    string area,                 
-    ApplicationDbContext db
-) =>
+app.MapPut("/skills/{id}", async (int id, [FromBody] Skill updatedSkill, ApplicationDbContext db) =>
 {
     var skill = await db.Skills.FindAsync(id);
     if (skill == null)
         return Results.NotFound("Skill não encontrada!");
 
-    // Update name and area
-    skill.name = name;
-    skill.area = area;
+    // Atualiza os campos
+    skill.name = updatedSkill.name;
+    skill.area = updatedSkill.area;
 
     await db.SaveChangesAsync();
-    return Results.Ok($"Skill {id} atualizada: Nome='{name}', Área='{area}'");
+    return Results.Ok($"Skill {id} atualizada com sucesso!");
 });
+
 
 // Endpoint to delete a skill
 app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
