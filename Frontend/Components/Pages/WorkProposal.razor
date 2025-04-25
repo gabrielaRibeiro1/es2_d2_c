@@ -1,80 +1,410 @@
 ﻿@page "/WorkProposal"
 
-@inject HttpClient Http
+@using System.Text.Json
+@using Frontend.Helpers
 
-<h3>Work Proposals</h3>
+@rendermode InteractiveServer
 
-@if (!string.IsNullOrEmpty(_message))
-{
-    <p style="color: green;">@_message</p>
-}
+@inject ApiHelper ApiHelper
 
-<EditForm Model="_proposal" OnValidSubmit="SubmitProposal" FormName="WorkProposalForm">
-    <DataAnnotationsValidator />
+<h2 class="titles">Work Proposals</h2>
 
-    <div>
-        <label>Proposal Name:</label>
-        <InputText @bind-Value="_proposal.ProposalName" required />
+<hr class="separator" />
+
+<div>
+    <h4 class="titles">All Work Proposals</h4>
+    @if (!string.IsNullOrEmpty(_tableMessage))
+    {
+        <p style="color:@_tableMessageColor;">@_tableMessage</p>
+    }
+    @if (_workProposals is null)
+    {
+        <p>Loading proposals...</p>
+    }
+    else if (_workProposals.Count == 0)
+    {
+        <p>No proposals found.</p>
+    }
+    else
+    {
+        <table class="wptable">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Skills</th>
+                <th>Experience</th>
+                <th>Description</th>
+                <th>Hours</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var proposal in _workProposals)
+            {
+                int currentId = ((JsonElement)proposal["proposal_id"]).GetInt32();
+                bool isEditingRow = currentId == _editingRowId;
+
+                <tr>
+                    @if (isEditingRow)
+                    {
+                        <td><input @bind="_editingProposal.proposal_name" /></td>
+                        <td><input @bind="_editingProposal.category" /></td>
+                        <td><input @bind="_editingProposal.necessary_skills" /></td>
+                        <td><input @bind="_editingProposal.years_of_experience" /></td>
+                        <td><input @bind="_editingProposal.description" /></td>
+                        <td><input @bind="_editingProposal.total_hours" /></td>
+                        <td>
+                            <button class="btn btn-success" @onclick="UpdateProposal">Save</button>
+                            <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                        </td>
+                    }
+                    else
+                    {
+                        <td>@proposal["proposal_name"]</td>
+                        <td>@proposal["category"]</td>
+                        <td>@proposal["necessary_skills"]</td>
+                        <td>@proposal["years_of_experience"]</td>
+                        <td>@proposal["description"]</td>
+                        <td>@proposal["total_hours"]</td>
+                        <td>
+                            <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
+                            <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
+                        </td>
+                    }
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+
+<hr class="separator" />
+
+<div class="form-wrapper">
+    <div class="form-container">
+        <h4>Create Work Proposal</h4>
+
+        @if (!string.IsNullOrEmpty(_formMessage))
+        {
+            <p style="color:@_formMessageColor;">@_formMessage</p>
+        }
+        
+        <EditForm Model="_proposal" OnValidSubmit="SubmitProposal" FormName="WorkProposalForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            
+            <div>
+                <label>Proposal Name:</label>
+                <InputText @bind-Value="_proposal.proposal_name"  class="form-control" required/>
+            </div>
+
+            <div>
+                <label>Category:</label>
+                <InputText @bind-Value="_proposal.category" class="form-control"  required/>
+            </div>
+
+            <div>
+                <label>Necessary Skills:</label>
+                <InputText @bind-Value="_proposal.necessary_skills" class="form-control"  required/>
+            </div>
+
+            <div>
+                <label>Years of Experience:</label>
+                <InputNumber @bind-Value="_proposal.years_of_experience" class="form-control"  required/>
+            </div>
+
+            <div>
+                <label>Description:</label>
+                <InputTextArea @bind-Value="_proposal.description" class="form-control"  required/>
+            </div>
+
+            <div>
+                <label>Total Hours:</label>
+                <InputNumber @bind-Value="_proposal.total_hours" class="form-control"  required/>
+            </div>
+
+            <div>
+                <label>User ID:</label>
+                <InputNumber @bind-Value="_proposal.fk_user_id" class="form-control"  required/>
+            </div>
+
+            <button class="btn btn-success" type="submit">Criar</button>
+        </EditForm>
     </div>
-
-    <div>
-        <label>Category:</label>
-        <InputText @bind-Value="_proposal.Category" required />
-    </div>
-
-    <div>
-        <label>Necessary Skills:</label>
-        <InputText @bind-Value="_proposal.NecessarySkills" required />
-    </div>
-
-    <div>
-        <label>Years of Experience:</label>
-        <InputText @bind-Value="_proposal.YearsOfExperience" required />
-    </div>
-
-    <div>
-        <label>Description:</label>
-        <InputTextArea @bind-Value="_proposal.Description" required />
-    </div>
-
-    <div>
-        <label>Total Hours:</label>
-        <InputText @bind-Value="_proposal.TotalHours" required />
-    </div>
-
-    <div>
-        <label>User ID:</label>
-        <InputNumber @bind-Value="_proposal.FkUserId" required />
-    </div>
-
-    <button type="submit">Submit</button>
-</EditForm>
+</div>
 
 @code {
-    private WorkProposalModel _proposal = new WorkProposalModel();
-    private string _message = string.Empty;
+    private WorkProposalModel _proposal = new();
+    private List<Dictionary<string, object>> _workProposals = new();
+    private int _editingRowId = -1;
+    private WorkProposalModel _editingProposal = new();
+    private string _tableMessage = "";
+    private string _formMessage = "";
+    private string _tableMessageColor = "green"; // ou "red"
+    private string _formMessageColor = "green";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProposals();
+    }
+
+    private async Task LoadProposals()
+    {
+        try
+        {
+            _workProposals = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/work_proposals");
+        }
+        catch (Exception ex)
+        {
+            await ShowFormMessage("Error loading proposals!", "red");
+            Console.WriteLine($"Error: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+    
+    private void EditProposal(Dictionary<string, object> proposal)
+    {
+        _editingRowId = ((JsonElement)proposal["proposal_id"]).GetInt32();
+        _editingProposal = new WorkProposalModel
+        {
+            proposal_id = _editingRowId,
+            proposal_name = proposal["proposal_name"].ToString() ?? "",
+            category = proposal["category"].ToString() ?? "",
+            necessary_skills = proposal["necessary_skills"].ToString() ?? "",
+            years_of_experience = ((JsonElement)proposal["years_of_experience"]).GetInt32(),
+            description = proposal["description"].ToString() ?? "",
+            total_hours = ((JsonElement)proposal["total_hours"]).GetInt32(),
+            fk_user_id = proposal.TryGetValue("fk_user_id", out var fkUser) ? ((JsonElement)fkUser).GetInt32() : 0
+        };
+    }
+
+    private async Task UpdateProposal()
+    {
+        try
+        {
+            var response = await ApiHelper.PutToApiAsync<WorkProposalModel, WorkProposalModel>(
+                $"/work_proposals/{_editingProposal.proposal_id}", _editingProposal);
+
+            if (response != null)
+            {
+                await ShowTableMessage("Proposal updated!", "green");
+                _editingRowId = -1;
+                _editingProposal = new();
+                await LoadProposals();
+            }
+            else
+            {
+                await ShowTableMessage("Failed to update proposal!", "red");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowTableMessage("Failed to update proposal!", "red");
+            Console.WriteLine($"Error: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+            }
+        }
+    }
+    private void CancelEdit()
+    {
+        _editingRowId = -1;
+        _editingProposal = new();
+    }
+    
+    private async Task DeleteProposal(Dictionary<string, object> proposal)
+    {
+        try
+        {
+            if (proposal.TryGetValue("proposal_id", out var idObj) && idObj is not null)
+            {
+                int id = ((JsonElement)idObj).GetInt32();
+                var success = await ApiHelper.DeleteFromApiAsync($"/work_proposals/{id}");
+
+                if (success)
+                {
+                    await ShowTableMessage("Proposal deleted!", "green");
+                    await LoadProposals();
+                }
+                else
+                {
+                    await ShowTableMessage("Failed to delete proposal!", "red");
+                }
+            }
+            else
+            {
+                await ShowTableMessage("Invalid proposal ID provided.", "red");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowTableMessage("Failed to delete proposal!", "red");
+            Console.WriteLine($"Error: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+            }
+        }
+    }
 
     private async Task SubmitProposal()
     {
-        var response = await Http.PostAsJsonAsync("/work_proposals", _proposal);
-        if (response.IsSuccessStatusCode)
+        if (string.IsNullOrWhiteSpace(_proposal.proposal_name))
         {
-            _message = "Proposal created successfully!";
+            throw new NotSupportedException("HELP!");
         }
-        else
+        try
         {
-            _message = "Failed to create proposal.";
+            var response = await ApiHelper.PostToApiAsync<WorkProposalModel, WorkProposalModel>("/work_proposals", _proposal);
+
+            if (response != null)
+            {
+                await ShowFormMessage("Proposal created successfully!", "green");
+                _proposal = new();
+                await LoadProposals();
+            }
+            else
+            {
+                await ShowFormMessage("Error creating proposal!", "red");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowFormMessage("Error creating proposal!", "red");
+            Console.WriteLine($"Error: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+            }
         }
     }
 
     private class WorkProposalModel
     {
-        public string ProposalName { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public string NecessarySkills { get; set; } = string.Empty;
-        public string YearsOfExperience { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public string TotalHours { get; set; } = string.Empty;
-        public int FkUserId { get; set; }
+        public int proposal_id { get; set; }
+        public string proposal_name { get; set; } = string.Empty;
+        public string category { get; set; } = string.Empty;
+        public string necessary_skills { get; set; } = string.Empty;
+        public int years_of_experience { get; set; }
+        public string description { get; set; } = string.Empty;
+        public int total_hours { get; set; }
+        public int fk_user_id { get; set; }
+    }
+    
+    private async Task ShowFormMessage(string message, string color)
+    {
+        _formMessage = message;
+        _formMessageColor = color;
+        StateHasChanged();
+        await Task.Delay(5000); // espera 5 segundos
+        _formMessage = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task ShowTableMessage(string message, string color)
+    {
+        _tableMessage = message;
+        _tableMessageColor = color;
+        StateHasChanged();
+        await Task.Delay(5000);
+        _tableMessage = string.Empty;
+        StateHasChanged();
     }
 }
+
+<style>
+    .titles {
+        margin-left: 10px;
+    }
+    
+    .wptable {
+        max-width: 1200px;
+        width: 100%;
+        table-layout: fixed;
+        overflow-x: auto;
+        word-wrap: break-word;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    hr.separator {
+        border: 0;
+        height: 2px;
+        background-color: #ccc;
+        margin: 30px 0;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #f7f7f7;
+    }
+
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #ebebeb;
+        font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f0f0f0;
+    }
+
+    tr:hover {
+        background-color: #e2e2e2;
+    }
+
+    .form-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+    
+    .form-container {
+        border: 2px solid #cccccc;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #f9f9f9;
+        max-width: 600px;
+        width: 100%;
+        margin: 20px;
+    }
+
+    label {
+        font-size: 14px;
+        font-weight: bold;
+        color: #333333;
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    input[type="text"], input[type="number"], textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #cccccc;
+        margin-bottom: 15px;
+        font-size: 14px;
+        background-color: #ffffff;
+        box-sizing: border-box;
+    }
+    
+    textarea {
+        resize: vertical;
+    }
+</style>

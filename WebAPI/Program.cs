@@ -338,22 +338,25 @@ app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
 
 
 // CREATE WORK PROPOSAL
-app.MapPost("/work_proposals", async (string proposalName, string category, string necessarySkills, int yearsOfExperience, string description, int totalHours, int fkUserId, ApplicationDbContext db) =>
+app.MapPost("/work_proposals", async (WorkProposal workProposal, ApplicationDbContext db) =>
 {
-    var workProposal = new WorkProposal
+    if (workProposal == null)
     {
-        proposal_name = proposalName,
-        category = category,
-        necessary_skills = necessarySkills,
-        years_of_experience = yearsOfExperience,
-        description = description,
-        total_hours = totalHours,
-        fk_user_id = fkUserId,
-    };
+        return Results.BadRequest("Proposal data is missing.");
+    }
 
-    db.WorkProposals.Add(workProposal);
-    await db.SaveChangesAsync();
-    return Results.Created($"/work_proposals/{workProposal.proposal_id}", workProposal);
+    try
+    {
+        db.WorkProposals.Add(workProposal);
+        await db.SaveChangesAsync();
+        return Results.Created($"/work_proposals/{workProposal.proposal_id}", workProposal);
+    }
+    catch (Exception ex)
+    {
+        // Log any error that occurs
+        Console.WriteLine($"Error creating proposal: {ex.Message}");
+        return Results.StatusCode(500);
+    }
 });
 
 // GET ALL WORK PROPOSALS
@@ -371,20 +374,19 @@ app.MapGet("/work_proposal/{id}", async (int id, ApplicationDbContext db) =>
 });
 
 // UPDATE WORK PROPOSAL
-app.MapPut("/work_proposal/{id}", async (int id, string proposalName, string category, string necessarySkills, int yearsOfExperience, string description, int totalHours, int fkUserId, ApplicationDbContext db) =>
+app.MapPut("/work_proposals/{id}", async (int id, WorkProposal workProposal, ApplicationDbContext db) =>
 {
     var existingProposal = await db.WorkProposals.FindAsync(id);
     if (existingProposal == null)
-        return Results.NotFound("Perfil não encontrado.");
+        return Results.NotFound("Proposal not found.");
 
-    existingProposal.proposal_name = proposalName;
-    existingProposal.category = category;
-    existingProposal.necessary_skills = necessarySkills;
-    existingProposal.years_of_experience = yearsOfExperience;
-    existingProposal.description = description;
-    existingProposal.total_hours = totalHours;
-    existingProposal.fk_user_id = fkUserId;
-
+    existingProposal.proposal_name = workProposal.proposal_name;
+    existingProposal.category = workProposal.category;
+    existingProposal.necessary_skills = workProposal.necessary_skills;
+    existingProposal.years_of_experience = workProposal.years_of_experience;
+    existingProposal.description = workProposal.description;
+    existingProposal.total_hours = workProposal.total_hours;
+    existingProposal.fk_user_id = workProposal.fk_user_id;
 
     await db.SaveChangesAsync();
     return Results.Ok(existingProposal);
