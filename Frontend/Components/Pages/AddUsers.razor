@@ -26,7 +26,7 @@
     </div>
 
     <div class="form-group">
-        <label for="password">Pasword::</label>
+        <label for="password">Pasword:</label>
         <InputText id="password" type="password" class="form-control" @bind-Value="userModel.Password" />
     </div>
 
@@ -39,11 +39,12 @@
         </InputSelect>
     </div>
 
-
-    <button type="submit" class="btn btn-primary mt-2">Save</button>
-    <NavLink  class="btn btn-secondary ms-2" href="user-info">
+    <div>
+    <button style="margin-top: 10px" type="submit" class="btn btn-primary">Save</button>
+    <NavLink style="margin-top: 10px"  class="btn btn-secondary ms-2" href="user-info">
         Cancel
     </NavLink>
+    </div>
 </EditForm>
 
 @if (!string.IsNullOrEmpty(successMessage))

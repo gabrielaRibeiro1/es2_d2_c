@@ -30,14 +30,7 @@ else
             <InputText id="password" @bind-Value="_user.Password" type="password" class="form-control" placeholder="Leave blank to keep current" />
         </div>
 
-        <div class="mb-3">
-            <label for="role">Role</label>
-            <InputSelect id="role" class="form-control" @bind-Value="_user.RoleId">
-                <option value="1">Admin</option>
-                <option value="2">UserManager</option>
-                <option value="3">User</option>
-            </InputSelect>
-        </div>
+  
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
@@ -70,10 +63,11 @@ else
         try
         {
             // Usa o método do ApiHelper que faz PUT como JSON
-            var success = await ApiHelper.PostToApiAsync("update_user/" + UserId, _user!);
+            var success = await ApiHelper.PostToApiAsync("update_user2/" + UserId, _user!);
             if (success)
             {
                 NavigationManager.NavigateTo("user-info");
+                _errorMessage = "SUCESSO";
             }
             else
             {

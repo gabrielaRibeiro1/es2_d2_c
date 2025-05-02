@@ -1,7 +1,8 @@
-using ESOF.Factories;
+
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
+using Frontend.Models;
 using Helpers.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -78,73 +79,7 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
     });
 });
 
-app.MapDelete("/delete_user/{username}", async (string username, ApplicationDbContext db) =>
-{
-    // Find user by username
-    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
-    if (user == null)
-    {
-        return Results.NotFound("User not found.");
-    }
 
-    // Remove user from database
-    db.Users.Remove(user);
-    await db.SaveChangesAsync();
-
-    return Results.Ok("User deleted successfully.");
-});
-app.MapPut("/update_user/{username}", async (string username, string? newPassword, int? newRoleId, ApplicationDbContext db) =>
-{
-    // Find user by username
-    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
-    if (user == null)
-    {
-        return Results.NotFound("User not found.");
-    }
-
-    // Update password if provided
-    if (!string.IsNullOrEmpty(newPassword))
-    {
-        PasswordHelper.CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
-        user.passwordHash = passwordHash;
-        user.passwordSalt = passwordSalt;
-    }
-
-    // Update role if provided
-    if (newRoleId.HasValue)
-    {
-        user.fk_role_id = newRoleId.Value;
-    }
-
-    await db.SaveChangesAsync();
-    return Results.Ok("User updated successfully.");
-});
-
-
-app.MapPost("/logout", () =>
-{
-   
-    return Results.Ok("User logged out successfully.");
-});
-
-
-app.MapGet("/get_user/{username}", async (string username, ApplicationDbContext db) =>
-{
-    // Find user by username
-    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
-    if (user == null)
-    {
-        return Results.NotFound("User not found.");
-    }
-
-    // Return user info
-    return Results.Ok(new
-    {
-        user.user_id,
-        user.username,
-        user.fk_role_id
-    });
-});
 
 
 
@@ -261,6 +196,27 @@ app.MapPost("/add_user", async (UserAddModel model, ApplicationDbContext db) =>
     .Produces<User>(StatusCodes.Status201Created)
     .Produces(StatusCodes.Status400BadRequest);
 
+
+app.MapPut("/update_user2/{id:int}", async (int id, UserUpdateModel updateData, ApplicationDbContext db) =>
+{
+    var user = await db.Users.FirstOrDefaultAsync(u => u.user_id == id);
+    if (user == null)
+    {
+        return Results.NotFound("Usuário não encontrado.");
+    }
+
+    // Atualiza a senha, se fornecida
+    if (!string.IsNullOrEmpty(updateData.Password))
+    {
+        PasswordHelper.CreatePasswordHash(updateData.Password, out byte[] passwordHash, out byte[] passwordSalt);
+        user.passwordHash = passwordHash;
+        user.passwordSalt = passwordSalt;
+    }
+
+
+    await db.SaveChangesAsync();
+    return Results.Ok("Usuário atualizado com sucesso.");
+});
 
 app.UseHttpsRedirection();
 
