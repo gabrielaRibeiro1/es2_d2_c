@@ -327,14 +327,22 @@ app.MapPut("/skills/{id}", async (int id, [FromBody] Skill updatedSkill, Applica
 // Endpoint to delete a skill
 app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
 {
-    var skill = await db.Skills.FindAsync(id);
+    var skill = await db.Skills
+        .Include(s => s.UserSkills)
+        .FirstOrDefaultAsync(s => s.skill_id == id);
+
     if (skill == null)
-        return Results.NotFound();
+        return Results.NotFound("Skill not found.");
+
+    if (skill.UserSkills.Any())
+        return Results.BadRequest("Cannot delete skill because it is associated with one or more professionals.");
 
     db.Skills.Remove(skill);
     await db.SaveChangesAsync();
+
     return Results.NoContent();
-}); 
+});
+
 
 
 // CREATE WORK PROPOSAL
