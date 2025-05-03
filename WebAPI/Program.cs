@@ -80,25 +80,37 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
 });
 
 
-// CRUD TalentProfiles
+// GET /talent_profiles — Apenas perfis públicos
 app.MapGet("/talent_profiles", async (ApplicationDbContext db) =>
 {
-    var talentProfiles = await db.TalentProfiles.ToListAsync();
-    return Results.Ok(talentProfiles);
+    var publicProfiles = await db.TalentProfiles
+        .Where(p => p.privacy == 0)
+        .ToListAsync();
+
+    return Results.Ok(publicProfiles);
 });
 
+// GET /talent_profiles/{id} — Só retorna se for público
 app.MapGet("/talent_profiles/{id}", async (int id, ApplicationDbContext db) =>
 {
-    var talentProfile = await db.TalentProfiles.FindAsync(id);
-    return talentProfile == null ? Results.NotFound() : Results.Ok(talentProfile);
+    var profile = await db.TalentProfiles.FindAsync(id);
+    if (profile == null)
+        return Results.NotFound();
+
+    if (profile.privacy != 0)
+        return Results.Unauthorized(); 
+
+    return Results.Ok(profile);
 });
+
 
 app.MapPost("/talent_profiles", async (
     string profile_name,
     string country,
     string email,
     float price,
-    float privacy,
+    int privacy,
+    string category,
     int fk_user_id,
     ApplicationDbContext db) =>
 {
@@ -109,6 +121,7 @@ app.MapPost("/talent_profiles", async (
         email = email,
         price = price,
         privacy = privacy,
+        category = category,
         fk_user_id = fk_user_id,
     };
 
@@ -123,7 +136,8 @@ app.MapPut("/talent_profiles/{id}", async (
     string country,
     string email,
     float price,
-    float privacy,
+    int privacy,
+    string category,
     int fk_user_id,
     ApplicationDbContext db) =>
 {
@@ -137,6 +151,7 @@ app.MapPut("/talent_profiles/{id}", async (
     existingProfile.email = email;
     existingProfile.price = price;
     existingProfile.privacy = privacy;
+    existingProfile.category = category;
     existingProfile.fk_user_id = fk_user_id;
 
 
