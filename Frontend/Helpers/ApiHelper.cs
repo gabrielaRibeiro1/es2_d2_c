@@ -104,6 +104,48 @@ public class ApiHelper
             throw;
         }
     }
+    
+    public async Task<bool> PostToApiAsync2<T>(string endpoint, T data)
+    {
+        try
+        {
+            _logger.LogInformation($"Posting data to {endpoint} (PostToApiAsync2)");
+            var response = await _httpClient.PostAsJsonAsync(endpoint, data);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"API Error: {response.StatusCode} - {errorContent}");
+            }
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in PostToApiAsync2 for endpoint {endpoint}");
+            throw new ApplicationException($"Error posting data to {endpoint}: {ex.Message}", ex);
+        }
+    }
+    
+    public async Task<bool> PutToApiAsync3<T>(string endpoint, T data)
+    {
+        try
+        {
+            _logger.LogInformation($"Updating data at {endpoint} (PutToApiAsync2)");
+            var response = await _httpClient.PutAsJsonAsync(endpoint, data);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"API Error: {response.StatusCode} - {errorContent}");
+            }
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in PutToApiAsync2 for endpoint {endpoint}");
+            throw new ApplicationException($"Error updating data at {endpoint}: {ex.Message}", ex);
+        }
+    }
+    
+   
 }
 
 public class ApiException : Exception

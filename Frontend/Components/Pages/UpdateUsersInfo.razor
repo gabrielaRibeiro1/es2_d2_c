@@ -63,7 +63,7 @@ else
         try
         {
             // Usa o método do ApiHelper que faz PUT como JSON
-            var success = await ApiHelper.PostToApiAsync("update_user2/" + UserId, _user!);
+            var success = await ApiHelper.PutToApiAsync3("update_user2/" + UserId, _user!);
             if (success)
             {
                 NavigationManager.NavigateTo("user-info");
