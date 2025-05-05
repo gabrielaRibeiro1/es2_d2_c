@@ -52,6 +52,8 @@ public partial class ApplicationDbContext : DbContext
     public DbSet<UserSkill> UserSkills { get; set; }
     public DbSet<WorkProposal> WorkProposals { get; set; }
     public DbSet<Experience> Experiences { get; set; }
+    public DbSet<TalentProfileSkill> TalentProfileSkills { get; set; }
+
 
     // OnModelCreating for configuring relationships and keys
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -151,6 +153,13 @@ public partial class ApplicationDbContext : DbContext
             .HasForeignKey(tp => tp.fk_user_id)
             .HasConstraintName("FK_TalentProfiles_Users_fk_user_id")
             .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<TalentProfile>()
+            .HasMany(p => p.TalentProfileSkills)
+            .WithOne(s => s.TalentProfile)
+            .HasForeignKey(s => s.TalentProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
 
         // EXPERIENCE
         modelBuilder.Entity<Experience>()
@@ -165,6 +174,19 @@ public partial class ApplicationDbContext : DbContext
             .WithMany(tp => tp.Experiences)
             .HasForeignKey(e => e.fk_profile_id)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<TalentProfileSkill>()
+            .HasKey(tps => tps.Id);
+
+        modelBuilder.Entity<TalentProfileSkill>()
+            .HasOne(tps => tps.TalentProfile)
+            .WithMany(tp => tp.TalentProfileSkills)
+            .HasForeignKey(tps => tps.TalentProfileId);
+
+        modelBuilder.Entity<TalentProfileSkill>()
+            .HasOne(tps => tps.Skill)
+            .WithMany()
+            .HasForeignKey(tps => tps.SkillId);
     }
 
 }

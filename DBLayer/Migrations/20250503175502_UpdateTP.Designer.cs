@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ESOF.WebApp.DBLayer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250503160300_UpdateDBtables")]
-    partial class UpdateDBtables
+    [Migration("20250503175502_UpdateTP")]
+    partial class UpdateTP
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -132,6 +132,32 @@ namespace ESOF.WebApp.DBLayer.Migrations
                     b.ToTable("TalentProfiles");
                 });
 
+            modelBuilder.Entity("ESOF.WebApp.DBLayer.Entities.TalentProfileSkill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("SkillId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TalentProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("YearsOfExperience")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SkillId");
+
+                    b.HasIndex("TalentProfileId");
+
+                    b.ToTable("TalentProfileSkills");
+                });
+
             modelBuilder.Entity("ESOF.WebApp.DBLayer.Entities.User", b =>
                 {
                     b.Property<int>("user_id")
@@ -240,6 +266,25 @@ namespace ESOF.WebApp.DBLayer.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ESOF.WebApp.DBLayer.Entities.TalentProfileSkill", b =>
+                {
+                    b.HasOne("ESOF.WebApp.DBLayer.Entities.Skill", "Skill")
+                        .WithMany()
+                        .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ESOF.WebApp.DBLayer.Entities.TalentProfile", "TalentProfile")
+                        .WithMany("TalentProfileSkills")
+                        .HasForeignKey("TalentProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Skill");
+
+                    b.Navigation("TalentProfile");
+                });
+
             modelBuilder.Entity("ESOF.WebApp.DBLayer.Entities.User", b =>
                 {
                     b.HasOne("ESOF.WebApp.DBLayer.Entities.Role", "Role")
@@ -294,6 +339,8 @@ namespace ESOF.WebApp.DBLayer.Migrations
             modelBuilder.Entity("ESOF.WebApp.DBLayer.Entities.TalentProfile", b =>
                 {
                     b.Navigation("Experiences");
+
+                    b.Navigation("TalentProfileSkills");
                 });
 
             modelBuilder.Entity("ESOF.WebApp.DBLayer.Entities.User", b =>

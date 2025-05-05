@@ -21,4 +21,6 @@ public class TalentProfile
     
     //one-to-many
     public ICollection<Experience> Experiences { get; set; }
+    public ICollection<TalentProfileSkill> TalentProfileSkills { get; set; }
+
 }

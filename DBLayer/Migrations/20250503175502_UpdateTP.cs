@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ESOF.WebApp.DBLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateDBtables : Migration
+    public partial class UpdateTP : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -156,6 +156,33 @@ namespace ESOF.WebApp.DBLayer.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "TalentProfileSkills",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TalentProfileId = table.Column<int>(type: "integer", nullable: false),
+                    SkillId = table.Column<int>(type: "integer", nullable: false),
+                    YearsOfExperience = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TalentProfileSkills", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TalentProfileSkills_Skills_SkillId",
+                        column: x => x.SkillId,
+                        principalTable: "Skills",
+                        principalColumn: "skill_id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TalentProfileSkills_TalentProfiles_TalentProfileId",
+                        column: x => x.TalentProfileId,
+                        principalTable: "TalentProfiles",
+                        principalColumn: "profile_id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Experiences_fk_profile_id",
                 table: "Experiences",
@@ -165,6 +192,16 @@ namespace ESOF.WebApp.DBLayer.Migrations
                 name: "IX_TalentProfiles_fk_user_id",
                 table: "TalentProfiles",
                 column: "fk_user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TalentProfileSkills_SkillId",
+                table: "TalentProfileSkills",
+                column: "SkillId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TalentProfileSkills_TalentProfileId",
+                table: "TalentProfileSkills",
+                column: "TalentProfileId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_fk_role_id",
@@ -187,6 +224,9 @@ namespace ESOF.WebApp.DBLayer.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Experiences");
+
+            migrationBuilder.DropTable(
+                name: "TalentProfileSkills");
 
             migrationBuilder.DropTable(
                 name: "UserSkills");
