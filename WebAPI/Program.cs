@@ -49,8 +49,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-
-
 app.MapPost("/create_account", async (string username, string password, int fk_role_id, ApplicationDbContext db) =>
 {
     // Step 1: Check if the password is provided
@@ -84,8 +82,6 @@ app.MapPost("/create_account", async (string username, string password, int fk_r
     return Results.Created($"/users/{newUser.user_id}", newUser);
 });
 
-
-
 app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext db) =>
 {
     // Verificar se login está a ser recebido corretamente
@@ -100,7 +96,6 @@ app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext d
     if (!PasswordHelper.VerifyPassword(login.Password, user.passwordHash, user.passwordSalt))
         return Results.Unauthorized();
     
-    
     return Results.Ok(new
     {
         user.user_id,
@@ -109,8 +104,6 @@ app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext d
     });
 });
 
-
-   
 // endpoint para retornar dados do user loggado
 app.MapGet("/me", (HttpContext httpContext) =>
     {
