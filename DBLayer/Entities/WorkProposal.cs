@@ -12,9 +12,9 @@ public class WorkProposal
     public string proposal_name { get; set; }
     public string category { get; set; }
     public string necessary_skills { get; set; }
-    public string years_of_experience { get; set; }
+    public int years_of_experience { get; set; }
     public string description { get; set; }
-    public string total_hours { get; set; }
+    public int total_hours { get; set; }
     
     //many-to-one
     public int fk_user_id { get; set; }

@@ -1,0 +1,37 @@
+﻿@page "/update-user-info"
+@using Frontend.Helpers
+@using Frontend.Models
+@using global::Helpers.Models
+@inject ApiHelper ApiHelper
+
+<PageTitle>Update User Info</PageTitle>
+
+@if (_user == null)
+{
+<p><em>Loading...</em></p>
+}
+else
+{
+<EditForm Model="_user" >
+
+    <div class="mb-3">
+        <label for="password">Password:</label>
+        <InputText id="password" @bind-Value="_user.Password" type="password" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label for="roleId">Role ID:</label>
+        <InputNumber id="roleId" @bind-Value="_user.RoleId" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+</EditForm>
+}
+
+@code {
+private UserUpdateModel? _user;
+
+
+}
+
+

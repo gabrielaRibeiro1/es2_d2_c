@@ -6,7 +6,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ESOF.WebApp.DBLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateUserMode : Migration
+    public partial class UpdateDB : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,8 +17,7 @@ namespace ESOF.WebApp.DBLayer.Migrations
                 {
                     role_id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    role = table.Column<string>(type: "text", nullable: false),
-                    role_level = table.Column<int>(type: "integer", nullable: false)
+                    role = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -72,8 +71,7 @@ namespace ESOF.WebApp.DBLayer.Migrations
                     email = table.Column<string>(type: "text", nullable: false),
                     price = table.Column<float>(type: "real", nullable: false),
                     privacy = table.Column<float>(type: "real", nullable: false),
-                    fk_user_id = table.Column<int>(type: "integer", nullable: false),
-                    user_id = table.Column<int>(type: "integer", nullable: true)
+                    fk_user_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -84,11 +82,6 @@ namespace ESOF.WebApp.DBLayer.Migrations
                         principalTable: "Users",
                         principalColumn: "user_id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_TalentProfiles_Users_user_id",
-                        column: x => x.user_id,
-                        principalTable: "Users",
-                        principalColumn: "user_id");
                 });
 
             migrationBuilder.CreateTable(
@@ -124,9 +117,9 @@ namespace ESOF.WebApp.DBLayer.Migrations
                     proposal_name = table.Column<string>(type: "text", nullable: false),
                     category = table.Column<string>(type: "text", nullable: false),
                     necessary_skills = table.Column<string>(type: "text", nullable: false),
-                    years_of_experience = table.Column<string>(type: "text", nullable: false),
+                    years_of_experience = table.Column<int>(type: "integer", nullable: false),
                     description = table.Column<string>(type: "text", nullable: false),
-                    total_hours = table.Column<string>(type: "text", nullable: false),
+                    total_hours = table.Column<int>(type: "integer", nullable: false),
                     fk_user_id = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -171,11 +164,6 @@ namespace ESOF.WebApp.DBLayer.Migrations
                 name: "IX_TalentProfiles_fk_user_id",
                 table: "TalentProfiles",
                 column: "fk_user_id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TalentProfiles_user_id",
-                table: "TalentProfiles",
-                column: "user_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_fk_role_id",

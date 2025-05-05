@@ -1,7 +1,8 @@
-
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
+using Microsoft.AspNetCore.Mvc;
+using ESOF.WebApp.Services.Reports;
 using Frontend.Models;
 using Helpers.Models;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add services to the container.
+builder.Services.AddScoped<CategoryCountryReport>();
+builder.Services.AddScoped<SkillReport>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -80,6 +82,146 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
 });
 
 
+// CRUD TalentProfiles
+app.MapGet("/talent_profiles", async (ApplicationDbContext db) =>
+{
+    var talentProfiles = await db.TalentProfiles.ToListAsync();
+    return Results.Ok(talentProfiles);
+});
+
+app.MapGet("/talent_profiles/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var talentProfile = await db.TalentProfiles.FindAsync(id);
+    return talentProfile == null ? Results.NotFound() : Results.Ok(talentProfile);
+});
+
+app.MapPost("/talent_profiles", async (
+    string profile_name,
+    string country,
+    string email,
+    float price,
+    float privacy,
+    int fk_user_id,
+    ApplicationDbContext db) =>
+{
+    var talentProfile = new TalentProfile
+    {
+        profile_name = profile_name,
+        country = country,
+        email = email,
+        price = price,
+        privacy = privacy,
+        fk_user_id = fk_user_id,
+    };
+
+    db.TalentProfiles.Add(talentProfile);
+    await db.SaveChangesAsync();
+    return Results.Created($"/talent_profiles/{talentProfile.profile_id}", talentProfile);
+});
+
+app.MapPut("/talent_profiles/{id}", async (
+    int id,
+    string profile_name,
+    string country,
+    string email,
+    float price,
+    float privacy,
+    int fk_user_id,
+    ApplicationDbContext db) =>
+{
+    var existingProfile = await db.TalentProfiles.FindAsync(id);
+    if (existingProfile == null)
+        return Results.NotFound("Perfil não encontrado.");
+
+    // Atualiza apenas os campos permitidos
+    existingProfile.profile_name = profile_name;
+    existingProfile.country = country;
+    existingProfile.email = email;
+    existingProfile.price = price;
+    existingProfile.privacy = privacy;
+    existingProfile.fk_user_id = fk_user_id;
+
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existingProfile);
+});
+
+app.MapDelete("/talent_profiles/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var talentProfile = await db.TalentProfiles.FindAsync(id);
+    if (talentProfile == null) return Results.NotFound();
+
+    db.TalentProfiles.Remove(talentProfile);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.MapDelete("/delete_user/{username}", async (string username, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Remove user from database
+    db.Users.Remove(user);
+    await db.SaveChangesAsync();
+
+    return Results.Ok("User deleted successfully.");
+});
+
+app.MapPut("/update_user/{username}", async (string username, string? newPassword, int? newRoleId, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Update password if provided
+    if (!string.IsNullOrEmpty(newPassword))
+    {
+        PasswordHelper.CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
+        user.passwordHash = passwordHash;
+        user.passwordSalt = passwordSalt;
+    }
+
+    // Update role if provided
+    if (newRoleId.HasValue)
+    {
+        user.fk_role_id = newRoleId.Value;
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Ok("User updated successfully.");
+});
+
+app.MapPost("/logout", () =>
+{
+   
+    return Results.Ok("User logged out successfully.");
+});
+
+app.MapGet("/get_user/{username}", async (string username, ApplicationDbContext db) =>
+{
+    // Find user by username
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    if (user == null)
+    {
+        return Results.NotFound("User not found.");
+    }
+
+    // Return user info
+    return Results.Ok(new
+    {
+        user.user_id,
+        user.username,
+        user.fk_role_id
+    });
+});
 
 
 
@@ -101,25 +243,19 @@ app.MapGet("/get_all_users", async (ApplicationDbContext db) =>
     return Results.Ok(users);
 });
 
-
-
 app.MapDelete("/delete_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
 {
-    
     // Encontrar usuário pelo ID
     var user = await db.Users.FindAsync(id);
     if (user == null)
     {
-        Console.WriteLine("user not found");
         return Results.NotFound("User not found.");
     }
-    Console.WriteLine("found");
 
+    // Remover usuário do banco de dados
     db.Users.Remove(user);
-    Console.WriteLine("removed");
     await db.SaveChangesAsync();
 
-    Console.WriteLine($"done {id}");
     return Results.Ok($"User with ID {id} deleted successfully.");
 });
 
@@ -139,7 +275,7 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
         user.passwordHash = passwordHash;
         user.passwordSalt = passwordSalt;
     }
-    
+
     // Atualiza a role, se fornecida
     if (newRoleId.HasValue)
     {
@@ -217,6 +353,149 @@ app.MapPut("/update_user2/{id:int}", async (int id, UserUpdateModel updateData, 
     await db.SaveChangesAsync();
     return Results.Ok("Usuário atualizado com sucesso.");
 });
+
+// Endpoint to create a skill
+app.MapPost("/skills", async ([FromBody] Skill skill, ApplicationDbContext db) =>
+{
+    db.Skills.Add(skill);
+    await db.SaveChangesAsync();
+
+    return Results.Ok($"Skill '{skill.name}' criada com sucesso!");
+});
+
+
+// Endpoint to get all skills
+app.MapGet("/skills", async (ApplicationDbContext db) =>
+{
+    return await db.Skills.Select(s => new { s.skill_id, s.name, s.area }).ToListAsync();
+});
+
+// Endpoint to get a skill by ID
+app.MapGet("/skills/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var skill = await db.Skills.Where(s => s.skill_id == id)
+        .Select(s => new { s.skill_id, s.name, s.area })
+        .FirstOrDefaultAsync();
+    return skill == null ? Results.NotFound() : Results.Ok(skill);
+});
+
+// Endpoint to update a skill
+app.MapPut("/skills/{id}", async (int id, [FromBody] Skill updatedSkill, ApplicationDbContext db) =>
+{
+    var skill = await db.Skills.FindAsync(id);
+    if (skill == null)
+        return Results.NotFound("Skill não encontrada!");
+
+    // Atualiza os campos
+    skill.name = updatedSkill.name;
+    skill.area = updatedSkill.area;
+
+    await db.SaveChangesAsync();
+    return Results.Ok($"Skill {id} atualizada com sucesso!");
+});
+
+
+// Endpoint to delete a skill
+app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var skill = await db.Skills.FindAsync(id);
+    if (skill == null)
+        return Results.NotFound();
+
+    db.Skills.Remove(skill);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}); 
+
+
+// CREATE WORK PROPOSAL
+app.MapPost("/work_proposals", async (WorkProposal workProposal, ApplicationDbContext db) =>
+{
+    if (workProposal == null)
+    {
+        return Results.BadRequest("Proposal data is missing.");
+    }
+
+    try
+    {
+        db.WorkProposals.Add(workProposal);
+        await db.SaveChangesAsync();
+        return Results.Created($"/work_proposals/{workProposal.proposal_id}", workProposal);
+    }
+    catch (Exception ex)
+    {
+        // Log any error that occurs
+        Console.WriteLine($"Error creating proposal: {ex.Message}");
+        return Results.StatusCode(500);
+    }
+});
+
+// GET ALL WORK PROPOSALS
+app.MapGet("/work_proposals", async (ApplicationDbContext db) =>
+{
+    var workProposals = await db.WorkProposals.ToListAsync();
+    return Results.Ok(workProposals);
+});
+
+// GET WORK PROPOSAL BY ID
+app.MapGet("/work_proposal/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var workProposal = await db.WorkProposals.FindAsync(id);
+    return workProposal == null ? Results.NotFound() : Results.Ok(workProposal);
+});
+
+// UPDATE WORK PROPOSAL
+app.MapPut("/work_proposals/{id}", async (int id, WorkProposal workProposal, ApplicationDbContext db) =>
+{
+    var existingProposal = await db.WorkProposals.FindAsync(id);
+    if (existingProposal == null)
+        return Results.NotFound("Proposal not found.");
+
+    existingProposal.proposal_name = workProposal.proposal_name;
+    existingProposal.category = workProposal.category;
+    existingProposal.necessary_skills = workProposal.necessary_skills;
+    existingProposal.years_of_experience = workProposal.years_of_experience;
+    existingProposal.description = workProposal.description;
+    existingProposal.total_hours = workProposal.total_hours;
+    existingProposal.fk_user_id = workProposal.fk_user_id;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(existingProposal);
+});
+
+// DELETE WORK PROPOSAL
+app.MapDelete("/work_proposals/{id}", async (int id, ApplicationDbContext db) =>
+{
+    var workProposal = await db.WorkProposals.FindAsync(id);
+    if (workProposal == null) return Results.NotFound();
+
+    db.WorkProposals.Remove(workProposal);
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+app.MapGet("/reports/category-country", async (ApplicationDbContext db) =>
+    {
+        var report = new CategoryCountryReport(db).GenerateReport();
+        return Results.Ok(report);
+    })
+    .WithName("GetCategoryCountryReport")
+    .WithSummary("Obtém o preço médio mensal por categoria e país.")
+    .WithDescription("Baseado em 176 horas por mês, agrupa talentos por categoria e país.")
+    .Produces<Dictionary<string, float>>(StatusCodes.Status200OK);
+
+app.MapGet("/reports/skill", async (ApplicationDbContext db) =>
+    {
+        var report = new SkillReport(db).GenerateReport();
+        return Results.Ok(report);
+    })
+    .WithName("GetSkillReport")
+    .WithSummary("Obtém o preço médio mensal por skill.")
+    .WithDescription("Baseado em 176 horas por mês, agrupa talentos pelas suas skills.")
+    .Produces<Dictionary<string, float>>(StatusCodes.Status200OK);
+
+
 
 app.UseHttpsRedirection();
 

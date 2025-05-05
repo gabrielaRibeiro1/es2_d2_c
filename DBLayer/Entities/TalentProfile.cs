@@ -13,6 +13,7 @@ public class TalentProfile
     public string email { get; set; }
     public float price { get; set; }
     public float privacy { get; set; }
+    public string category { get; set; }
     
     //many-to-one
     public int fk_user_id { get; set; }

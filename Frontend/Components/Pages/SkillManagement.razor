@@ -1,0 +1,309 @@
+﻿@page "/SkillManagement"
+@using Microsoft.AspNetCore.Components.Web
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@inject ApiHelper apiHelper
+@using System.ComponentModel.DataAnnotations
+@using Frontend.Helpers
+@rendermode InteractiveServer
+
+<h3>Gestão de Skills</h3>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h4>@(isEditing ? "Editar Skill" : "Criar Nova Skill")</h4>
+
+        <EditForm Model="@newSkill" OnValidSubmit="@((isEditing) ? UpdateSkill : CreateSkill)" FormName="createSkillForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="skillName">Nome *</label>
+                <InputText id="skillName"
+                           @bind-Value="newSkill.name"
+                           class="form-control"
+                           aria-label="Nome da skill"
+                           aria-required="true"
+                           placeholder="Digite o nome da skill" />
+                <ValidationMessage For="@(() => newSkill.name)" />
+            </div>
+
+            <div class="form-group">
+                <label for="skillArea">Área *</label>
+                <InputText id="skillArea"
+                           @bind-Value="newSkill.area"
+                           class="form-control"
+                           aria-label="Área da skill"
+                           aria-required="true"
+                           placeholder="Digite a área da skill" />
+                <ValidationMessage For="@(() => newSkill.area)" />
+            </div>
+
+            <button type="submit" class="btn btn-success mt-3" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    <span> A Guardar...</span>
+                }
+                else
+                {
+                    @if (isEditing)
+                    {
+                        <span class="oi oi-check"></span> @("Guardar Alterações")
+                    }
+                    else
+                    {
+                        <span class="oi oi-plus"></span> @("Criar Skill")
+                    }
+                }
+            </button>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="alert alert-success mt-3">@successMessage</div>
+            }
+        </EditForm>
+    </div>
+</div>
+
+<h4 class="mt-5">Lista de Skills</h4>
+
+<table class="table table-striped table-hover">
+    <thead class="thead-dark">
+    <tr>
+        <th>Nome</th>
+        <th>Área</th>
+        <th>Ações</th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (isLoading && skills == null)
+    {
+        <tr>
+            <td colspan="3" class="text-center text-muted">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                Carregando...
+            </td>
+        </tr>
+    }
+    else if (skills == null || !skills.Any())
+    {
+        <tr>
+            <td colspan="3" class="text-center text-muted">Nenhuma skill encontrada</td>
+        </tr>
+    }
+    else
+    {
+        @foreach (var skill in skills)
+        {
+            <tr>
+                <td>@skill.name</td>
+                <td>@skill.area</td>
+                <td>
+                    <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-primary mr-2">
+                        <span class="oi oi-pencil"></span> Editar
+                    </button>
+                    <button @onclick="@(() => DeleteSkill(skill.skill_id))" class="btn btn-sm btn-danger">
+                        <span class="oi oi-trash"></span> Excluir
+                    </button>
+                </td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>
+
+@code {
+    private List<Skill>? skills;
+    private Skill newSkill = new();
+    private bool isLoading = false;
+    private bool isEditing = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSkills();
+    }
+
+    private async Task LoadSkills()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            var response = await Http.GetAsync("/skills");
+
+            if (response.IsSuccessStatusCode)
+            {
+                skills = await response.Content.ReadFromJsonAsync<List<Skill>>();
+                errorMessage = string.Empty;
+            }
+            else
+            {
+                errorMessage = $"Erro ao carregar: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
+            }
+            if (!string.IsNullOrEmpty(successMessage))
+            {
+                await JSRuntime.InvokeVoidAsync("console.log", successMessage);
+            }
+        }
+    }
+
+    private async Task CreateSkill()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            StateHasChanged();
+
+            var response = await Http.PostAsJsonAsync("/skills", newSkill);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Skill criada com sucesso!";
+                await LoadSkills();
+                newSkill = new Skill();
+                isEditing = false;
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = $"Erro: {response.StatusCode}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateSkill()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+
+            var response = await Http.PutAsJsonAsync($"/skills/{newSkill.skill_id}", newSkill);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "Skill atualizada com sucesso!";
+                await LoadSkills();
+                newSkill = new Skill();
+                isEditing = false;
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(errorMessage))
+                    errorMessage = $"Erro: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task EditSkill(Skill skill)
+    {
+        newSkill = new Skill
+        {
+            skill_id = skill.skill_id,
+            name = skill.name,
+            area = skill.area
+        };
+        isEditing = true;
+        successMessage = "Edite os dados acima e clique em Guardar";
+        StateHasChanged();
+    }
+
+    private async Task DeleteSkill(int skillId)
+    {
+        try
+        {
+            if (await JSRuntime.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir esta skill?"))
+            {
+                isLoading = true;
+                StateHasChanged();
+
+                var response = await Http.DeleteAsync($"/skills/{skillId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    successMessage = "Skill excluída com sucesso!";
+                    await LoadSkills();
+                }
+                else
+                {
+                    errorMessage = await response.Content.ReadAsStringAsync();
+                    if (string.IsNullOrEmpty(errorMessage))
+                    {
+                        errorMessage = $"Erro ao excluir: {response.StatusCode}";
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public class Skill
+    {
+        public int skill_id { get; set; }
+
+        [Required(ErrorMessage = "Nome da skill é obrigatório")]
+        public string name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Área da skill é obrigatória")]
+        public string area { get; set; } = string.Empty;
+    }
+}

@@ -35,6 +35,4 @@ public static class EnvFileHelper
     {
         return Env.GetString(key);
     }
-    
-    
 }

@@ -1,3 +1,5 @@
+
+
 namespace Helpers.Models
 {
     public class UserViewModel
