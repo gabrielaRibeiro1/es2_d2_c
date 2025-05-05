@@ -3,6 +3,9 @@ using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
 using Helpers.Models;
 using Microsoft.EntityFrameworkCore;
+using ESOF.WebApp.DBLayer.DTOs; // importa o DTO
+using Microsoft.AspNetCore.Mvc; // necessário para [FromBody]
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,23 +93,16 @@ app.MapGet("/talent_profiles/{id}", async (int id, ApplicationDbContext db) =>
     return talentProfile == null ? Results.NotFound() : Results.Ok(talentProfile);
 });
 
-app.MapPost("/talent_profiles", async (
-    string profile_name,
-    string country,
-    string email,
-    float price,
-    float privacy,
-    int fk_user_id,
-    ApplicationDbContext db) =>
+app.MapPost("/talent_profiles", async ([FromBody] TalentProfileDto dto, ApplicationDbContext db) =>
 {
     var talentProfile = new TalentProfile
     {
-        profile_name = profile_name,
-        country = country,
-        email = email,
-        price = price,
-        privacy = privacy,
-        fk_user_id = fk_user_id,
+        profile_name = dto.profile_name,
+        country = dto.country,
+        email = dto.email,
+        price = dto.price,
+        privacy = dto.privacy,
+        fk_user_id = dto.fk_user_id
     };
 
     db.TalentProfiles.Add(talentProfile);
