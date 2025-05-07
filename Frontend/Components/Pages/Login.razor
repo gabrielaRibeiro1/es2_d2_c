@@ -1,0 +1,88 @@
+﻿@page "/Login"
+
+@using Frontend.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@using Frontend.Helpers
+
+@rendermode InteractiveServer
+
+@inject ApiHelper ApiHelper
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+<EditForm Model="_loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="username">Username</label>
+        <InputText id="username" class="form-control" @bind-Value="_loginModel.Username" />
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <InputText id="password" type="password" class="form-control" @bind-Value="_loginModel.Password" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="text-danger">@_errorMessage</div>
+    }
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+@code {
+    private LoginModel _loginModel = new ();
+    private string _errorMessage;
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = string.Empty;
+
+        try
+        {
+            // Chama o POST /login que retorna { user_id, username, fk_role_id }
+            var result = await ApiHelper.PostToApiAsync<LoginModel, LoginResult>("/login", _loginModel);
+
+            if (result is null)
+            {
+                _errorMessage = "Resposta inválida do servidor.";
+                return;
+            }
+            
+            var customAuth = (CustomAuthenticationStateProvider)AuthProvider;
+            customAuth.MarkUserAsAuthenticated(result.Username, result.UserId, result.FkRoleId);
+
+            Navigation.NavigateTo("/");
+        }
+        catch (ApiException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            _errorMessage = "Utilizador ou password incorretos.";
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = "Ocorreu um erro ao tentar fazer login.";
+            Console.Error.WriteLine(ex);
+        }
+    }
+
+    private class LoginModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private class LoginResult
+    {
+        public int UserId { get; set; }
+        public string Username { get; set; } = default!;
+        public int FkRoleId { get; set; }
+    }
+}
