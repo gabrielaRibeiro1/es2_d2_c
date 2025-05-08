@@ -55,7 +55,7 @@
         try
         {
             
-            bool success = await ApiHelper.PostToApiAsync("/create-account", userModel);
+            bool success = await ApiHelper.PostToApiAsync("/create_account2", userModel);
             if (success)
             {
                 successMessage = "User sucessfully added!";
@@ -87,6 +87,8 @@
        
         [DataType(DataType.Password)]
         public string Password { get; set; }
+        
+        public int RoleId { get; set; }
 
        
     }
