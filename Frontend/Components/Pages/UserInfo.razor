@@ -5,6 +5,8 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @inject ApiHelper ApiHelper
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
 
 <PageTitle>User Info</PageTitle>
 
@@ -12,7 +14,10 @@
 <h1>User Info</h1>
 
 
-<button class="btn btn-primary mb-3">Add User</button>
+
+<NavLink  class="btn btn-primary mb-3" href="add-user">
+     Add User
+</NavLink>
 
 @if (_users == null)
 {
@@ -25,6 +30,7 @@ else
         <tr>
           
             <th>Username</th>
+            <th>UserId</th>
             <th>Role</th>
             <th>Actions</th>
             
@@ -36,19 +42,23 @@ else
             <tr>
                 
                 <td>@user.Username</td>
-                <td>@user.fk_role_id</td>
-                
+                <td>@user.User_id</td>
+                <td>@user.RoleName</td>
+
                 <td>
-                    <div class="d-flex gap-2"> 
-                        <button class="btn btn-secondary btn-sm" >
-                            <i class="bi bi-pencil"></i> 
-                        </button>
-                        <button class="btn btn-danger btn-sm" >
-                            <i class="bi bi-trash" @onclick="() => DeleteUserById(user.UserId)"></i> 
+                    <div class="d-flex gap-2">
+
+                        <NavLink class="btn btn-secondary btn-sm"
+                                 href="@($"update-user-info/{user.User_id}")">
+                            <i class="bi bi-pencil"></i>
+                        </NavLink>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteUserById(user.User_id)">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </td>
-                
+
+
             </tr>
         }
         </tbody>
@@ -71,6 +81,24 @@ else
     
     private async Task DeleteUserById(int userId)
     {
-        
+        try
+        {
+            bool success = await ApiHelper.DeleteFromApiAsync($"delete_user_by_id/{userId}");
+
+            if (success)
+            {
+                _users.RemoveAll(u => u.User_id == userId);
+                StateHasChanged();
+                await JSRuntime.InvokeVoidAsync("alert", "User deleted sucessfully!");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error!");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro: {ex.Message}");
+        }
     }
 }
