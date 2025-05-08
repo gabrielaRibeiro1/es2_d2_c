@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
@@ -17,6 +18,11 @@ builder.Services.AddScoped<CategoryCountryReport>();
 builder.Services.AddScoped<SkillReport>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    });
 
 var app = builder.Build();
 
@@ -78,252 +84,6 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
         user.username,
         user.fk_role_id
     });
-});
-
-//TALENT PROFILES 
-app.MapGet("/talent_profiles/list", async (ApplicationDbContext db) =>
-{
-    var publicProfiles = await db.TalentProfiles
-        .Where(p => p.privacy == 0)
-        .Select(p => new TalentProfileDto
-        {
-            ProfileId = p.profile_id,
-            ProfileName = p.profile_name,
-            Country = p.country,
-            Email = p.email,
-            Price = p.price,
-            Privacy = p.privacy,
-            Category = p.category,
-            FkUserId = p.fk_user_id,
-            Skills = p.TalentProfileSkills.Select(s => new SkillDto
-            {
-                SkillId = s.SkillId,
-                SkillName = s.Skill.name,
-                YearsOfExperience = s.YearsOfExperience
-            }).ToList()
-        })
-        .ToListAsync();
-
-    return Results.Ok(publicProfiles);
-});
-
-
-
-app.MapGet("/talent_profiles/{id}/list", async (int id, ApplicationDbContext db) =>
-{
-    var profile = await db.TalentProfiles
-        .Include(p => p.TalentProfileSkills)
-        .ThenInclude(tps => tps.Skill)
-        .FirstOrDefaultAsync(p => p.profile_id == id);
-
-    if (profile == null)
-        return Results.NotFound();
-
-    if (profile.privacy != 0)
-        return Results.Unauthorized();
-
-    return Results.Ok(profile);
-});
-
-app.MapPost("/talent_profile/add_profile", async (
-    [FromQuery] string profile_name,
-    [FromQuery] string country,
-    [FromQuery] string email,
-    [FromQuery] float price,
-    [FromQuery] int privacy,
-    [FromQuery] string category,
-    [FromQuery] int fk_user_id,
-    [FromServices] ApplicationDbContext db) =>
-{
-    var talentProfile = new TalentProfile
-    {
-        profile_name = profile_name,
-        country = country,
-        email = email,
-        price = price,
-        privacy = privacy,
-        category = category,
-        fk_user_id = fk_user_id
-    };
-
-    db.TalentProfiles.Add(talentProfile);
-    await db.SaveChangesAsync();
-
-    return Results.Created($"/talent_profiles/{talentProfile.profile_id}", talentProfile);
-});
-
-app.MapPost("/talent_profiles/{profile_name}/add_skill", async (
-    string profile_name,
-    [FromQuery] string skill_name,
-    [FromQuery] int years_of_experience,
-    [FromServices] ApplicationDbContext db) =>
-{
-    var profile = await db.TalentProfiles
-        .Include(p => p.TalentProfileSkills)
-        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
-
-    if (profile == null)
-        return Results.NotFound($"Talent profile with name '{profile_name}' not found.");
-
-    var skill = await db.Skills.FirstOrDefaultAsync(s => s.name == skill_name);
-    if (skill == null)
-        return Results.BadRequest($"Skill '{skill_name}' does not exist.");
-
-    // Check if this skill is already added (optional)
-    var alreadyExists = profile.TalentProfileSkills.Any(ts => ts.SkillId == skill.skill_id);
-    if (alreadyExists)
-        return Results.BadRequest($"Skill '{skill_name}' is already associated with the profile.");
-
-    profile.TalentProfileSkills.Add(new TalentProfileSkill
-    {
-        TalentProfileId = profile.profile_id,
-        SkillId = skill.skill_id,
-        YearsOfExperience = years_of_experience
-    });
-
-    await db.SaveChangesAsync();
-    return Results.Ok($"Skill '{skill_name}' added to profile '{profile_name}'.");
-});
-
-app.MapPut("/talent_profiles/{profile_name}/update", async (
-    string profile_name,
-    [FromQuery] string? country,
-    [FromQuery] string? email,
-    [FromQuery] float? price,
-    [FromQuery] int? privacy,
-    [FromQuery] string? category,
-    [FromQuery] int? fk_user_id,
-    [FromServices] ApplicationDbContext db) =>
-{
-    var profile = await db.TalentProfiles.FirstOrDefaultAsync(p => p.profile_name == profile_name);
-    if (profile == null)
-        return Results.NotFound($"Profile '{profile_name}' not found.");
-
-    // Only update fields that were provided
-    if (country != null) profile.country = country;
-    if (email != null) profile.email = email;
-    if (price != null) profile.price = price.Value;
-    if (privacy != null) profile.privacy = privacy.Value;
-    if (category != null) profile.category = category;
-    if (fk_user_id != null) profile.fk_user_id = fk_user_id.Value;
-
-    await db.SaveChangesAsync();
-    return Results.Ok($"Profile '{profile_name}' updated.");
-});
-
-app.MapPut("/talent_profiles/{profile_name}/update_skill", async (
-    string profile_name,
-    [FromQuery] string skill_name,
-    [FromQuery] int years_of_experience,
-    [FromServices] ApplicationDbContext db) =>
-{
-    var profile = await db.TalentProfiles
-        .Include(p => p.TalentProfileSkills)
-        .ThenInclude(tps => tps.Skill)
-        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
-
-    if (profile == null)
-        return Results.NotFound($"Profile '{profile_name}' not found.");
-
-    var skill = await db.Skills.FirstOrDefaultAsync(s => s.name == skill_name);
-    if (skill == null)
-        return Results.BadRequest($"Skill '{skill_name}' does not exist.");
-
-    var skillEntry = profile.TalentProfileSkills.FirstOrDefault(ts => ts.SkillId == skill.skill_id);
-    if (skillEntry == null)
-        return Results.BadRequest($"Skill '{skill_name}' is not associated with the profile.");
-
-    skillEntry.YearsOfExperience = years_of_experience;
-    await db.SaveChangesAsync();
-
-    return Results.Ok($"Updated '{skill_name}' to {years_of_experience} years for profile '{profile_name}'.");
-});
-
-app.MapDelete("/talent_profiles/{profile_name}/remove_skill", async (
-    string profile_name,
-    [FromQuery] string skill_name,
-    [FromServices] ApplicationDbContext db) =>
-{
-    var profile = await db.TalentProfiles
-        .Include(p => p.TalentProfileSkills)
-        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
-
-    if (profile == null)
-        return Results.NotFound($"Profile '{profile_name}' not found.");
-
-    var skill = await db.Skills.FirstOrDefaultAsync(s => s.name == skill_name);
-    if (skill == null)
-        return Results.BadRequest($"Skill '{skill_name}' does not exist.");
-
-    var skillEntry = profile.TalentProfileSkills.FirstOrDefault(ts => ts.SkillId == skill.skill_id);
-    if (skillEntry == null)
-        return Results.BadRequest($"Skill '{skill_name}' is not associated with the profile.");
-
-    profile.TalentProfileSkills.Remove(skillEntry);
-    await db.SaveChangesAsync();
-
-    return Results.Ok($"Skill '{skill_name}' removed from profile '{profile_name}'.");
-});
-
-app.MapDelete("/talent_profiles/{profile_name}/delete", async (
-    string profile_name,
-    [FromServices] ApplicationDbContext db) =>
-{
-    var profile = await db.TalentProfiles
-        .Include(p => p.TalentProfileSkills)
-        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
-
-    if (profile == null)
-        return Results.NotFound($"Talent profile '{profile_name}' not found.");
-
-    db.TalentProfiles.Remove(profile);
-    await db.SaveChangesAsync();
-
-    return Results.Ok($"Talent profile '{profile_name}' and associated skills have been deleted.");
-});
-
-app.MapGet("/talent_profiles/search_by_skills", async (
-    [FromQuery] string skill_names, // Recebe como string
-    [FromServices] ApplicationDbContext db) =>
-{
-    if (string.IsNullOrEmpty(skill_names))
-        return Results.BadRequest("At least one skill name must be provided.");
-
-    // Converte a string separada por vírgulas para uma lista de skills
-    var skillList = skill_names.Split(',').ToList();
-
-    // Busca os talentos que têm todas as skills informadas
-    var profiles = await db.TalentProfiles
-        .Where(p => p.privacy == 0)
-        .Include(p => p.TalentProfileSkills)
-        .ThenInclude(tps => tps.Skill)
-        .ToListAsync();
-
-    // Filtra os perfis que têm todas as skills da busca
-    var filtered = profiles
-        .Where(p => skillList.All(sn =>
-            p.TalentProfileSkills.Any(tps => tps.Skill.name.ToLower() == sn.ToLower())))
-        .OrderBy(p => p.profile_name)
-        .Select(p => new TalentProfileDto
-        {
-            ProfileId = p.profile_id,
-            ProfileName = p.profile_name,
-            Country = p.country,
-            Email = p.email,
-            Price = p.price,
-            Privacy = p.privacy,
-            Category = p.category,
-            FkUserId = p.fk_user_id,
-            Skills = p.TalentProfileSkills.Select(s => new SkillDto
-            {
-                SkillId = s.SkillId,
-                SkillName = s.Skill.name,
-                YearsOfExperience = s.YearsOfExperience
-            }).ToList()
-        })
-        .ToList();
-
-    return Results.Ok(filtered);
 });
 
 
@@ -609,6 +369,419 @@ app.MapGet("/reports/skill", async (ApplicationDbContext db) =>
 
 
 //EXPERIENCES
+app.MapPost("/talent_profiles/{profile_name}/add_experience", async (
+    string profile_name,
+    [FromQuery] string company_name,
+    [FromQuery] string start_year,
+    [FromQuery] string end_year,
+    [FromServices] ApplicationDbContext db) =>
+{
+    var profile = await db.TalentProfiles
+        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
+
+    if (profile == null)
+        return Results.NotFound($"Talent profile with name '{profile_name}' not found.");
+
+    var experience = new Experience
+    {
+        company_name = company_name,
+        start_year = start_year,
+        end_year = end_year,
+        fk_profile_id = profile.profile_id
+    };
+
+    db.Experiences.Add(experience);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/experiences/{experience.experience_id}", new
+    {
+        experience.experience_id,
+        experience.company_name,
+        experience.start_year,
+        experience.end_year,
+        fk_profile_id = profile.profile_id
+    });
+
+});
+
+
+
+app.MapGet("/experiences/by-profile", async (
+    [FromQuery] string profileName,
+    [FromServices] ApplicationDbContext dbContext) =>
+{
+    // Retrieve the TalentProfile by ProfileName from the query parameter
+    var profile = await dbContext.TalentProfiles
+        .FirstOrDefaultAsync(p => p.profile_name == profileName);
+
+    if (profile == null)
+    {
+        return Results.NotFound("Profile not found");
+    }
+
+    // Retrieve all experiences related to the profile and project to anonymous objects
+    var experiences = await dbContext.Experiences
+        .Where(e => e.fk_profile_id == profile.profile_id)
+        .Select(e => new
+        {
+            e.experience_id,
+            e.company_name,
+            e.start_year,
+            e.end_year,
+            profile_name = profile.profile_name
+        })
+        .ToListAsync();
+
+    if (!experiences.Any())
+    {
+        return Results.NotFound("No experiences found for this profile");
+    }
+
+    return Results.Ok(experiences);
+});
+
+
+app.MapGet("/experiences", async (ApplicationDbContext dbContext) =>
+{
+    var experiences = await dbContext.Experiences.ToListAsync();
+
+    return Results.Ok(experiences);
+});
+
+app.MapPut("/experiences/{id}", async (
+    [FromRoute] int id,
+    [FromQuery] string company_name,
+    [FromQuery] string start_year,
+    [FromQuery] string end_year,
+    [FromServices] ApplicationDbContext dbContext) =>
+{
+    var experience = await dbContext.Experiences
+        .FirstOrDefaultAsync(e => e.experience_id == id);
+
+    if (experience == null)
+    {
+        return Results.NotFound("Experience not found");
+    }
+
+    experience.company_name = company_name;
+    experience.start_year = start_year;
+    experience.end_year = end_year;
+
+    await dbContext.SaveChangesAsync();
+
+    return Results.Ok(new
+    {
+        experience.experience_id,
+        experience.company_name,
+        experience.start_year,
+        experience.end_year,
+        profile_id = experience.fk_profile_id
+    });
+});
+
+
+app.MapDelete("/experiences/{id}", async (int id, ApplicationDbContext dbContext) =>
+{
+    var experience = await dbContext.Experiences
+        .FirstOrDefaultAsync(e => e.experience_id == id);
+
+    if (experience == null)
+    {
+        return Results.NotFound("Experience not found");
+    }
+
+    dbContext.Experiences.Remove(experience);
+    await dbContext.SaveChangesAsync();
+
+    return Results.NoContent(); // 204 No Content
+});
+
+
+
+//TALENT PROFILES 
+app.MapGet("/talent_profiles/list", async (ApplicationDbContext db) =>
+{
+    var publicProfiles = await db.TalentProfiles
+        .Where(p => p.privacy == 0)
+        .Include(p => p.TalentProfileSkills)
+        .ThenInclude(s => s.Skill)
+        .Include(p => p.Experiences)
+        .Select(p => new TalentProfileDto
+        {
+            ProfileId = p.profile_id,
+            ProfileName = p.profile_name,
+            Country = p.country,
+            Email = p.email,
+            Price = p.price,
+            Privacy = p.privacy,
+            Category = p.category,
+            FkUserId = p.fk_user_id,
+            Skills = p.TalentProfileSkills.Select(s => new SkillDto
+            {
+                SkillId = s.SkillId,
+                SkillName = s.Skill.name,
+                YearsOfExperience = s.YearsOfExperience
+            }).ToList(),
+            Experiences = p.Experiences.Select(e => new ExperienceDto
+            {
+                ExperienceId = e.experience_id,
+                CompanyName = e.company_name,
+                StartYear = e.start_year,
+                EndYear = e.end_year
+            }).ToList()
+        })
+        .ToListAsync();
+
+    return Results.Ok(publicProfiles);
+});
+
+
+app.MapGet("/talent_profiles/{id}/list", async (int id, ApplicationDbContext db) =>
+{
+    var profile = await db.TalentProfiles
+        .Include(p => p.TalentProfileSkills)
+        .ThenInclude(tps => tps.Skill)
+        .Include(p => p.Experiences)
+        .FirstOrDefaultAsync(p => p.profile_id == id);
+
+    if (profile == null)
+        return Results.NotFound();
+
+    if (profile.privacy != 0)
+        return Results.Unauthorized();
+
+    var profileDto = new TalentProfileDto
+    {
+        ProfileId = profile.profile_id,
+        ProfileName = profile.profile_name,
+        Country = profile.country,
+        Email = profile.email,
+        Price = profile.price,
+        Privacy = profile.privacy,
+        Category = profile.category,
+        FkUserId = profile.fk_user_id,
+        Skills = profile.TalentProfileSkills.Select(s => new SkillDto
+        {
+            SkillId = s.SkillId,
+            SkillName = s.Skill.name,
+            YearsOfExperience = s.YearsOfExperience
+        }).ToList(),
+        Experiences = profile.Experiences.Select(e => new ExperienceDto
+        {
+            ExperienceId = e.experience_id,
+            CompanyName = e.company_name,
+            StartYear = e.start_year,
+            EndYear = e.end_year
+        }).ToList()
+    };
+
+    return Results.Ok(profileDto);
+});
+
+
+
+
+app.MapPost("/talent_profile/add_profile", async (
+    [FromQuery] string profile_name,
+    [FromQuery] string country,
+    [FromQuery] string email,
+    [FromQuery] float price,
+    [FromQuery] int privacy,
+    [FromQuery] string category,
+    [FromQuery] int fk_user_id,
+    [FromServices] ApplicationDbContext db) =>
+{
+    var talentProfile = new TalentProfile
+    {
+        profile_name = profile_name,
+        country = country,
+        email = email,
+        price = price,
+        privacy = privacy,
+        category = category,
+        fk_user_id = fk_user_id
+    };
+
+    db.TalentProfiles.Add(talentProfile);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/talent_profiles/{talentProfile.profile_id}", talentProfile);
+});
+
+app.MapPost("/talent_profiles/{profile_name}/add_skill", async (
+    string profile_name,
+    [FromQuery] string skill_name,
+    [FromQuery] int years_of_experience,
+    [FromServices] ApplicationDbContext db) =>
+{
+    var profile = await db.TalentProfiles
+        .Include(p => p.TalentProfileSkills)
+        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
+
+    if (profile == null)
+        return Results.NotFound($"Talent profile with name '{profile_name}' not found.");
+
+    var skill = await db.Skills.FirstOrDefaultAsync(s => s.name == skill_name);
+    if (skill == null)
+        return Results.BadRequest($"Skill '{skill_name}' does not exist.");
+
+    // Check if this skill is already added (optional)
+    var alreadyExists = profile.TalentProfileSkills.Any(ts => ts.SkillId == skill.skill_id);
+    if (alreadyExists)
+        return Results.BadRequest($"Skill '{skill_name}' is already associated with the profile.");
+
+    profile.TalentProfileSkills.Add(new TalentProfileSkill
+    {
+        TalentProfileId = profile.profile_id,
+        SkillId = skill.skill_id,
+        YearsOfExperience = years_of_experience
+    });
+
+    await db.SaveChangesAsync();
+    return Results.Ok($"Skill '{skill_name}' added to profile '{profile_name}'.");
+});
+
+app.MapPut("/talent_profiles/{profile_name}/update", async (
+    string profile_name,
+    [FromQuery] string? country,
+    [FromQuery] string? email,
+    [FromQuery] float? price,
+    [FromQuery] int? privacy,
+    [FromQuery] string? category,
+    [FromQuery] int? fk_user_id,
+    [FromServices] ApplicationDbContext db) =>
+{
+    var profile = await db.TalentProfiles.FirstOrDefaultAsync(p => p.profile_name == profile_name);
+    if (profile == null)
+        return Results.NotFound($"Profile '{profile_name}' not found.");
+
+    // Only update fields that were provided
+    if (country != null) profile.country = country;
+    if (email != null) profile.email = email;
+    if (price != null) profile.price = price.Value;
+    if (privacy != null) profile.privacy = privacy.Value;
+    if (category != null) profile.category = category;
+    if (fk_user_id != null) profile.fk_user_id = fk_user_id.Value;
+
+    await db.SaveChangesAsync();
+    return Results.Ok($"Profile '{profile_name}' updated.");
+});
+
+app.MapPut("/talent_profiles/{profile_name}/update_skill", async (
+    string profile_name,
+    [FromQuery] string skill_name,
+    [FromQuery] int years_of_experience,
+    [FromServices] ApplicationDbContext db) =>
+{
+    var profile = await db.TalentProfiles
+        .Include(p => p.TalentProfileSkills)
+        .ThenInclude(tps => tps.Skill)
+        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
+
+    if (profile == null)
+        return Results.NotFound($"Profile '{profile_name}' not found.");
+
+    var skill = await db.Skills.FirstOrDefaultAsync(s => s.name == skill_name);
+    if (skill == null)
+        return Results.BadRequest($"Skill '{skill_name}' does not exist.");
+
+    var skillEntry = profile.TalentProfileSkills.FirstOrDefault(ts => ts.SkillId == skill.skill_id);
+    if (skillEntry == null)
+        return Results.BadRequest($"Skill '{skill_name}' is not associated with the profile.");
+
+    skillEntry.YearsOfExperience = years_of_experience;
+    await db.SaveChangesAsync();
+
+    return Results.Ok($"Updated '{skill_name}' to {years_of_experience} years for profile '{profile_name}'.");
+});
+
+app.MapDelete("/talent_profiles/{profile_name}/remove_skill", async (
+    string profile_name,
+    [FromQuery] string skill_name,
+    [FromServices] ApplicationDbContext db) =>
+{
+    var profile = await db.TalentProfiles
+        .Include(p => p.TalentProfileSkills)
+        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
+
+    if (profile == null)
+        return Results.NotFound($"Profile '{profile_name}' not found.");
+
+    var skill = await db.Skills.FirstOrDefaultAsync(s => s.name == skill_name);
+    if (skill == null)
+        return Results.BadRequest($"Skill '{skill_name}' does not exist.");
+
+    var skillEntry = profile.TalentProfileSkills.FirstOrDefault(ts => ts.SkillId == skill.skill_id);
+    if (skillEntry == null)
+        return Results.BadRequest($"Skill '{skill_name}' is not associated with the profile.");
+
+    profile.TalentProfileSkills.Remove(skillEntry);
+    await db.SaveChangesAsync();
+
+    return Results.Ok($"Skill '{skill_name}' removed from profile '{profile_name}'.");
+});
+
+app.MapDelete("/talent_profiles/{profile_name}/delete", async (
+    string profile_name,
+    [FromServices] ApplicationDbContext db) =>
+{
+    var profile = await db.TalentProfiles
+        .Include(p => p.TalentProfileSkills)
+        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
+
+    if (profile == null)
+        return Results.NotFound($"Talent profile '{profile_name}' not found.");
+
+    db.TalentProfiles.Remove(profile);
+    await db.SaveChangesAsync();
+
+    return Results.Ok($"Talent profile '{profile_name}' and associated skills have been deleted.");
+});
+
+app.MapGet("/talent_profiles/search_by_skills", async (
+    [FromQuery] string skill_names, // Recebe como string
+    [FromServices] ApplicationDbContext db) =>
+{
+    if (string.IsNullOrEmpty(skill_names))
+        return Results.BadRequest("At least one skill name must be provided.");
+
+    // Converte a string separada por vírgulas para uma lista de skills
+    var skillList = skill_names.Split(',').ToList();
+
+    // Busca os talentos que têm todas as skills informadas
+    var profiles = await db.TalentProfiles
+        .Where(p => p.privacy == 0)
+        .Include(p => p.TalentProfileSkills)
+        .ThenInclude(tps => tps.Skill)
+        .ToListAsync();
+
+    // Filtra os perfis que têm todas as skills da busca
+    var filtered = profiles
+        .Where(p => skillList.All(sn =>
+            p.TalentProfileSkills.Any(tps => tps.Skill.name.ToLower() == sn.ToLower())))
+        .OrderBy(p => p.profile_name)
+        .Select(p => new TalentProfileDto
+        {
+            ProfileId = p.profile_id,
+            ProfileName = p.profile_name,
+            Country = p.country,
+            Email = p.email,
+            Price = p.price,
+            Privacy = p.privacy,
+            Category = p.category,
+            FkUserId = p.fk_user_id,
+            Skills = p.TalentProfileSkills.Select(s => new SkillDto
+            {
+                SkillId = s.SkillId,
+                SkillName = s.Skill.name,
+                YearsOfExperience = s.YearsOfExperience
+            }).ToList()
+        })
+        .ToList();
+
+    return Results.Ok(filtered);
+});
+
 
 
 

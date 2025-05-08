@@ -1,3 +1,7 @@
+using ESOF.WebApp.DBLayer.Context;
+using ESOF.WebApp.DBLayer.Entities;
+using Microsoft.EntityFrameworkCore;
+
 namespace ESOF.WebApp.WebAPI.DTOs;
 
 public class TalentProfileDto
@@ -12,6 +16,7 @@ public class TalentProfileDto
     public int FkUserId { get; set; }
 
     public List<SkillDto> Skills { get; set; }
+    public List<ExperienceDto> Experiences { get; set; }
 }
 
 public class SkillDto
@@ -20,3 +25,13 @@ public class SkillDto
     public string SkillName { get; set; }
     public int YearsOfExperience { get; set; }
 }
+
+public class ExperienceDto
+{
+    public int ExperienceId { get; set; }
+    public string CompanyName { get; set; }
+    public string StartYear { get; set; }
+    public string EndYear { get; set; }
+}
+
+
