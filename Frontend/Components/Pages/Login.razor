@@ -1,4 +1,4 @@
-﻿@page "/login"
+﻿@page "/"
 @using Frontend.Helpers
 @inject HttpClient Http
 @inject NavigationManager Navigation
@@ -28,7 +28,7 @@
         <InputText @bind-Value="loginModel.Password" class="form-control" type="password" />
     </div>
 
-    <button type="submit" class="btn btn-primary">Entrar</button>
+    <button style="margin-top: 10px" type="submit" class="btn btn-primary">Entrar</button>
 </EditForm>
 
 @code {
@@ -41,8 +41,8 @@
 
         if (success)
         {
-            Navigation.NavigateTo("/");
-            errorMessage = ("WORKING");
+            Navigation.NavigateTo("/home");
+           
         }
         else
         {

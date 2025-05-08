@@ -1,9 +1,24 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+@code {
+// Pega o path relativo sem barras e em minúsculas (ex: "login", "ingredients")
+private string RelativePath =>
+Nav.ToBaseRelativePath(Nav.Uri)
+.Trim('/')
+.ToLowerInvariant();
+
+// Mostra o sidebar em tudo que não for a página de login
+private bool ShowSidebar => RelativePath != "";
+}
 
 <div class="page">
+    @if (ShowSidebar)
+    {
     <div class="sidebar">
-        <NavMenu/>
+        <NavMenu />
     </div>
+    }
 
     <main>
         <div class="top-row px-4">
