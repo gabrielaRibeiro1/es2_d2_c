@@ -16,6 +16,7 @@
         <EditForm Model="@newTalent" OnValidSubmit="@CreateTalent" FormName="createTalentForm">
             <DataAnnotationsValidator />
             <ValidationSummary />
+
             <div class="form-group">
                 <label for="profileName">Nome *</label>
                 <InputText id="profileName"
@@ -46,6 +47,15 @@
                            class="form-control"
                            aria-label="País de origem"
                            placeholder="Digite o país" />
+            </div>
+
+            <div class="form-group">
+                <label for="category">Categoria</label>
+                <InputText id="category"
+                           @bind-Value="newTalent.category"
+                           class="form-control"
+                           aria-label="Categoria do talento"
+                           placeholder="Digite a categoria" />
             </div>
 
             <div class="form-group">
@@ -108,6 +118,7 @@
         <th>Nome</th>
         <th>Email</th>
         <th>País</th>
+        <th>Categoria</th>
         <th>Preço</th>
         <th>Privacidade</th>
         <th>ID Usuário</th>
@@ -118,7 +129,7 @@
     @if (isLoading && talents == null)
     {
     <tr>
-        <td colspan="7" class="text-center text-muted">
+        <td colspan="8" class="text-center text-muted">
             <span class="spinner-border spinner-border-sm" role="status"></span>
             Carregando...
         </td>
@@ -127,7 +138,7 @@
     else if (talents == null || !talents.Any())
     {
     <tr>
-        <td colspan="7" class="text-center text-muted">Nenhum talento encontrado</td>
+        <td colspan="8" class="text-center text-muted">Nenhum talento encontrado</td>
     </tr>
     }
     else
@@ -138,6 +149,7 @@
         <td>@talent.profile_name</td>
         <td>@talent.email</td>
         <td>@talent.country</td>
+        <td>@talent.category</td>
         <td>@talent.price.ToString("0.00")</td>
         <td>@(talent.privacy == 1 ? "Privado" : "Público")</td>
         <td>@talent.fk_user_id</td>
@@ -156,146 +168,145 @@
 </table>
 
 @code {
-    private List<TalentProfile>? talents;
-    private TalentProfile newTalent = new();
-    private bool isLoading = false;
-    private string errorMessage = string.Empty;
-    private string successMessage = string.Empty;
+private List<TalentProfile>? talents;
+private TalentProfile newTalent = new();
+private bool isLoading = false;
+private string errorMessage = string.Empty;
+private string successMessage = string.Empty;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadTalents();
-    }
+protected override async Task OnInitializedAsync()
+{
+await LoadTalents();
+}
 
-    private async Task LoadTalents()
-    {
-        try
-        {
-            isLoading = true;
-            StateHasChanged();
+private async Task LoadTalents()
+{
+try
+{
+isLoading = true;
+StateHasChanged();
 
-            var response = await Http.GetAsync("/talent_profiles");
+var response = await Http.GetAsync("/talent_profiles");
 
-            if (response.IsSuccessStatusCode)
-            {
-                talents = await response.Content.ReadFromJsonAsync<List<TalentProfile>>();
-                errorMessage = string.Empty;
-            }
-            else
-            {
-                errorMessage = $"Erro ao carregar: {response.StatusCode}";
-                await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Erro: {ex.Message}";
-            await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
-    }
+if (response.IsSuccessStatusCode)
+{
+talents = await response.Content.ReadFromJsonAsync<List<TalentProfile>>();
+errorMessage = string.Empty;
+}
+else
+{
+errorMessage = $"Erro ao carregar: {response.StatusCode}";
+await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
+}
+}
+catch (Exception ex)
+{
+errorMessage = $"Erro: {ex.Message}";
+await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
+}
+finally
+{
+isLoading = false;
+StateHasChanged();
+}
+}
 
-    private async Task CreateTalent()
-    {
-        try
-        {
-            isLoading = true;
-            errorMessage = string.Empty;
-            StateHasChanged();
+private async Task CreateTalent()
+{
+try
+{
+isLoading = true;
+errorMessage = string.Empty;
+StateHasChanged();
 
-            var response = await Http.PostAsJsonAsync("/talent_profiles", newTalent);
+var response = await Http.PostAsJsonAsync("/talent_profiles", newTalent);
 
-            if (response.IsSuccessStatusCode)
-            {
-                successMessage = "Talento criado com sucesso!";
-                await LoadTalents();
-                newTalent = new TalentProfile();
-            }
-            else
-            {
-                errorMessage = await response.Content.ReadAsStringAsync();
-                if (string.IsNullOrEmpty(errorMessage))
-                {
-                    errorMessage = $"Erro: {response.StatusCode}";
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Erro: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
-    }
+if (response.IsSuccessStatusCode)
+{
+successMessage = "Talento criado com sucesso!";
+await LoadTalents();
+newTalent = new TalentProfile();
+}
+else
+{
+errorMessage = await response.Content.ReadAsStringAsync();
+if (string.IsNullOrEmpty(errorMessage))
+{
+errorMessage = $"Erro: {response.StatusCode}";
+}
+}
+}
+catch (Exception ex)
+{
+errorMessage = $"Erro: {ex.Message}";
+}
+finally
+{
+isLoading = false;
+StateHasChanged();
+}
+}
 
-    private async Task EditTalent(TalentProfile talent)
-    {
-// Preenche o formulário com os dados do talento selecionado
-        newTalent = talent;
-        successMessage = "Edite os dados acima";
-        StateHasChanged();
-    }
+private async Task EditTalent(TalentProfile talent)
+{
+newTalent = talent;
+successMessage = "Edite os dados acima";
+StateHasChanged();
+}
 
-    private async Task DeleteTalent(int profileId)
-    {
-        try
-        {
-            if (await JSRuntime.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este talento?"))
-            {
-                isLoading = true;
-                StateHasChanged();
+private async Task DeleteTalent(int profileId)
+{
+try
+{
+if (await JSRuntime.InvokeAsync<bool>("confirm", "Tem certeza que deseja excluir este talento?"))
+{
+isLoading = true;
+StateHasChanged();
 
-                var response = await Http.DeleteAsync($"/talent_profiles/{profileId}");
+var response = await Http.DeleteAsync($"/talent_profiles/{profileId}");
 
-                if (response.IsSuccessStatusCode)
-                {
-                    successMessage = "Talento excluído com sucesso!";
-                    await LoadTalents();
-                }
-                else
-                {
-                    errorMessage = await response.Content.ReadAsStringAsync();
-                    if (string.IsNullOrEmpty(errorMessage))
-                    {
-                        errorMessage = $"Erro ao excluir: {response.StatusCode}";
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Erro: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
-    }
+if (response.IsSuccessStatusCode)
+{
+successMessage = "Talento excluído com sucesso!";
+await LoadTalents();
+}
+else
+{
+errorMessage = await response.Content.ReadAsStringAsync();
+if (string.IsNullOrEmpty(errorMessage))
+{
+errorMessage = $"Erro ao excluir: {response.StatusCode}";
+}
+}
+}
+}
+catch (Exception ex)
+{
+errorMessage = $"Erro: {ex.Message}";
+}
+finally
+{
+isLoading = false;
+StateHasChanged();
+}
+}
 
-    public class TalentProfile
-    {
-        public int profile_id { get; set; }
+public class TalentProfile
+{
+public int profile_id { get; set; }
 
-        [Required(ErrorMessage = "Nome é obrigatório")]
-        public string profile_name { get; set; } = string.Empty;
+[Required(ErrorMessage = "Nome é obrigatório")]
+public string profile_name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Email é obrigatório")]
-        [EmailAddress(ErrorMessage = "Formato de email inválido")]
-        public string email { get; set; } = string.Empty;
+[Required(ErrorMessage = "Email é obrigatório")]
+[EmailAddress(ErrorMessage = "Formato de email inválido")]
+public string email { get; set; } = string.Empty;
 
-        public string? country { get; set; }
-        public float price { get; set; }
-        public float privacy { get; set; }
-        public int fk_user_id { get; set; }
-        public int user_id { get; set; }
-    }
-
+public string? country { get; set; }
+public string? category { get; set; }
+public float price { get; set; }
+public float privacy { get; set; }
+public int fk_user_id { get; set; }
+public int user_id { get; set; }
+}
 }

@@ -8,5 +8,6 @@
         public float price { get; set; }
         public float privacy { get; set; }
         public int fk_user_id { get; set; }
+        public string category { get; set; } 
     }
 }

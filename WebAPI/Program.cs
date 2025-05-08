@@ -105,7 +105,8 @@ app.MapPost("/talent_profiles", async ([FromBody] TalentProfileDto dto, Applicat
         email = dto.email,
         price = dto.price,
         privacy = dto.privacy,
-        fk_user_id = dto.fk_user_id
+        fk_user_id = dto.fk_user_id,
+        category = dto.category 
     };
 
     db.TalentProfiles.Add(talentProfile);
@@ -121,6 +122,7 @@ app.MapPut("/talent_profiles/{id}", async (
     float price,
     float privacy,
     int fk_user_id,
+    string category,
     ApplicationDbContext db) =>
 {
     var existingProfile = await db.TalentProfiles.FindAsync(id);
@@ -134,6 +136,7 @@ app.MapPut("/talent_profiles/{id}", async (
     existingProfile.price = price;
     existingProfile.privacy = privacy;
     existingProfile.fk_user_id = fk_user_id;
+    existingProfile.category = category;
 
 
     await db.SaveChangesAsync();
