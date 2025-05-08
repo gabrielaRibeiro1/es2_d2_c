@@ -104,20 +104,37 @@ app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext d
     });
 }) ;
 
-// endpoint para retornar dados do user loggado
-app.MapGet("/me", (HttpContext httpContext) =>
+app.MapPost("/create_account2", async (string username, string password, ApplicationDbContext db) =>
+{
+    // 1) validação de senha
+    if (string.IsNullOrEmpty(password))
+        return Results.BadRequest("Password cannot be empty.");
+
+    // 2) gerar hash e salt
+    PasswordHelper.CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+
+    // 3) checar se hash/salt foram gerados
+    if (passwordHash == null || passwordSalt == null)
+        return Results.BadRequest("Error generating password hash and salt.");
+
+    // 4) criar usuário com role_id = 3 por padrão
+    var newUser = new User
     {
-        var user = httpContext.User;
-        if (user?.Identity?.IsAuthenticated == true)
-        {
-            // Extraia os dados do usuário dos Claims
-            var username = user.Identity.Name;
-            var roleClaim = user.FindFirst(ClaimTypes.Role)?.Value;
-            return Results.Ok(new { Username = username, RoleId = roleClaim });
-        }
-        return Results.Unauthorized();
-    })
-    .RequireAuthorization();
+        username      = username,
+        passwordHash  = passwordHash,
+        passwordSalt  = passwordSalt,
+        fk_role_id    = 3
+    };
+
+    // 5) salvar no banco
+    db.Users.Add(newUser);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/users/{newUser.user_id}", newUser);
+});
+
+
+
 
 app.UseHttpsRedirection();
 

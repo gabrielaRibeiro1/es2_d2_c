@@ -19,16 +19,20 @@
     <ValidationSummary />
 
     <div>
-        <label>Usuário</label>
+        <label>Username:</label>
         <InputText @bind-Value="loginModel.Username" class="form-control" />
     </div>
 
     <div>
-        <label>Senha</label>
+        <label>Password:</label>
         <InputText @bind-Value="loginModel.Password" class="form-control" type="password" />
     </div>
 
-    <button style="margin-top: 10px" type="submit" class="btn btn-primary">Entrar</button>
+    <button style="margin-top: 10px" type="submit" class="btn btn-primary">Login</button>
+
+    <NavLink style="margin-top: 10px"  class="btn btn-secondary ms-2" href="/create-account">
+        Create Account
+    </NavLink>
 </EditForm>
 
 @code {

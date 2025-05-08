@@ -9,7 +9,7 @@ Nav.ToBaseRelativePath(Nav.Uri)
 .ToLowerInvariant();
 
 // Mostra o sidebar em tudo que não for a página de login
-private bool ShowSidebar => RelativePath != "";
+private bool ShowSidebar => RelativePath != "" && RelativePath != "create-account";
 }
 
 <div class="page">
