@@ -104,35 +104,29 @@ app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext d
     });
 }) ;
 
-app.MapPost("/create_account2", async (string username, string password, ApplicationDbContext db) =>
-{
-    // 1) validação de senha
-    if (string.IsNullOrEmpty(password))
-        return Results.BadRequest("Password cannot be empty.");
-
-    // 2) gerar hash e salt
-    PasswordHelper.CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
-
-    // 3) checar se hash/salt foram gerados
-    if (passwordHash == null || passwordSalt == null)
-        return Results.BadRequest("Error generating password hash and salt.");
-
-    // 4) criar usuário com role_id = 3 por padrão
-    var newUser = new User
+app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, ApplicationDbContext db) =>
     {
-        username      = username,
-        passwordHash  = passwordHash,
-        passwordSalt  = passwordSalt,
-        fk_role_id    = 3
-    };
+        if (string.IsNullOrEmpty(dto.Password))
+            return Results.BadRequest("Password cannot be empty.");
 
-    // 5) salvar no banco
-    db.Users.Add(newUser);
-    await db.SaveChangesAsync();
+        PasswordHelper.CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
-    return Results.Created($"/users/{newUser.user_id}", newUser);
-});
+        if (passwordHash == null || passwordSalt == null)
+            return Results.BadRequest("Error generating password hash and salt.");
 
+        var newUser = new User
+        {
+            username     = dto.Username,
+            passwordHash = passwordHash,
+            passwordSalt = passwordSalt,
+            fk_role_id   = 3
+        };
+
+        db.Users.Add(newUser);
+        await db.SaveChangesAsync();
+
+        return Results.Created($"/users/{newUser.user_id}", newUser);
+    });
 
 
 

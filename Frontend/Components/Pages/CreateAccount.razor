@@ -9,87 +9,90 @@
 
 
 
-<h3>Create Account</h3>
+<div class="card mt-5 mx-auto" style="max-width: 500px;">
+  <div class="card-header" style="background-color:whitesmoke; color: black;">
+    <h3 class="mb-0">Create Account</h3>
+  </div>
+  <div class="card-body">
+    <EditForm Model="@userModel" OnValidSubmit="HandleValidSubmit">
+      <DataAnnotationsValidator />
+      <ValidationSummary />
 
-<EditForm Model="@userModel" OnValidSubmit="HandleValidSubmit" >
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div class="form-group">
-        <label for="username">Username:</label>
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
         <InputText id="username" class="form-control" @bind-Value="userModel.Username" />
-    </div>
+        <ValidationMessage For="() => userModel.Username" />
+      </div>
 
-    <div class="form-group">
-        <label for="password">Password:</label>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
         <InputText id="password" type="password" class="form-control" @bind-Value="userModel.Password" />
-    </div>
+        <ValidationMessage For="() => userModel.Password" />
+      </div>
 
+      <div class="mb-3">
+        <label for="confirmPassword" class="form-label">Confirm Password</label>
+        <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="userModel.ConfirmPassword" />
+        <ValidationMessage For="() => userModel.ConfirmPassword" />
+      </div>
 
+      <button type="submit" class="btn btn-success me-2">Save</button>
+      <NavLink class="btn btn-secondary" href="/">Cancel</NavLink>
+    </EditForm>
 
-    <div>
-    <button style="margin-top: 10px" type="submit" class="btn btn-primary">Save</button>
-    <NavLink style="margin-top: 10px"  class="btn btn-secondary ms-2" href="/">
-        Cancel
-    </NavLink>
-    </div>
-</EditForm>
-
-@if (!string.IsNullOrEmpty(successMessage))
-{
-    <div class="alert alert-success mt-2">@successMessage</div>
-}
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger mt-2">@errorMessage</div>
-}
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+      <div class="alert alert-success mt-3">@successMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+      <div class="alert alert-danger mt-3">@errorMessage</div>
+    }
+  </div>
+</div>
 
 @code {
-    private CreateUserModel userModel = new CreateUserModel();
-    
-    private string successMessage;
-    private string errorMessage;
+  private CreateUserModel userModel = new CreateUserModel();
+  private string successMessage;
+  private string errorMessage;
 
-    private async Task HandleValidSubmit()
+  private async Task HandleValidSubmit()
+  {
+    try
     {
-        try
-        {
-            
-            bool success = await ApiHelper.PostToApiAsync("/create_account2", userModel);
-            if (success)
-            {
-                successMessage = "User sucessfully added!";
-                errorMessage = null;
-             
-                userModel = new CreateUserModel();
-           
-            }
-            else
-            {
-                successMessage = null;
-                errorMessage = "Error!";
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Ocorreu um erro: {ex.Message}";
-            successMessage = null;
-        }
+      // Remove leading slash to respect BaseAddress
+      bool success = await ApiHelper.PostToApiAsync("create_account2", userModel);
+      if (success)
+      {
+        successMessage = "User successfully added!";
+        errorMessage = null;
+        userModel = new CreateUserModel();
+      }
+      else
+      {
+        successMessage = null;
+        errorMessage = "Error saving user.";
+      }
     }
-    public class CreateUserModel
+    catch (Exception ex)
     {
-        
-        public int? UserId { get; set; } 
-
-        
-        public string Username { get; set; }
-
-       
-        [DataType(DataType.Password)]
-        public string Password { get; set; }
-        
-        public int RoleId { get; set; }
-
-       
+      errorMessage = $"Ocorreu um erro: {ex.Message}";
+      successMessage = null;
     }
+  }
+
+  public class CreateUserModel
+  {
+    [Required(ErrorMessage = "Username is required.")]
+    [StringLength(50, MinimumLength = 3, ErrorMessage = "Username must be between 3 and 50 characters.")]
+    public string Username { get; set; }
+
+    [Required(ErrorMessage = "Password is required.")]
+    [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters.")]
+    public string Password { get; set; }
+
+    [Required(ErrorMessage = "Please confirm your password.")]
+    [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+    public string ConfirmPassword { get; set; }
+  }
 }
