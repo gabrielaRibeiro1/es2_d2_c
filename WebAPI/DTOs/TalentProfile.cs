@@ -30,8 +30,8 @@ public class ExperienceDto
 {
     public int ExperienceId { get; set; }
     public string CompanyName { get; set; }
-    public string StartYear { get; set; }
-    public string EndYear { get; set; }
+    public int StartYear { get; set; }
+    public int EndYear { get; set; }
 }
 
 

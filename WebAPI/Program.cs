@@ -372,21 +372,38 @@ app.MapGet("/reports/skill", async (ApplicationDbContext db) =>
 app.MapPost("/talent_profiles/{profile_name}/add_experience", async (
     string profile_name,
     [FromQuery] string company_name,
-    [FromQuery] string start_year,
-    [FromQuery] string end_year,
+    [FromQuery] int start_year,
+    [FromQuery] int? end_year,
     [FromServices] ApplicationDbContext db) =>
 {
     var profile = await db.TalentProfiles
+        .Include(p => p.Experiences)
         .FirstOrDefaultAsync(p => p.profile_name == profile_name);
 
     if (profile == null)
         return Results.NotFound($"Talent profile with name '{profile_name}' not found.");
 
+    // If end_year was not provided, assume it's the same as start_year (still working)
+    int resolvedEndYear = end_year.HasValue ? end_year.Value : start_year;
+
+    // Check for overlapping years with existing experiences
+    foreach (var existing in profile.Experiences)
+    {
+        int existingStart = existing.start_year;
+        int existingEnd = existing.end_year; // always set since it's int, not int?
+
+        bool overlaps = start_year <= existingEnd && resolvedEndYear >= existingStart;
+        if (overlaps)
+        {
+            return Results.BadRequest($"The experience period {start_year}-{resolvedEndYear} overlaps with an existing experience ({existingStart}-{existingEnd}).");
+        }
+    }
+
     var experience = new Experience
     {
         company_name = company_name,
         start_year = start_year,
-        end_year = end_year,
+        end_year = resolvedEndYear,
         fk_profile_id = profile.profile_id
     };
 
@@ -401,8 +418,8 @@ app.MapPost("/talent_profiles/{profile_name}/add_experience", async (
         experience.end_year,
         fk_profile_id = profile.profile_id
     });
-
 });
+
 
 
 
@@ -451,8 +468,8 @@ app.MapGet("/experiences", async (ApplicationDbContext dbContext) =>
 app.MapPut("/experiences/{id}", async (
     [FromRoute] int id,
     [FromQuery] string company_name,
-    [FromQuery] string start_year,
-    [FromQuery] string end_year,
+    [FromQuery] int start_year,
+    [FromQuery] int end_year,
     [FromServices] ApplicationDbContext dbContext) =>
 {
     var experience = await dbContext.Experiences
@@ -577,8 +594,6 @@ app.MapGet("/talent_profiles/{id}/list", async (int id, ApplicationDbContext db)
 
     return Results.Ok(profileDto);
 });
-
-
 
 
 app.MapPost("/talent_profile/add_profile", async (
