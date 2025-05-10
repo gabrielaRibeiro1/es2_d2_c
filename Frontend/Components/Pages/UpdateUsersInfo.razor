@@ -1,0 +1,93 @@
+﻿@page "/update-user-info/{UserId:int}"
+
+@using Frontend.Helpers
+@using Frontend.Models
+
+@inject ApiHelper ApiHelper
+
+@rendermode InteractiveServer
+
+<PageTitle>Update User</PageTitle>
+
+<h1>Update User</h1>
+
+@if (_user == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="_user" OnValidSubmit="HandleValidSubmit" FormName="UpdateUserForm">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="username">Username</label>
+            <InputText id="username" @bind-Value="_user.Username" class="form-control" Disabled="true" />
+        </div>
+
+        <div class="mb-3">
+            <label for="password">New Password</label>
+            <InputText id="password" @bind-Value="_newPassword" type="password" class="form-control" placeholder="Leave blank to keep current" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="alert alert-danger">@_errorMessage</div>
+        }
+        else if (!string.IsNullOrEmpty(_successMessage))
+        {
+            <div class="alert alert-success">@_successMessage</div>
+        }
+
+        <button type="submit" class="btn btn-primary">Update</button>
+        <NavLink class="btn btn-secondary ms-2" href="user-info">Cancel</NavLink>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int UserId { get; set; }
+
+    private UserUpdateModel? _user;
+    private string? _newPassword;
+    private string? _errorMessage;
+    private string? _successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        _errorMessage = null;
+        _successMessage = null;
+
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(_newPassword))
+            {
+                _user!.Password = _newPassword;
+            }
+
+            var result = await ApiHelper.PutToApiAsync<UserUpdateModel, string>($"update_user2/{UserId}", _user!);
+
+            if (!string.IsNullOrEmpty(result))
+            {
+                _successMessage = result;
+            }
+            else
+            {
+                _errorMessage = "Falha ao atualizar o usuário (resposta vazia).";
+            }
+        }
+        catch (ApiException apiEx)
+        {
+            _errorMessage = apiEx.Message;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erro inesperado: {ex.Message}";
+        }
+    }
+}
