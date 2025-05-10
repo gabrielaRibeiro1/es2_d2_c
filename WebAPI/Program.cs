@@ -31,33 +31,24 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapPost("/create_account", async (string username, string password, int fk_role_id, ApplicationDbContext db) =>
+app.MapPost("/create_account", async ([FromBody] UserAddModel request, ApplicationDbContext db) =>
 {
-    // Step 1: Check if the password is provided
-    if (string.IsNullOrEmpty(password))
-    {
+    if (string.IsNullOrEmpty(request.Password))
         return Results.BadRequest("Password cannot be empty.");
-    }
 
-    // Step 2: Generate the password hash and salt
-    PasswordHelper.CreatePasswordHash(password, out byte[] passwordHash, out byte[] passwordSalt);
+    PasswordHelper.CreatePasswordHash(request.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
-    // Step 3: Ensure passwordHash and passwordSalt are not null
     if (passwordHash == null || passwordSalt == null)
-    {
         return Results.BadRequest("Error generating password hash and salt.");
-    }
 
-    // Step 4: Create the new user without storing the raw password, but with the hashed password and salt
     var newUser = new User
     {
-        username = username,  // Use the username directly
-        passwordHash = passwordHash, // Store hashed password (byte[])
-        passwordSalt = passwordSalt, // Store salt (byte[])
-        fk_role_id = fk_role_id  // Use fk_role_id directly
+        username = request.Username,
+        passwordHash = passwordHash,
+        passwordSalt = passwordSalt,
+        fk_role_id = request.RoleId
     };
 
-    // Step 5: Save the new user to the database
     db.Users.Add(newUser);
     await db.SaveChangesAsync();
 

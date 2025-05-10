@@ -1,14 +1,13 @@
 ﻿@page "/update-user-info/{UserId:int}"
+
 @using Frontend.Helpers
 @using Frontend.Models
-@using global::Helpers.Models
+
 @inject ApiHelper ApiHelper
-@inject NavigationManager NavigationManager
-@using Microsoft.AspNetCore.Components.Forms
+
 @rendermode InteractiveServer
 
 <PageTitle>Update User</PageTitle>
-
 
 <h1>Update User</h1>
 
@@ -18,7 +17,8 @@
 }
 else
 {
-    <EditForm Model="_user" OnValidSubmit="HandleValidSubmit" >
+    <EditForm Model="_user" OnValidSubmit="HandleValidSubmit" FormName="UpdateUserForm">
+        <DataAnnotationsValidator />
 
         <div class="mb-3">
             <label for="username">Username</label>
@@ -27,59 +27,67 @@ else
 
         <div class="mb-3">
             <label for="password">New Password</label>
-            <InputText id="password" @bind-Value="_user.Password" type="password" class="form-control" placeholder="Leave blank to keep current" />
+            <InputText id="password" @bind-Value="_newPassword" type="password" class="form-control" placeholder="Leave blank to keep current" />
         </div>
-
-  
 
         @if (!string.IsNullOrEmpty(_errorMessage))
         {
-        <div class="alert alert-danger">@_errorMessage</div>
+            <div class="alert alert-danger">@_errorMessage</div>
+        }
+        else if (!string.IsNullOrEmpty(_successMessage))
+        {
+            <div class="alert alert-success">@_successMessage</div>
         }
 
-        <button type="submit" class="btn btn-primary" @onclick="HandleValidSubmit">Update</button>
-        <NavLink  class="btn btn-secondary ms-2" href="user-info">
-            Cancel
-        </NavLink>
-       
+        <button type="submit" class="btn btn-primary">Update</button>
+        <NavLink class="btn btn-secondary ms-2" href="user-info">Cancel</NavLink>
     </EditForm>
 }
 
 @code {
     [Parameter]
     public int UserId { get; set; }
-    private string? _errorMessage;
 
     private UserUpdateModel? _user;
+    private string? _newPassword;
+    private string? _errorMessage;
+    private string? _successMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        
         _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
     }
-    
+
     private async Task HandleValidSubmit()
     {
+        _errorMessage = null;
+        _successMessage = null;
+
         try
         {
-            // Usa o método do ApiHelper que faz PUT como JSON
-            var success = await ApiHelper.PostToApiAsync("update_user2/" + UserId, _user!);
-            if (success)
+            if (!string.IsNullOrWhiteSpace(_newPassword))
             {
-                NavigationManager.NavigateTo("user-info");
-                _errorMessage = "SUCESSO";
+                _user!.Password = _newPassword;
+            }
+
+            var result = await ApiHelper.PutToApiAsync<UserUpdateModel, string>($"update_user2/{UserId}", _user!);
+
+            if (!string.IsNullOrEmpty(result))
+            {
+                _successMessage = result;
             }
             else
             {
-                _errorMessage = "Falha ao atualizar o usuário.";
+                _errorMessage = "Falha ao atualizar o usuário (resposta vazia).";
             }
+        }
+        catch (ApiException apiEx)
+        {
+            _errorMessage = apiEx.Message;
         }
         catch (Exception ex)
         {
-            _errorMessage = ex.Message;
+            _errorMessage = $"Erro inesperado: {ex.Message}";
         }
     }
-    
-    }
-
-
+}

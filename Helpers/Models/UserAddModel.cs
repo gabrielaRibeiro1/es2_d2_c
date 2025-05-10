@@ -1,6 +1,5 @@
-
-
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Helpers.Models
 {
@@ -17,6 +16,7 @@ namespace Helpers.Models
         public string Password { get; set; }
 
         [Required(ErrorMessage = "O campo role é obrigatório.")]
+        [JsonPropertyName("fk_role_id")]
         public int RoleId { get; set; }
     }
 }
