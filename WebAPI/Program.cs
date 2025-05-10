@@ -345,6 +345,63 @@ app.MapDelete("/work_proposals/{id}", async (int id, ApplicationDbContext db) =>
     return Results.NoContent();
 });
 
+app.MapGet("/work_proposals/{proposalId}/eligible_talents", async (int proposalId, ApplicationDbContext db) => 
+{
+    // Retrieve the work proposal by ID
+    var proposal = await db.WorkProposals
+        .FirstOrDefaultAsync(p => p.proposal_id == proposalId);
+
+    if (proposal == null)
+    {
+        return Results.NotFound("Work proposal not found.");
+    }
+
+    // Retrieve talents that are eligible for this proposal
+    var eligibleTalents = await db.TalentProfiles
+        .Where(p => p.category == proposal.category) // Filter by category
+        .Include(p => p.TalentProfileSkills) // Include skills
+        .Include(p => p.Experiences) // Include experiences
+        .ToListAsync();
+
+    // Calculate the total value of each talent based on experience years
+    var talentDtos = eligibleTalents.Select(p => new TalentProfileDto
+    {
+        ProfileId = p.profile_id,
+        ProfileName = p.profile_name,
+        Country = p.country,
+        Email = p.email,
+        Price = p.price,
+        Privacy = p.privacy,
+        Category = p.category,
+        FkUserId = p.fk_user_id,
+        Skills = p.TalentProfileSkills.Select(s => new SkillDto
+        {
+            SkillId = s.SkillId,
+            SkillName = s.Skill.name,
+            YearsOfExperience = s.YearsOfExperience
+        }).ToList(),
+        Experiences = p.Experiences.Select(e => new ExperienceDto
+        {
+            ExperienceId = e.experience_id,
+            CompanyName = e.company_name,
+            StartYear = e.start_year,
+            EndYear = e.end_year // No null handling needed as end_year is non-nullable
+        }).ToList(),
+        TotalValue = p.Experiences.Sum(e =>
+        {
+            // Calculate the total value based on years worked and price
+            int experienceYears = e.end_year - e.start_year; // end_year is not nullable, no need for ?? DateTime.Now.Year
+            return experienceYears * p.price * 1000; // Adjust the multiplier as needed
+        })
+    })
+    .OrderByDescending(p => p.TotalValue) // Order talents by their total value
+    .ToList();
+
+    return Results.Ok(talentDtos);
+});
+
+
+
 //REPORTS
 
 app.MapGet("/reports/category-country", async (ApplicationDbContext db) =>

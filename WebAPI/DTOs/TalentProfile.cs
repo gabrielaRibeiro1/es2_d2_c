@@ -14,6 +14,8 @@ public class TalentProfileDto
     public int Privacy { get; set; }
     public string Category { get; set; }
     public int FkUserId { get; set; }
+    public float TotalValue { get; set; } // <- Adicionado
+
 
     public List<SkillDto> Skills { get; set; }
     public List<ExperienceDto> Experiences { get; set; }
