@@ -9,8 +9,8 @@ public class Experience
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int experience_id { get; set; }
     public string company_name { get; set; }
-    public string start_year { get; set; }
-    public string end_year { get; set; }
+    public int start_year { get; set; }
+    public int end_year { get; set; }
 
     //many-to-one
     public int fk_profile_id { get; set; }

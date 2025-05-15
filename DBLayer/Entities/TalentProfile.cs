@@ -12,7 +12,7 @@ public class TalentProfile
     public string country { get; set; }
     public string email { get; set; }
     public float price { get; set; }
-    public float privacy { get; set; }
+    public int privacy { get; set; }
     public string category { get; set; }
     
     //many-to-one
@@ -21,4 +21,6 @@ public class TalentProfile
     
     //one-to-many
     public ICollection<Experience> Experiences { get; set; }
+    public ICollection<TalentProfileSkill> TalentProfileSkills { get; set; }
+
 }
