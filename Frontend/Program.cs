@@ -12,13 +12,13 @@ builder.Services.AddServerSideBlazor();
 
 // Configure serviços de autenticação e autorização
 builder.Services.AddOptions();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/login";
-        options.AccessDeniedPath = "/access-denied";
-    });
-builder.Services.AddAuthorizationCore();
+// builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+//     .AddCookie(options =>
+//     {
+//         options.LoginPath = "/login";
+//         options.AccessDeniedPath = "/access-denied";
+//     });
+ builder.Services.AddAuthorizationCore();
 
 // Registre o AuthenticationStateProvider customizado
 builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
