@@ -1,17 +1,12 @@
-using System.Text.Json;
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
-using Microsoft.AspNetCore.Mvc;
 using ESOF.WebApp.Services.Reports;
-
 using ESOF.WebApp.WebAPI.DTOs;
-
+using Helpers.Models;
+using Frontend.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ESOF.WebApp.DBLayer.DTOs; // importa o DTO
-using Microsoft.AspNetCore.Mvc; // necessário para [FromBody]
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
