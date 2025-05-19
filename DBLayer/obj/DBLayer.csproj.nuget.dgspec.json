@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj": {}
+    "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/DBLayer/DBLayer.csproj": {}
   },
   "projects": {
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj": {
+    "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/DBLayer/DBLayer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj",
+        "projectUniqueName": "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/DBLayer/DBLayer.csproj",
         "projectName": "ESOF WebApp DBLayer",
-        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/DBLayer.csproj",
+        "projectPath": "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/DBLayer/DBLayer.csproj",
         "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
-        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/DBLayer/obj/",
+        "outputPath": "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/DBLayer/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
@@ -26,8 +26,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
-                "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj"
+              "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/Helpers/Helpers.csproj": {
+                "projectPath": "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/Helpers/Helpers.csproj"
               }
             }
           }
@@ -44,7 +44,7 @@
           "dependencies": {
             "DotNetEnv": {
               "target": "Package",
-              "version": "[3.0.0, )"
+              "version": "[3.1.1, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
@@ -81,14 +81,14 @@
         }
       }
     },
-    "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj": {
+    "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/Helpers/Helpers.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj",
+        "projectUniqueName": "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/Helpers/Helpers.csproj",
         "projectName": "Helpers",
-        "projectPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/Helpers.csproj",
+        "projectPath": "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/Helpers/Helpers.csproj",
         "packagesPath": "/Users/gabrielaribeiro/.nuget/packages/",
-        "outputPath": "/Users/gabrielaribeiro/Desktop/es2_d2_c/Helpers/obj/",
+        "outputPath": "/Users/gabrielaribeiro/RiderProjects/es2_d2_c/Helpers/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/gabrielaribeiro/.nuget/NuGet/NuGet.Config"
