@@ -1,13 +1,12 @@
 ﻿@page "/create-account"
+
 @using System.ComponentModel.DataAnnotations
 @using Frontend.Helpers
-@inject HttpClient Http
-@inject NavigationManager Navigation
-@inject ApiAuthenticationStateProvider AuthStateProvider
-@rendermode InteractiveServer
+@using global::Helpers.Models
+
 @inject ApiHelper ApiHelper
 
-
+@rendermode InteractiveServer
 
 <div class="card mt-5 mx-auto" style="max-width: 500px;">
   <div class="card-header" style="background-color:whitesmoke; color: black;">
@@ -52,7 +51,7 @@
 </div>
 
 @code {
-  private CreateUserModel userModel = new CreateUserModel();
+  private CreateUserModel userModel = new ();
   private string successMessage;
   private string errorMessage;
 
@@ -60,23 +59,23 @@
   {
     try
     {
-      // Remove leading slash to respect BaseAddress
-      bool success = await ApiHelper.PostToApiAsync("create_account2", userModel);
-      if (success)
+      var createdUser = await ApiHelper.PostToApiAsync<CreateUserModel, UserViewModel>("create_account2", userModel);
+      
+      if (createdUser != null)
       {
-        successMessage = "User successfully added!";
-        errorMessage = null;
-        userModel = new CreateUserModel();
+        successMessage = $"User added successfully!";
+        errorMessage   = null;
+        userModel      = new CreateUserModel();
       }
       else
       {
         successMessage = null;
-        errorMessage = "Error saving user.";
+        errorMessage   = "Error adding user.";
       }
     }
     catch (Exception ex)
     {
-      errorMessage = $"Ocorreu um erro: {ex.Message}";
+      errorMessage = $"There has been an error: {ex.Message}";
       successMessage = null;
     }
   }

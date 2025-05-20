@@ -105,30 +105,28 @@ app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext d
 }) ;
 
 app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, ApplicationDbContext db) =>
+{
+    if (string.IsNullOrEmpty(dto.Password))
+        return Results.BadRequest("Password cannot be empty.");
+
+    PasswordHelper.CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+
+    if (passwordHash == null || passwordSalt == null)
+        return Results.BadRequest("Error generating password hash and salt.");
+
+    var newUser = new User
     {
-        if (string.IsNullOrEmpty(dto.Password))
-            return Results.BadRequest("Password cannot be empty.");
+        username     = dto.Username,
+        passwordHash = passwordHash,
+        passwordSalt = passwordSalt,
+        fk_role_id   = 3
+    };
 
-        PasswordHelper.CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+    db.Users.Add(newUser);
+    await db.SaveChangesAsync();
 
-        if (passwordHash == null || passwordSalt == null)
-            return Results.BadRequest("Error generating password hash and salt.");
-
-        var newUser = new User
-        {
-            username     = dto.Username,
-            passwordHash = passwordHash,
-            passwordSalt = passwordSalt,
-            fk_role_id   = 3
-        };
-
-        db.Users.Add(newUser);
-        await db.SaveChangesAsync();
-
-        return Results.Created($"/users/{newUser.user_id}", newUser);
-    });
-
-
+    return Results.Created($"/users/{newUser.user_id}", newUser);
+});
 
 app.UseHttpsRedirection();
 

@@ -1,10 +1,12 @@
 ﻿@page "/user-info"
-@inject IJSRuntime JSRuntime
+
 @using Frontend.Helpers
 @using global::Helpers.Models
 @using Microsoft.AspNetCore.Components.Authorization
+
 @inject ApiHelper ApiHelper
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
 
 <PageTitle>User Info</PageTitle>
 
@@ -57,17 +59,14 @@ else
 
 @code {
     private List<UserViewModel>? _users;
- 
-
+    
     protected override async Task OnInitializedAsync()
+        => await LoadUsers();
+    
+    private async Task LoadUsers()
     {
-        
-            _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
-        
+        _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
     }
-    
-    
-    
     
     private async Task DeleteUserById(int userId)
     {
