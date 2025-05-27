@@ -12,7 +12,7 @@ public class TalentProfile
     public string country { get; set; }
     public string email { get; set; }
     public float price { get; set; }
-    public int privacy { get; set; }
+    public float privacy { get; set; }
     public string category { get; set; }
     
     //many-to-one
