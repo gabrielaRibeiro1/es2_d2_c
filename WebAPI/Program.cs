@@ -515,12 +515,23 @@ app.MapGet("/experiences/by-profile", async (
 });
 
 
-app.MapGet("/experiences", async (ApplicationDbContext dbContext) =>
+app.MapGet("/experiences", async (ApplicationDbContext db) =>
 {
-    var experiences = await dbContext.Experiences.ToListAsync();
+    var list = await db.Experiences
+        .Include(e => e.Profile)
+        .Select(e => new ExperienceDto()
+        {
+            ExperienceId = e.experience_id,
+            CompanyName  = e.company_name,
+            StartYear    = e.start_year,
+            EndYear      = e.end_year,
+            ProfileName  = e.Profile.profile_name
+        })
+        .ToListAsync();
 
-    return Results.Ok(experiences);
+    return Results.Ok(list);
 });
+
 
 app.MapPut("/experiences/{id}", async (
     [FromRoute] int id,
