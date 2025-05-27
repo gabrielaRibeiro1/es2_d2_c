@@ -1,4 +1,3 @@
-using ESOF.WebApp.DBLayer;
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -17,9 +16,8 @@ public class SkillReport : ReportGenerator
     protected override List<TalentProfile> GetData()
     {
         return _context.TalentProfiles
-            .Include(tp => tp.User)
-            .ThenInclude(u => u.UserSkills)
-            .ThenInclude(us => us.Skill)
+            .Include(tp => tp.TalentProfileSkills)
+            .ThenInclude(tps => tps.Skill)
             .ToList();
     }
 
@@ -29,9 +27,9 @@ public class SkillReport : ReportGenerator
 
         foreach (var profile in data)
         {
-            foreach (var userSkill in profile.User.UserSkills)
+            foreach (var tps in profile.TalentProfileSkills)
             {
-                var skillName = userSkill.Skill.name;
+                var skillName = tps.Skill.name;
 
                 if (!result.ContainsKey(skillName))
                     result[skillName] = new List<float>();
