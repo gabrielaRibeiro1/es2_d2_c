@@ -11,7 +11,7 @@ public class TalentProfileDto
     public string Country { get; set; }
     public string Email { get; set; }
     public float Price { get; set; }
-    public float Privacy { get; set; }
+    public int Privacy { get; set; }
     public string Category { get; set; }
     public int FkUserId { get; set; }
     public float TotalValue { get; set; } // <- Adicionado
