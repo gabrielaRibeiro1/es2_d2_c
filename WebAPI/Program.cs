@@ -1,9 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Text;
 using ESOF.WebApp.DBLayer.Context;
 using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
 using ESOF.WebApp.WebAPI.Models;
-using Helpers.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -19,24 +20,41 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+// Configure JWT settings
+var jwtKey     = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey))
+    throw new InvalidOperationException("Falta configuração Jwt:Key em appsettings.json!");
+var jwtIssuer  = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+var keyBytes  = Encoding.UTF8.GetBytes(jwtKey);
+
+// Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        // Exemplo de configuração
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            // IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("sua-chave-secreta"))
-        };
-    });
+        ValidateIssuer           = true,
+        ValidateAudience         = true,
+        ValidateLifetime         = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer   = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+        
+        NameClaimType    = JwtRegisteredClaimNames.Sub,
+        RoleClaimType    = "role",
+    };
+});
 
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
-
 
 if (app.Environment.IsDevelopment())
 {
@@ -82,27 +100,33 @@ app.MapPost("/create_account", async (string username, string password, int fk_r
     return Results.Created($"/users/{newUser.user_id}", newUser);
 });
 
+// Login endpoint - now generates JWT
 app.MapPost("/login", async ([FromBody] LoginModel login, ApplicationDbContext db) =>
 {
-    // Verificar se login está a ser recebido corretamente
-  
-
     var user = await db.Users.FirstOrDefaultAsync(u => u.username == login.Username);
-    if (user == null)
+    if (user == null || !PasswordHelper.VerifyPassword(login.Password, user.passwordHash, user.passwordSalt))
         return Results.Unauthorized();
-    Console.WriteLine($"Username: {login.Username}");
-    Console.WriteLine($"Password: {login.Password}");
 
-    if (!PasswordHelper.VerifyPassword(login.Password, user.passwordHash, user.passwordSalt))
-        return Results.Unauthorized();
-    
-    return Results.Ok(new
+    var claims = new[]
     {
-        user.user_id,
-        user.username,
-        user.fk_role_id
-    });
-}) ;
+        new Claim(JwtRegisteredClaimNames.Sub, user.username),
+        new Claim(JwtRegisteredClaimNames.Name, user.username),
+        new Claim("role", user.fk_role_id.ToString()),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
+
+    var creds = new SigningCredentials(new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256);
+    var token = new JwtSecurityToken(
+        issuer: jwtIssuer,
+        audience: jwtAudience,
+        claims: claims,
+        expires: DateTime.UtcNow.AddHours(2),
+        signingCredentials: creds
+    );
+
+    var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+    return Results.Ok(new LoginResponse { Token = tokenString, Username = user.username, Role = user.fk_role_id });
+});
 
 app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, ApplicationDbContext db) =>
 {
@@ -127,7 +151,5 @@ app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, Application
 
     return Results.Created($"/users/{newUser.user_id}", newUser);
 });
-
-app.UseHttpsRedirection();
 
 app.Run();

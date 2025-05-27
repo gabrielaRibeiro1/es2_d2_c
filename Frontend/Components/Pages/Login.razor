@@ -1,8 +1,12 @@
 ﻿@page "/"
+
 @using Frontend.Helpers
+
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject ApiAuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime _jsRuntime
+
 @rendermode InteractiveServer
 
 <div class="card mt-5 mx-auto" style="max-width: 500px;">
@@ -43,11 +47,10 @@
 
     private async Task HandleLogin()
     {
-        bool success = await AuthStateProvider.LoginAsync(loginModel);
-
+        var success = await AuthStateProvider.LoginAsync(loginModel);
         if (success)
         {
-            Navigation.NavigateTo("/home");
+            Navigation.NavigateTo("/home", forceLoad: true);
         }
         else
         {

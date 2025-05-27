@@ -1,15 +1,28 @@
 ﻿@inherits LayoutComponentBase
+
 @inject NavigationManager Nav
+@inject Helpers.ApiAuthenticationStateProvider AuthStateProvider
 
 @code {
-// Pega o path relativo sem barras e em minúsculas (ex: "login", "ingredients")
-private string RelativePath =>
-Nav.ToBaseRelativePath(Nav.Uri)
-.Trim('/')
-.ToLowerInvariant();
+    // Pega o path relativo sem barras e em minúsculas (ex: "login", "ingredients")
+    private string RelativePath =>
+    Nav.ToBaseRelativePath(Nav.Uri)
+    .Trim('/')
+    .ToLowerInvariant();
 
-// Mostra o sidebar em tudo que não for a página de login
-private bool ShowSidebar => RelativePath != "" && RelativePath != "create-account";
+    // Mostra o sidebar em tudo que não for a página de login
+    private bool ShowSidebar => RelativePath != "" && RelativePath != "create-account";
+
+    private bool _hasRefreshed;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && !_hasRefreshed)
+        {
+            _hasRefreshed = true;
+            AuthStateProvider.RefreshAuthenticationState();
+        }
+    }
 }
 
 <div class="page">

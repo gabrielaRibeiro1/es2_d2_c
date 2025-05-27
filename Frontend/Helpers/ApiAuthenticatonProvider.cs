@@ -1,131 +1,91 @@
-using System.Text;
-using Frontend.Components.Pages;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 
 namespace Frontend.Helpers;
-
-using System.Security.Claims;
-using System.Text.Json;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-
 
 public class ApiAuthenticationStateProvider : AuthenticationStateProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly IJSRuntime   _jsRuntime;
 
-    public ApiAuthenticationStateProvider(HttpClient httpClient)
+    public ApiAuthenticationStateProvider(HttpClient httpClient, IJSRuntime jsRuntime)
     {
         _httpClient = httpClient;
+        _jsRuntime  = jsRuntime;
     }
-
-    // public override async Task<AuthenticationState> GetAuthenticationStateAsync()
-    // {
-    //     var user = new ClaimsPrincipal(new ClaimsIdentity()); 
-    //
-    //     try
-    //     {
-    //         var dados = new {username = "ana", password= "1234"};
-    //         var json = JsonSerializer.Serialize(dados);
-    //         var content = new StringContent(json, Encoding.UTF8, "application/json");
-    //
-    //         var response = await _httpClient.PostAsync("https://localhost:7103/login", content);
-    //     //   var response = await _httpClient.GetAsync("https://localhost:7103/login");
-    //     
-    //
-    //         if (response.IsSuccessStatusCode)
-    //         {
-    //             var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
-    //
-    //             var identity = new ClaimsIdentity(new[]
-    //             {
-    //                 new Claim(ClaimTypes.Name, userInfo.Username),
-    //                 new Claim(ClaimTypes.Role, userInfo.RoleId.ToString())
-    //             }, "apiauth");
-    //
-    //             user = new ClaimsPrincipal(identity);
-    //         }
-    //         Console.WriteLine($"{response}");
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.WriteLine($"Erro ao buscar autenticação: {ex.Message}");
-    //     }
-    //
-    //     return new AuthenticationState(user);
-    // }
-    //
-    // public async Task<bool> LoginAsync(LoginModel login)
-    // {
-    //     Console.WriteLine("uuu");
-    //     var response = await _httpClient.PostAsJsonAsync("login", login);
-    //     if (response.IsSuccessStatusCode)
-    //     {
-    //         // Se a API retornar informações do usuário, você pode usá-las aqui
-    //         var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
-    //         NotifyUserAuthentication(userInfo.Username);
-    //         return true;
-    //     }
-    //     return false;
-    // }
     
     public async Task<bool> LoginAsync(LoginModel login)
     {
         var response = await _httpClient.PostAsJsonAsync("login", login);
-        if (response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
+            return false;
+
+        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+        // 1) Store token (only in interactive mode)
+        await _jsRuntime.InvokeVoidAsync("localStorage.setItem", "authToken", loginResponse.Token);
+        Console.WriteLine("Escrevi raw localStorage: " + loginResponse.Token);
+
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", loginResponse.Token);
+
+        MarkUserAsAuthenticated(loginResponse.Token);
+
+        return true;
+    }
+
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    {
+        string token = null;
+        try
         {
-            var userInfo = await response.Content.ReadFromJsonAsync<UserInfo>();
-        
-            var identity = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, userInfo.Username),
-                new Claim(ClaimTypes.Role, userInfo.RoleId.ToString())
-            }, "apiauth");
-
-            var user = new ClaimsPrincipal(identity);
-            NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
-
-            return true;
+            token = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "authToken");
+            Console.WriteLine("Lido raw localStorage: " + token);
         }
-        return false;
-    }
-
-    public override Task<AuthenticationState> GetAuthenticationStateAsync()
-    {
-        // No início o utilizador está anónimo
-        var user = new ClaimsPrincipal(new ClaimsIdentity());
-
-        // Aqui podes mais tarde tentar ler do localStorage/session ou cookies se usares JWT
-        return Task.FromResult(new AuthenticationState(user));
-    }
-
-    public void NotifyUserAuthentication(string username)
-    {
-        var identity = new ClaimsIdentity(new[]
+        catch (InvalidOperationException)
         {
-            new Claim(ClaimTypes.Name, username)
-        }, "apiauth");
+            // prerendering: no token available yet
+        }
+        
+        if (string.IsNullOrEmpty(token))
+            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
 
-        var user = new ClaimsPrincipal(identity);
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
-    }
+        // Set HttpClient header
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
 
-    public void NotifyUserLogout()
-    {
-        var anonymousUser = new ClaimsPrincipal(new ClaimsIdentity());
-        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(anonymousUser)));
-    }
+        // Rebuild user
+        var handler = new JwtSecurityTokenHandler();
+        var jwt     = handler.ReadJwtToken(token);
+        var identity = new ClaimsIdentity(jwt.Claims, "jwt");
+        var user     = new ClaimsPrincipal(identity);
+        
+        _httpClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
 
-    private class UserInfo
-    {
-        public string Username { get; set; }
-        public int RoleId { get; set; }
+        return new AuthenticationState(user);
     }
     
+    public void MarkUserAsAuthenticated(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(token);
+        var identity = new ClaimsIdentity(jwt.Claims, "jwt");
+        var user = new ClaimsPrincipal(identity);
+
+        NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(user)));
+    }
+    
+    public void RefreshAuthenticationState() 
+        => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     
     public class LoginModel {
         public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
+    
+    public record LoginResponse(string Token, string Username, int Role);
 }
-

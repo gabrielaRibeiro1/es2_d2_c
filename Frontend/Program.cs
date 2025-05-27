@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Frontend.Components;
 using Frontend.Helpers;
 using Helpers;
@@ -10,43 +9,32 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
-// Configure serviços de autenticação e autorização
-builder.Services.AddOptions();
-// builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-//     .AddCookie(options =>
-//     {
-//         options.LoginPath = "/login";
-//         options.AccessDeniedPath = "/access-denied";
-//     });
- builder.Services.AddAuthorizationCore();
+// Autorização baseada em Claims (obrigatório para <AuthorizeView>)
+builder.Services.AddAuthorizationCore();
 
-// Registre o AuthenticationStateProvider customizado
-builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
+// Registar o AuthenticationStateProvider personalizado
+builder.Services.AddScoped<ApiAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<ApiAuthenticationStateProvider>());
 
-// Antiforgery (para proteger formulários e requisições)
+// HttpClient configurado para todos os serviços
+builder.Services.AddHttpClient("API", client =>
+    {
+        client.BaseAddress = new Uri(EnvFileHelper.GetString("API_URL"));
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    });
+
+// Regista o HttpClient padrão usando o nome "API"
+builder.Services.AddScoped(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    return factory.CreateClient("API");
+});
+
+// Antiforgery
 builder.Services.AddAntiforgery();
-
-// Registre HttpClient para comunicação com a API usando BaseAddress do EnvFileHelper
-builder.Services.AddHttpClient<ApiHelper>(client =>
-{
-    client.BaseAddress = new Uri(EnvFileHelper.GetString("API_URL"));
-})
-.ConfigurePrimaryHttpMessageHandler(() =>
-    new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-    });
-
-// Registre HttpClient específico para o ApiAuthenticationStateProvider
-builder.Services.AddHttpClient<ApiAuthenticationStateProvider>(client =>
-{
-    client.BaseAddress = new Uri(EnvFileHelper.GetString("API_URL"));
-})
-.ConfigurePrimaryHttpMessageHandler(() =>
-    new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-    });
 
 // Registre componentes interativos Razor
 builder.Services.AddRazorComponents()
