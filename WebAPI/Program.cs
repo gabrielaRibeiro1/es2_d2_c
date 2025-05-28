@@ -404,60 +404,72 @@ app.MapDelete("/work_proposals/{id}", async (int id, ApplicationDbContext db) =>
     return Results.NoContent();
 });
 
-app.MapGet("/work_proposals/{proposalId}/eligible_talents", async (int proposalId, ApplicationDbContext db) => 
+app.MapGet("/work_proposals/{proposalId}/eligible_talents", 
+    async (int proposalId, ApplicationDbContext db) => 
 {
-    // Retrieve the work proposal by ID
+    // 1) Busca a proposta
     var proposal = await db.WorkProposals
+        .AsNoTracking()
         .FirstOrDefaultAsync(p => p.proposal_id == proposalId);
 
     if (proposal == null)
-    {
         return Results.NotFound("Work proposal not found.");
-    }
 
-    // Retrieve talents that are eligible for this proposal
+    // 2) Busca talentos elegíveis: mesma categoria + público
     var eligibleTalents = await db.TalentProfiles
-        .Where(p => p.category == proposal.category) // Filter by category
-        .Include(p => p.TalentProfileSkills) // Include skills
-        .Include(p => p.Experiences) // Include experiences
+        .Where(p => p.category == proposal.category 
+                 && p.privacy == 0)
+        .Include(p => p.TalentProfileSkills)
+            .ThenInclude(tps => tps.Skill)    // garante carregar Skill
+        .Include(p => p.Experiences)
+        .AsNoTracking()
         .ToListAsync();
 
-    // Calculate the total value of each talent based on experience years
-    var talentDtos = eligibleTalents.Select(p => new TalentProfileDto
-    {
-        ProfileId = p.profile_id,
-        ProfileName = p.profile_name,
-        Country = p.country,
-        Email = p.email,
-        Price = p.price,
-        Privacy = p.privacy,
-        Category = p.category,
-        FkUserId = p.fk_user_id,
-        Skills = p.TalentProfileSkills.Select(s => new SkillDto
-        {
-            SkillId = s.SkillId,
-            SkillName = s.Skill.name,
-            YearsOfExperience = s.YearsOfExperience
-        }).ToList(),
-        Experiences = p.Experiences.Select(e => new ExperienceDto
-        {
-            ExperienceId = e.experience_id,
-            CompanyName = e.company_name,
-            StartYear = e.start_year,
-            EndYear = e.end_year // No null handling needed as end_year is non-nullable
-        }).ToList(),
-        TotalValue = p.Experiences.Sum(e =>
-        {
-            // Calculate the total value based on years worked and price
-            int experienceYears = e.end_year - e.start_year; // end_year is not nullable, no need for ?? DateTime.Now.Year
-            return experienceYears * p.price * 1000; // Adjust the multiplier as needed
+    // 3) Mapeia para DTO e calcula TotalValue tratando end_year == 0
+    var talentDtos = eligibleTalents
+        .Select(p => {
+            var totalValue = p.Experiences.Sum(e =>
+            {
+                var endYear = (e.end_year == 0 ? DateTime.Now.Year : e.end_year);
+                var years   = endYear - e.start_year;
+                return years * p.price * 1000;
+            });
+
+            return new TalentProfileDto
+            {
+                ProfileId   = p.profile_id,
+                ProfileName = p.profile_name,
+                Country     = p.country,
+                Email       = p.email,
+                Price       = p.price,
+                Privacy     = p.privacy,
+                Category    = p.category,
+                FkUserId    = p.fk_user_id,
+                Skills      = p.TalentProfileSkills
+                                  .Select(s => new SkillDto {
+                                      SkillId           = s.SkillId,
+                                      SkillName         = s.Skill.name,
+                                      YearsOfExperience = s.YearsOfExperience
+                                  })
+                                  .ToList(),
+                Experiences = p.Experiences
+                                  .Select(e => new ExperienceDto {
+                                      ExperienceId = e.experience_id,
+                                      CompanyName  = e.company_name,
+                                      StartYear    = e.start_year,
+                                      EndYear      = e.end_year
+                                  })
+                                  .ToList(),
+                TotalValue  = totalValue
+            };
         })
-    })
-    .OrderByDescending(p => p.TotalValue) // Order talents by their total value
-    .ToList();
+        .OrderByDescending(x => x.TotalValue)
+        .ToList();
 
     return Results.Ok(talentDtos);
 });
+
+
 
 
 
@@ -574,12 +586,23 @@ app.MapGet("/experiences/by-profile", async (
 });
 
 
-app.MapGet("/experiences", async (ApplicationDbContext dbContext) =>
+app.MapGet("/experiences", async (ApplicationDbContext db) =>
 {
-    var experiences = await dbContext.Experiences.ToListAsync();
+    var list = await db.Experiences
+        .Include(e => e.Profile)
+        .Select(e => new ExperienceDto()
+        {
+            ExperienceId = e.experience_id,
+            CompanyName  = e.company_name,
+            StartYear    = e.start_year,
+            EndYear      = e.end_year,
+            ProfileName  = e.Profile.profile_name
+        })
+        .ToListAsync();
 
-    return Results.Ok(experiences);
+    return Results.Ok(list);
 });
+
 
 app.MapPut("/experiences/{id}", async (
     [FromRoute] int id,
@@ -870,50 +893,59 @@ app.MapDelete("/talent_profiles/{profile_name}/delete", async (
 });
 
 app.MapGet("/talent_profiles/search_by_skills", async (
-    [FromQuery] string skill_names, // Recebe como string
+    [FromQuery] string skill_names,
     [FromServices] ApplicationDbContext db) =>
 {
     if (string.IsNullOrEmpty(skill_names))
         return Results.BadRequest("At least one skill name must be provided.");
 
-    // Converte a string separada por vírgulas para uma lista de skills
-    var skillList = skill_names.Split(',').ToList();
+    var skillList = skill_names
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(s => s.Trim().ToLower())
+        .ToList();
 
-    // Busca os talentos que têm todas as skills informadas
+    // bring in skills + experiences
     var profiles = await db.TalentProfiles
         .Where(p => p.privacy == 0)
         .Include(p => p.TalentProfileSkills)
-        .ThenInclude(tps => tps.Skill)
+            .ThenInclude(tps => tps.Skill)
+        .Include(p => p.Experiences)
         .ToListAsync();
 
-    // Filtra os perfis que têm todas as skills da busca
     var filtered = profiles
-        .Where(p => skillList.All(sn =>
-            p.TalentProfileSkills.Any(tps => tps.Skill.name.ToLower() == sn.ToLower())))
+        .Where(p => skillList
+            .All(sn => p.TalentProfileSkills
+                .Any(tps => tps.Skill.name.ToLower() == sn)))
         .OrderBy(p => p.profile_name)
         .Select(p => new TalentProfileDto
         {
-            ProfileId = p.profile_id,
+            ProfileId   = p.profile_id,
             ProfileName = p.profile_name,
-            Country = p.country,
-            Email = p.email,
-            Price = p.price,
-            Privacy = p.privacy,
-            Category = p.category,
-            FkUserId = p.fk_user_id,
-            Skills = p.TalentProfileSkills.Select(s => new SkillDto
-            {
-                SkillId = s.SkillId,
-                SkillName = s.Skill.name,
-                YearsOfExperience = s.YearsOfExperience
-            }).ToList()
+            Country     = p.country,
+            Email       = p.email,
+            Price       = p.price,
+            Privacy     = p.privacy,
+            Category    = p.category,
+            FkUserId    = p.fk_user_id,
+            Skills      = p.TalentProfileSkills
+                            .Select(s => new SkillDto {
+                                SkillId           = s.SkillId,
+                                SkillName         = s.Skill.name,
+                                YearsOfExperience = s.YearsOfExperience
+                            }).ToList(),
+            Experiences = p.Experiences
+                            .Select(e => new ExperienceDto {
+                                ExperienceId = e.experience_id,
+                                CompanyName  = e.company_name,
+                                StartYear    = e.start_year,
+                                EndYear      = e.end_year,
+                                ProfileName  = p.profile_name   // optional
+                            }).ToList()
         })
         .ToList();
 
     return Results.Ok(filtered);
 });
-
-
 
 
 app.UseHttpsRedirection();
