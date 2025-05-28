@@ -1,0 +1,114 @@
+﻿@page "/Reports"
+@using Microsoft.AspNetCore.Components.Web
+@inject HttpClient Http
+@inject ApiHelper apiHelper
+@using System.ComponentModel.DataAnnotations
+@using Frontend.Helpers
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<h3>Relatórios de Preço Médio Mensal</h3>
+
+<div class="mb-3">
+    <button class="btn btn-primary me-2" @onclick="LoadCategoryCountryReport">Ver Relatório por Categoria e País</button>
+    <button class="btn btn-secondary" @onclick="LoadSkillReport">Ver Relatório por Skill</button>
+</div>
+
+@if (categoryCountryReport?.Any() == true)
+{
+    <h4>Relatório por Categoria e País</h4>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Categoria - País</th>
+                <th>Preço Médio Mensal (€)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in categoryCountryReport)
+            {
+                <tr>
+                    <td>@item.Key</td>
+                    <td>@item.Value.ToString("F2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (skillReport?.Any() == true)
+{
+    <h4>Relatório por Skill</h4>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Skill</th>
+                <th>Preço Médio Mensal (€)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in skillReport)
+            {
+                <tr>
+                    <td>@item.Key</td>
+                    <td>@item.Value.ToString("F2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@code {
+    private Dictionary<string, float>? categoryCountryReport;
+    private Dictionary<string, float>? skillReport;
+    private string errorMessage = string.Empty;
+
+    private async Task LoadCategoryCountryReport()
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            var response = await Http.GetAsync("/reports/category-country");
+            if (response.IsSuccessStatusCode)
+            {
+                categoryCountryReport = await response.Content.ReadFromJsonAsync<Dictionary<string, float>>();
+                skillReport = null;
+            }
+            else
+            {
+                errorMessage = $"Erro ao obter relatório: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+    }
+
+    private async Task LoadSkillReport()
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            var response = await Http.GetAsync("/reports/skill");
+            if (response.IsSuccessStatusCode)
+            {
+                skillReport = await response.Content.ReadFromJsonAsync<Dictionary<string, float>>();
+                categoryCountryReport = null;
+            }
+            else
+            {
+                errorMessage = $"Erro ao obter relatório: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+    }
+}
