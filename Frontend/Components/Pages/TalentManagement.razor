@@ -17,14 +17,43 @@
             <InputText class="form-control mb-2" placeholder="Nome do Perfil *" @bind-Value="newProfile.ProfileName" />
             <InputText class="form-control mb-2" placeholder="País *" @bind-Value="newProfile.Country" />
             <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email" />
+            <label class="form-label">Preço (em EUR) *</label>
             <InputNumber class="form-control mb-2" placeholder="Preço *" @bind-Value="newProfile.Price" />
             <InputText class="form-control mb-2" placeholder="Categoria" @bind-Value="newProfile.Category" />
+            <label class="form-label">ID (FK) *</label>
             <InputNumber class="form-control mb-2" placeholder="ID (FK) *" @bind-Value="newProfile.FkUserId" />
 
             <InputSelect class="form-control mb-2" @bind-Value="newProfile.Privacy">
                 <option value="0">Público</option>
                 <option value="1">Privado</option>
             </InputSelect>
+
+            <hr />
+            <h5>Skills</h5>
+            <div class="row">
+                <div class="col-md-5">
+                    <InputText class="form-control mb-2" placeholder="Nome da Skill" @bind-Value="newSkill.SkillName" />
+                </div>
+                <div class="col-md-3">
+                    <InputNumber class="form-control mb-2" placeholder="Anos de Experiência" @bind-Value="newSkill.YearsOfExperience" />
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-primary" @onclick="AddSkill">Adicionar Skill</button>
+                </div>
+            </div>
+
+            @if (newProfile.Skills.Any())
+            {
+                <ul class="list-group mb-2">
+                    @foreach (var skill in newProfile.Skills)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @skill.SkillName (@skill.YearsOfExperience) anos
+                            <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(skill)">Remover</button>
+                        </li>
+                    }
+                </ul>
+            }
 
             <button class="btn btn-success mt-2" type="submit" disabled="@isLoading">
                 @(isEditing ? "Guardar Alterações" : "Criar Perfil")
@@ -35,63 +64,64 @@
 
 @if (!string.IsNullOrEmpty(successMessage))
 {
-<div class="alert alert-success">@successMessage</div>
+    <div class="alert alert-success">@successMessage</div>
 }
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-<div class="alert alert-danger">@errorMessage</div>
+    <div class="alert alert-danger">@errorMessage</div>
 }
 
 <h4 class="mt-4">Perfis Públicos</h4>
 
 <table class="table table-bordered">
     <thead>
-    <tr>
-        <th>Nome</th>
-        <th>Email</th>
-        <th>País</th>
-        <th>Preço</th>
-        <th>Skills</th>
-        <th>Ações</th>
-    </tr>
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>País</th>
+            <th>Preço</th>
+            <th>Skills</th>
+            <th>Ações</th>
+        </tr>
     </thead>
     <tbody>
-    @if (profiles is null)
-    {
-    <tr><td colspan="6">Carregando...</td></tr>
-    }
-    else if (!profiles.Any())
-    {
-    <tr><td colspan="6">Nenhum perfil encontrado.</td></tr>
-    }
-    else
-    {
-    @foreach (var p in profiles)
-    {
-    <tr>
-        <td>@p.ProfileName</td>
-        <td>@p.Email</td>
-        <td>@p.Country</td>
-        <td>@p.Price</td>
-        <td>
-            @foreach (var skill in p.Skills)
+        @if (profiles is null)
+        {
+            <tr><td colspan="6">Carregando...</td></tr>
+        }
+        else if (!profiles.Any())
+        {
+            <tr><td colspan="6">Nenhum perfil encontrado.</td></tr>
+        }
+        else
+        {
+            @foreach (var p in profiles)
             {
-            <span class="badge bg-info text-dark me-1">@skill.SkillName (@skill.YearsOfExperience)</span>
+                <tr>
+                    <td>@p.ProfileName</td>
+                    <td>@p.Email</td>
+                    <td>@p.Country</td>
+                    <td>@p.Price</td>
+                    <td>
+                        @foreach (var skill in p.Skills)
+                        {
+                            <span class="badge bg-info text-dark me-1">@skill.SkillName (@skill.YearsOfExperience)</span>
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" @onclick="@(() => EditProfile(p))">Editar</button>
+                        <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteProfile(p.ProfileName))">Excluir</button>
+                    </td>
+                </tr>
             }
-        </td>
-        <td>
-            <button class="btn btn-sm btn-primary me-1" @onclick="@(() => EditProfile(p))">Editar</button>
-            <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteProfile(p.ProfileName))">Excluir</button>
-        </td>
-    </tr>
-    }
-    }
+        }
     </tbody>
 </table>
 
 @code {
     private List<TalentProfileDto>? profiles;
     private TalentProfileDto newProfile = new();
+    private SkillDto newSkill = new();
     private bool isLoading = false;
     private bool isEditing = false;
     private string successMessage = string.Empty;
@@ -137,9 +167,24 @@
 
             if (response.IsSuccessStatusCode)
             {
+                // Adicionar skills
+                foreach (var skill in newProfile.Skills)
+                {
+                    var skillUrl = $"/talent_profiles/{newProfile.ProfileName}/add_skill?" +
+                                   $"skill_name={Uri.EscapeDataString(skill.SkillName)}" +
+                                   $"&years_of_experience={skill.YearsOfExperience}";
+
+                    var skillResponse = await Http.PostAsync(skillUrl, null);
+                    if (!skillResponse.IsSuccessStatusCode)
+                    {
+                        errorMessage += $" Erro ao adicionar skill '{skill.SkillName}': {await skillResponse.Content.ReadAsStringAsync()}";
+                    }
+                }
+
                 successMessage = "Perfil criado com sucesso!";
                 await LoadProfiles();
                 newProfile = new();
+                newSkill = new();
                 isEditing = false;
             }
             else
@@ -177,6 +222,7 @@
                 successMessage = "Perfil atualizado com sucesso!";
                 await LoadProfiles();
                 newProfile = new();
+                newSkill = new();
                 isEditing = false;
             }
             else
@@ -234,9 +280,30 @@
             Price = profile.Price,
             Privacy = profile.Privacy,
             Category = profile.Category,
-            FkUserId = profile.FkUserId
+            FkUserId = profile.FkUserId,
+            Skills = new List<SkillDto>(profile.Skills)
         };
+        newSkill = new();
         isEditing = true;
+    }
+
+    private void AddSkill()
+    {
+        if (!string.IsNullOrWhiteSpace(newSkill.SkillName) && newSkill.YearsOfExperience > 0)
+        {
+            newProfile.Skills.Add(new SkillDto
+            {
+                SkillName = newSkill.SkillName,
+                YearsOfExperience = newSkill.YearsOfExperience
+            });
+
+            newSkill = new();
+        }
+    }
+
+    private void RemoveSkill(SkillDto skill)
+    {
+        newProfile.Skills.Remove(skill);
     }
 
     public class TalentProfileDto
@@ -245,7 +312,7 @@
         [Required] public string Country { get; set; } = "";
         [Required] public string Email { get; set; } = "";
         [Required] public float Price { get; set; }
-        [Required] public int Privacy { get; set; } = 0; // 0 = público, 1 = privado
+        [Required] public int Privacy { get; set; } = 0;
         public string Category { get; set; } = "";
         [Required] public int FkUserId { get; set; }
         public List<SkillDto> Skills { get; set; } = new();
@@ -257,5 +324,4 @@
         public string SkillName { get; set; } = "";
         public int YearsOfExperience { get; set; }
     }
-
 }
