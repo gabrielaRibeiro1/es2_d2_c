@@ -948,6 +948,18 @@ app.MapGet("/talent_profiles/search_by_skills", async (
 });
 
 
+app.MapGet("/skills/list", async (ApplicationDbContext db) =>
+{
+    var skills = await db.Skills
+        .Select(s => s.name)
+        .ToListAsync();
+
+    return Results.Ok(skills); // retorna List<string>
+});
+
+
+
+
 app.UseHttpsRedirection();
 
 app.Run();
