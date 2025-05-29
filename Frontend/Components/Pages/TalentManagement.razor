@@ -2,6 +2,7 @@
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 @using System.ComponentModel.DataAnnotations
+@using System.Text.Json
 @rendermode InteractiveServer
 
 <h3>Gestão de Talentos</h3>
@@ -32,7 +33,13 @@
             <h5>Skills</h5>
             <div class="row">
                 <div class="col-md-5">
-                    <InputText class="form-control mb-2" placeholder="Nome da Skill" @bind-Value="newSkill.SkillName" />
+                    <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
+                        <option disabled selected value="">Selecione uma Skill</option>
+                        @foreach (var skill in availableSkills)
+                        {
+                            <option value="@skill">@skill</option>
+                        }
+                    </InputSelect>
                 </div>
                 <div class="col-md-3">
                     <InputNumber class="form-control mb-2" placeholder="Anos de Experiência" @bind-Value="newSkill.YearsOfExperience" />
@@ -122,6 +129,7 @@
     private List<TalentProfileDto>? profiles;
     private TalentProfileDto newProfile = new();
     private SkillDto newSkill = new();
+    private List<string> availableSkills = new();
     private bool isLoading = false;
     private bool isEditing = false;
     private string successMessage = string.Empty;
@@ -130,6 +138,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadProfiles();
+        await LoadAvailableSkills();
     }
 
     private async Task LoadProfiles()
@@ -146,6 +155,24 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private async Task LoadAvailableSkills()
+    {
+        try
+        {
+            var json = await Http.GetStreamAsync("/skills/list");
+            var skills = await JsonSerializer.DeserializeAsync<List<string>>(json);
+
+            if (skills is not null)
+            {
+                availableSkills = skills;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao carregar lista de skills: {ex.Message}";
         }
     }
 
@@ -167,7 +194,6 @@
 
             if (response.IsSuccessStatusCode)
             {
-                // Adicionar skills
                 foreach (var skill in newProfile.Skills)
                 {
                     var skillUrl = $"/talent_profiles/{newProfile.ProfileName}/add_skill?" +
