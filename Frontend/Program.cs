@@ -7,12 +7,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Registre serviços de páginas Razor e Blazor Server
 builder.Services.AddRazorPages();
+builder.Services.AddRazorComponents();
 builder.Services.AddServerSideBlazor();
+
 
 // Autorização baseada em Claims (obrigatório para <AuthorizeView>)
 builder.Services.AddAuthorizationCore();
 
 // Registar o AuthenticationStateProvider personalizado
+builder.Services.AddScoped<ApiHelper>();
 builder.Services.AddScoped<ApiAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<ApiAuthenticationStateProvider>());
 
