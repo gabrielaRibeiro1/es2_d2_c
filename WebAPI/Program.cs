@@ -57,18 +57,15 @@ app.MapPost("/create_account", async ([FromBody] UserAddModel request, Applicati
     return Results.Created($"/users/{newUser.user_id}", newUser);
 });
 
-app.MapPost("/login", async (string username, string password, ApplicationDbContext db) =>
+app.MapPost("/login", async (LoginRequest login, ApplicationDbContext db) =>
 {
-    // Find user by username
-    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
+    var user = await db.Users.FirstOrDefaultAsync(u => u.username == login.Username);
     if (user == null)
         return Results.Unauthorized();
 
-    // Verify the password
-    if (!PasswordHelper.VerifyPassword(password, user.passwordHash, user.passwordSalt))
+    if (!PasswordHelper.VerifyPassword(login.Password, user.passwordHash, user.passwordSalt))
         return Results.Unauthorized();
 
-    // Return user info upon successful login
     return Results.Ok(new
     {
         user.user_id,
@@ -76,6 +73,7 @@ app.MapPost("/login", async (string username, string password, ApplicationDbCont
         user.fk_role_id
     });
 });
+
 
 app.MapDelete("/delete_user/{username}", async (string username, ApplicationDbContext db) =>
 {
