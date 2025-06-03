@@ -1,0 +1,131 @@
+﻿@page "/Login"
+@using Microsoft.AspNetCore.Components.Web
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
+@using Frontend.Helpers
+@rendermode InteractiveServer
+
+<h3>Login</h3>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="username">Nome de Utilizador *</label>
+                <InputText id="username"
+                           @bind-Value="loginModel.Username"
+                           class="form-control"
+                           placeholder="Digite seu nome de utilizador" />
+                <ValidationMessage For="@(() => loginModel.Username)" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Senha *</label>
+                <InputText id="password"
+                           type="password"
+                           @bind-Value="loginModel.Password"
+                           class="form-control"
+                           placeholder="Digite sua senha" />
+                <ValidationMessage For="@(() => loginModel.Password)" />
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    <span> A entrar...</span>
+                }
+                else
+                {
+                    <span class="oi oi-account-login"></span> <span>Entrar</span>
+                }
+            </button>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">@errorMessage</div>
+            }
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="alert alert-success mt-3">@successMessage</div>
+            }
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            successMessage = string.Empty;
+            StateHasChanged();
+
+            var response = await Http.PostAsJsonAsync("/login", loginModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var userData = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+                if (userData is not null)
+                {
+                    // Guardar em sessão (estático, sem token)
+                    UserSession.UserId = userData.user_id;
+                    UserSession.Username = userData.username;
+                    UserSession.RoleId = userData.fk_role_id;
+
+                    // Redirecionar com ID no URL
+                    Navigation.NavigateTo($"/SkillManagement?userId={userData.user_id}");
+                }
+                else
+                {
+                    errorMessage = "Erro ao processar os dados do utilizador.";
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                errorMessage = "Usuário ou senha inválidos.";
+            }
+            else
+            {
+                errorMessage = $"Erro no login: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Nome de utilizador é obrigatório")]
+        public string Username { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Senha é obrigatória")]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    public class LoginResponse
+    {
+        public int user_id { get; set; }
+        public string username { get; set; } = string.Empty;
+        public int fk_role_id { get; set; }
+    }
+}
