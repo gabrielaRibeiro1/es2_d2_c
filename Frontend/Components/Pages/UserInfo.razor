@@ -22,70 +22,128 @@
     </button>
 </div>
 }
-<h1>Informação Users</h1>
 
-
-
-<NavLink  class="btn btn-primary mb-3" href="add-user">
-     Adicionar User
-</NavLink>
-
-@if (_users == null)
+@* Se o utilizador não tiver RoleId = 1, mostramos uma mensagem de “Não autorizado” *@
+@if (accessDenied)
 {
-    <p><em>Loading...</em></p>
+<div class="alert alert-danger mt-5">
+    <h4>Acceso Negado</h4>
+    <p>Você não tem permissões suficientes para aceder a esta página.</p>
+</div>
 }
 else
 {
-    <table class="table">
-        <thead>
-        <tr>
-          
-            <th>Username</th>
-            <th>UserId</th>
-            <th>Role</th>
-            <th>Ações</th>
-            
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var user in _users)
-        {
-            <tr>
-                
-                <td>@user.Username</td>
-                <td>@user.User_id</td>
-                <td>@user.RoleName</td>
 
-                <td>
-                    <div class="d-flex gap-2">
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Lista de Utilizadores</h2>
+        <NavLink class="btn btn-success" href="add-user">
+            <i class="bi bi-plus-circle-fill me-1"></i>
+            Adicionar Utilizador
+        </NavLink>
+    </div>
 
-                        <NavLink class="btn btn-secondary btn-sm"
-                                 href="@($"update-user-info/{user.User_id}")">
-                            <i class="bi bi-pencil"></i>
-                        </NavLink>
-                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteUserById(user.User_id)">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </td>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input
+                    type="text"
+                    class="form-control"
+                    placeholder="Pesquisar por username..."
+                    @bind="searchUsername"
+                    @bind:event="oninput" />
+                <button class="btn btn-outline-primary" @onclick="SearchUser">
+                    <i class="bi bi-search"></i> Pesquisar
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(searchErrorMessage))
+            {
+            <div class="text-danger mt-2">@searchErrorMessage</div>
+            }
+        </div>
+    </div>
+    
 
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (_users == null)
+            {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            }
+            else if (!_users.Any())
+            {
+            <div class="text-center py-4">
+                <p class="text-muted mb-0">Nenhum utilizador encontrado.</p>
+            </div>
+            }
+            else
+            {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-bordered mb-0">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>Username</th>
+                        <th>UserId</th>
+                        <th>Role</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var user in _users)
+                    {
+                    <tr>
+                        <td>@user.Username</td>
+                        <td>@user.User_id</td>
+                        <td>@user.RoleName</td>
+                        <td class="text-center">
+                            <div class="d-inline-flex gap-2">
+                               
+                                <NavLink class="btn btn-sm btn-outline-secondary"
+                                         href="@($"update-user-info/{user.User_id}")"
+                                         title="Editar">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </NavLink>
 
-            </tr>
-        }
-        </tbody>
-    </table>
+                                
+                                <button class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => DeleteUserById(user.User_id)"
+                                        title="Excluir">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            }
+        </div>
+    </div>
+</div>
 }
 
 @code {
     private List<UserViewModel>? _users;
     private string errorMessage = string.Empty;
     private bool sessionChecked = false;
+    private bool accessDenied = false; // variável que controla se o utilizador tem permissão
+    
+    //barra de pesquisa
+    private string searchUsername = string.Empty;
+    private string searchErrorMessage = string.Empty;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !sessionChecked)
         {
             sessionChecked = true;
 
+// Carregar sessão do utilizador a partir do sessionStorage
             if (UserSession.UserId == null)
             {
                 var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
@@ -93,25 +151,49 @@ else
                 var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
                 if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
-                    UserSession.UserId = uid;
+                UserSession.UserId = uid;
 
                 if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
-                    UserSession.RoleId = roleId;
+                UserSession.RoleId = roleId;
 
                 if (!string.IsNullOrEmpty(username))
-                    UserSession.Username = username;
+                UserSession.Username = username;
             }
 
+// Se não tiver sequer session, redirecionar para o login
             if (UserSession.UserId == null)
             {
                 Navigation.NavigateTo("/Login");
             }
             else
             {
-                // Opcional: podes carregar um relatório inicial aqui se quiseres
-                // await LoadCategoryCountryReport();
-                StateHasChanged();
+                // Verificar se o RoleId é igual a 1; se não for, negar acesso
+                if (UserSession.RoleId != 1)
+                {
+                    accessDenied = true;
+                    StateHasChanged();
+                    // Poderíamos opcionalmente redirecionar:
+                    // Navigation.NavigateTo("/Unauthorized");
+                }
+                else
+                {
+                    // Se for admin (RoleId == 1), podemos carregar normalmente os dados
+                    await LoadUsers();
+                    StateHasChanged();
+                }
             }
+        }
+}
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao carregar utilizadores: {ex.Message}";
         }
     }
 
@@ -124,16 +206,7 @@ else
 
         Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
     }
-    protected override async Task OnInitializedAsync()
-    {
-        
-            _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
-        
-    }
-    
-    
-    
-    
+
     private async Task DeleteUserById(int userId)
     {
         try
@@ -148,12 +221,50 @@ else
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Erro!");
+                await JSRuntime.InvokeVoidAsync("alert", "Erro ao eliminar o utilizador!");
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Erro: {ex.Message}");
         }
+    }
+    private async Task SearchUser()
+    {
+        searchErrorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(searchUsername))
+        {
+            // Se o campo estiver vazio, recarrega todos os utilizadores
+            await LoadUsers();
+            return;
+        }
+
+        try
+        {
+            var encoded = Uri.EscapeDataString(searchUsername.Trim());
+            var single = await ApiHelper.GetFromApiAsync<UserViewModel>($"get_user/{encoded}");
+
+            if (single != null)
+            {
+                _users = new List<UserViewModel> { single };
+            }
+            else
+            {
+                _users = new List<UserViewModel>();
+            }
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // Se o endpoint devolveu 404, significa que não existe o username
+            _users = new List<UserViewModel>();
+        }
+        catch (Exception ex)
+        {
+            searchErrorMessage = $"Erro ao pesquisar: {ex.Message}";
+            _users = new List<UserViewModel>();
+        }
+
+        StateHasChanged();
     }
 }

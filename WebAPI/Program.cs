@@ -36,6 +36,13 @@ if (app.Environment.IsDevelopment())
 
 app.MapPost("/create_account", async ([FromBody] UserAddModel request, ApplicationDbContext db) =>
 {
+    var exists = await db.Users.AnyAsync(u => u.username == request.Username);
+    if (exists)
+    {
+        // Retorna 409 Conflict informando que o username já está em uso
+        return Results.Conflict($"O username '{request.Username}' já está em uso.");
+    }
+    
     if (string.IsNullOrEmpty(request.Password))
         return Results.BadRequest("Password cannot be empty.");
 
@@ -227,6 +234,13 @@ app.MapGet("/get_user_by_id/{id:int}",
 
 app.MapPost("/add_user", async (UserAddModel model, ApplicationDbContext db) =>
     {
+        // 1. Verifica se o username já existe
+        var exists = await db.Users.AnyAsync(u => u.username == model.Username);
+        if (exists)
+        {
+            return Results.Conflict($"O username '{model.Username}' já está em uso.");
+        }
+        
         if (string.IsNullOrEmpty(model.Password))
             return Results.BadRequest("Password cannot be empty.");
 
@@ -959,6 +973,11 @@ app.MapGet("/skills/list", async (ApplicationDbContext db) =>
 //Add user with role 3 automatically
 app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, ApplicationDbContext db) =>
 {
+    var exists = await db.Users.AnyAsync(u => u.username == dto.Username);
+    if (exists)
+    {
+        return Results.Conflict($"O username '{dto.Username}' já está em uso.");
+    }
     if (string.IsNullOrEmpty(dto.Password))
         return Results.BadRequest("Password cannot be empty.");
 

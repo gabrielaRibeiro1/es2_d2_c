@@ -3,55 +3,187 @@
 @using global::Helpers.Models
 @inject ApiHelper ApiHelper
 @rendermode InteractiveServer
+@inject HttpClient Http
+@inject ApiHelper apiHelper
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Adicionar User</PageTitle>
 
-
-<h1>Adicionar User</h1>
-
-<EditForm Model="@userModel" OnValidSubmit="HandleValidSubmit">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div class="form-group">
-        <label for="username">Username:</label>
-        <InputText id="username" class="form-control" @bind-Value="userModel.Username" />
-    </div>
-
-    <div class="form-group">
-        <label for="password">Password:</label>
-        <InputText id="password" type="password" class="form-control" @bind-Value="userModel.Password" />
-    </div>
-
-    <div class="form-group">
-        <label for="role">Role:</label>
-        <InputSelect id="role" class="form-control" @bind-Value="userModel.RoleId" placeholder="Selecionar Role">
-            <option value="1">Admin</option>
-            <option value="2">UserManager</option>
-            <option value="3">User</option>
-        </InputSelect>
-    </div>
-
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Guardar</button>
-        <NavLink class="btn btn-secondary ms-2" href="user-info">Cancelar</NavLink>
-    </div>
-</EditForm>
-
-@if (!string.IsNullOrEmpty(successMessage))
+@if (!string.IsNullOrEmpty(UserSession.Username))
 {
-    <div class="alert alert-success mt-2">@successMessage</div>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
+    <button class="btn btn-outline-danger" @onclick="Logout">
+        <span class="oi oi-account-logout"></span> Sair
+    </button>
+</div>
 }
-@if (!string.IsNullOrEmpty(errorMessage))
+
+@* Se o utilizador não tiver RoleId = 1, mostramos uma mensagem de “Não autorizado” *@
+@if (accessDenied)
 {
-    <div class="alert alert-danger mt-2">@errorMessage</div>
+<div class="alert alert-danger mt-5">
+    <h4>Acesso Negado</h4>
+    <p>Você não tem permissões suficientes para aceder a esta página.</p>
+</div>
+}
+else
+{
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-person-plus-fill me-2"></i>
+                        Adicionar Utilizador
+                    </h3>
+                </div>
+
+            
+                <div class="card-body">
+                    <EditForm Model="@userModel" OnValidSubmit="HandleValidSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="mb-3 text-danger" />
+
+                        @* Username *@
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <InputText id="username"
+                                       class="form-control"
+                                       @bind-Value="userModel.Username"
+                                       placeholder="Digite o nome de utilizador" />
+                        </div>
+
+                        @* Password *@
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <InputText id="password"
+                                       type="password"
+                                       class="form-control"
+                                       @bind-Value="userModel.Password"
+                                       placeholder="Digite a password" />
+                        </div>
+
+                        @* Role *@
+                        <div class="mb-4">
+                            <label for="role" class="form-label">Role</label>
+                            <InputSelect id="role"
+                                         class="form-select"
+                                         @bind-Value="userModel.RoleId">
+                                <option value="" disabled>Selecionar Role...</option>
+                                <option value="1">Admin</option>
+                                <option value="2">UserManager</option>
+                                <option value="3">User</option>
+                            </InputSelect>
+                        </div>
+
+                        @* Botões de ação *@
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-success me-2">
+                                <i class="bi bi-check-circle-fill me-1"></i>
+                                Guardar
+                            </button>
+                            <NavLink class="btn btn-outline-secondary" href="user-info">
+                                <i class="bi bi-x-circle-fill me-1"></i>
+                                Cancelar
+                            </NavLink>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+
+            @* Alertas de sucesso e erro abaixo do card *@
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <i class="bi bi-check-lg me-1"></i>
+                @successMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                @errorMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            }
+        </div>
+    </div>
+</div>
 }
 
 @code {
-    private UserAddModel userModel = new ();
+    private UserAddModel userModel = new();
     private string successMessage;
     private string errorMessage;
+    private bool sessionChecked = false;
+    private bool accessDenied = false; // controla se o utilizador está autorizado
+    
 
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !sessionChecked)
+        {
+            sessionChecked = true;
+
+            // Carregar sessão do utilizador a partir do sessionStorage
+            if (UserSession.UserId == null)
+            {
+                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                    UserSession.UserId = uid;
+
+                if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                    UserSession.RoleId = roleId;
+
+                if (!string.IsNullOrEmpty(username))
+                    UserSession.Username = username;
+            }
+
+            // Se não estiver logado, redireciona para o login
+            if (UserSession.UserId == null)
+            {
+                Navigation.NavigateTo("/Login");
+            }
+            else
+            {
+                // Verificar se tem RoleId == 1; se não tiver, negar acesso
+                if (UserSession.RoleId != 1)
+                {
+                    accessDenied = true;
+                    StateHasChanged();
+                    // Opcional: em vez de mensagem, pode redirecionar para /Unauthorized
+                    // Navigation.NavigateTo("/Unauthorized");
+                }
+                else
+                {
+                    // Se for admin (RoleId == 1), apenas renderiza o formulário normalmente
+                    StateHasChanged();
+                }
+            }
+        }
+    }
+
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        UserSession.UserId = null;
+        UserSession.Username = string.Empty;
+        UserSession.RoleId = null;
+
+        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+    }
+    
+ 
     private async Task HandleValidSubmit()
     {
         successMessage = errorMessage = null;
@@ -60,9 +192,9 @@
         {
             var payload = new
             {
-                username    = userModel.Username,
-                password    = userModel.Password,
-                fk_role_id  = userModel.RoleId
+                username   = userModel.Username,
+                password   = userModel.Password,
+                fk_role_id = userModel.RoleId
             };
 
             var createdUser = await ApiHelper.PostToApiAsync<object, UserAddModel>("/create_account", payload);
@@ -74,17 +206,25 @@
             }
             else
             {
-                errorMessage = "Unknown error: server returned no user data.";
+                errorMessage = "Erro desconhecido: o servidor não retornou dados do utilizador.";
             }
         }
         catch (ApiException apiEx)
         {
-            // ApiException carries StatusCode + server error content
-            errorMessage = $"API error ({apiEx.StatusCode}): {apiEx.Message}";
+            // Se o status code for 409, mostraremos a mensagem de username duplicado
+            if (apiEx.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                errorMessage = apiEx.Message; // deve conter algo como "O username 'X' já está em uso."
+            }
+            else
+            {
+                errorMessage = $"Erro na API ({(int)apiEx.StatusCode}): {apiEx.Message}";
+            }
         }
         catch (Exception ex)
         {
-            errorMessage = $"An unexpected error occurred: {ex.Message}";
+            errorMessage = $"Ocorreu um erro inesperado: {ex.Message}";
+        }
         }
     }
 }
