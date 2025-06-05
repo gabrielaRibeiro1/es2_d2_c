@@ -11,9 +11,14 @@
 
 <h3>Gestão de Skills</h3>
 
-@if (UserSession.UserId != null)
+@if (!string.IsNullOrEmpty(UserSession.Username))
 {
-    <p class="text-muted">Utilizador ID: @UserSession.UserId</p>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
+        <button class="btn btn-outline-danger" @onclick="Logout">
+            <span class="oi oi-account-logout"></span> Sair
+        </button>
+    </div>
 }
 
 <div class="card mb-4">
@@ -29,8 +34,6 @@
                 <InputText id="skillName"
                            @bind-Value="newSkill.name"
                            class="form-control"
-                           aria-label="Nome da skill"
-                           aria-required="true"
                            placeholder="Digite o nome da skill" />
                 <ValidationMessage For="@(() => newSkill.name)" />
             </div>
@@ -40,8 +43,6 @@
                 <InputText id="skillArea"
                            @bind-Value="newSkill.area"
                            class="form-control"
-                           aria-label="Área da skill"
-                           aria-required="true"
                            placeholder="Digite a área da skill" />
                 <ValidationMessage For="@(() => newSkill.area)" />
             </div>
@@ -81,46 +82,46 @@
 
 <table class="table table-striped table-hover">
     <thead class="thead-dark">
-        <tr>
-            <th>Nome</th>
-            <th>Área</th>
-            <th>Ações</th>
-        </tr>
+    <tr>
+        <th>Nome</th>
+        <th>Área</th>
+        <th>Ações</th>
+    </tr>
     </thead>
     <tbody>
-        @if (isLoading && skills == null)
+    @if (isLoading && skills == null)
+    {
+        <tr>
+            <td colspan="3" class="text-center text-muted">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                Carregando...
+            </td>
+        </tr>
+    }
+    else if (skills == null || !skills.Any())
+    {
+        <tr>
+            <td colspan="3" class="text-center text-muted">Nenhuma skill encontrada</td>
+        </tr>
+    }
+    else
+    {
+        @foreach (var skill in skills)
         {
             <tr>
-                <td colspan="3" class="text-center text-muted">
-                    <span class="spinner-border spinner-border-sm" role="status"></span>
-                    Carregando...
+                <td>@skill.name</td>
+                <td>@skill.area</td>
+                <td>
+                    <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-primary mr-2">
+                        <span class="oi oi-pencil"></span> Editar
+                    </button>
+                    <button @onclick="@(() => DeleteSkill(skill.skill_id))" class="btn btn-sm btn-danger">
+                        <span class="oi oi-trash"></span> Excluir
+                    </button>
                 </td>
             </tr>
         }
-        else if (skills == null || !skills.Any())
-        {
-            <tr>
-                <td colspan="3" class="text-center text-muted">Nenhuma skill encontrada</td>
-            </tr>
-        }
-        else
-        {
-            @foreach (var skill in skills)
-            {
-                <tr>
-                    <td>@skill.name</td>
-                    <td>@skill.area</td>
-                    <td>
-                        <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-primary mr-2">
-                            <span class="oi oi-pencil"></span> Editar
-                        </button>
-                        <button @onclick="@(() => DeleteSkill(skill.skill_id))" class="btn btn-sm btn-danger">
-                            <span class="oi oi-trash"></span> Excluir
-                        </button>
-                    </td>
-                </tr>
-            }
-        }
+    }
     </tbody>
 </table>
 
@@ -131,23 +132,56 @@
     private bool isEditing = false;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
+    private bool sessionChecked = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        TryReadUserIdFromQuery();
-        await LoadSkills();
+        if (firstRender && !sessionChecked)
+        {
+            sessionChecked = true;
+
+            var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+            var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+            if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                UserSession.UserId = uid;
+            else
+                UserSession.UserId = null;
+
+            if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                UserSession.RoleId = roleId;
+            else
+                UserSession.RoleId = null;
+
+            if (!string.IsNullOrEmpty(username))
+                UserSession.Username = username;
+            else
+                UserSession.Username = string.Empty;
+
+            // Se não houver sessão válida, limpa o UserSession e redireciona para Login
+            if (UserSession.UserId == null)
+            {
+                UserSession.Username = string.Empty;
+                UserSession.RoleId = null;
+                Navigation.NavigateTo("/Login", forceLoad: true);
+            }
+            else
+            {
+                await LoadSkills();
+                StateHasChanged();
+            }
+        }
     }
 
-    private void TryReadUserIdFromQuery()
+    private async Task Logout()
     {
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var query = QueryHelpers.ParseQuery(uri.Query);
+        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        UserSession.UserId = null;
+        UserSession.Username = string.Empty;
+        UserSession.RoleId = null;
 
-        if (query.TryGetValue("userId", out var uidString) && int.TryParse(uidString, out var uid))
-        {
-            if (UserSession.UserId == null)
-                UserSession.UserId = uid;
-        }
+        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
     }
 
     private async Task LoadSkills()
@@ -180,21 +214,6 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            if (!string.IsNullOrEmpty(errorMessage))
-            {
-                await JSRuntime.InvokeVoidAsync("console.error", errorMessage);
-            }
-            if (!string.IsNullOrEmpty(successMessage))
-            {
-                await JSRuntime.InvokeVoidAsync("console.log", successMessage);
-            }
-        }
-    }
-
     private async Task CreateSkill()
     {
         try
@@ -216,9 +235,7 @@
             {
                 errorMessage = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(errorMessage))
-                {
                     errorMessage = $"Erro: {response.StatusCode}";
-                }
             }
         }
         catch (Exception ex)
@@ -266,7 +283,7 @@
         }
     }
 
-    private async Task EditSkill(Skill skill)
+    private void EditSkill(Skill skill)
     {
         newSkill = new Skill
         {
@@ -299,9 +316,7 @@
                 {
                     errorMessage = await response.Content.ReadAsStringAsync();
                     if (string.IsNullOrEmpty(errorMessage))
-                    {
                         errorMessage = $"Erro ao excluir: {response.StatusCode}";
-                    }
                 }
             }
         }
