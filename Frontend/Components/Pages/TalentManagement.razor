@@ -3,6 +3,7 @@
 @inject IJSRuntime JSRuntime
 @using System.ComponentModel.DataAnnotations
 @using System.Text.Json
+@using Frontend.Helpers
 @rendermode InteractiveServer
 
 <h3>Gestão de Talentos</h3>
@@ -137,9 +138,34 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await GetUserIdFromQueryStringAsync();
         await LoadProfiles();
         await LoadAvailableSkills();
     }
+
+    private async Task GetUserIdFromQueryStringAsync()
+    {
+        try
+        {
+            var uri = new Uri(NavigationManager.Uri);
+            var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+            if (query.TryGetValue("userId", out var uidString) && int.TryParse(uidString, out var uid))
+            {
+                if (UserSession.UserId == null)
+                    UserSession.UserId = uid;
+
+                // Preenche FK automaticamente com o UserId para criar perfil
+                newProfile.FkUserId = uid;
+            }
+        }
+        catch
+        {
+            // Ignorar erros na leitura do query string
+        }
+    }
+
+    [Inject] NavigationManager NavigationManager { get; set; } = default!;
 
     private async Task LoadProfiles()
     {
@@ -182,12 +208,12 @@
         {
             isLoading = true;
             var url = $"/talent_profile/add_profile?" +
-                      $"profile_name={newProfile.ProfileName}" +
-                      $"&country={newProfile.Country}" +
-                      $"&email={newProfile.Email}" +
+                      $"profile_name={Uri.EscapeDataString(newProfile.ProfileName)}" +
+                      $"&country={Uri.EscapeDataString(newProfile.Country)}" +
+                      $"&email={Uri.EscapeDataString(newProfile.Email)}" +
                       $"&price={newProfile.Price}" +
                       $"&privacy={newProfile.Privacy}" +
-                      $"&category={newProfile.Category}" +
+                      $"&category={Uri.EscapeDataString(newProfile.Category)}" +
                       $"&fk_user_id={newProfile.FkUserId}";
 
             var response = await Http.PostAsync(url, null);
@@ -196,7 +222,7 @@
             {
                 foreach (var skill in newProfile.Skills)
                 {
-                    var skillUrl = $"/talent_profiles/{newProfile.ProfileName}/add_skill?" +
+                    var skillUrl = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?" +
                                    $"skill_name={Uri.EscapeDataString(skill.SkillName)}" +
                                    $"&years_of_experience={skill.YearsOfExperience}";
 
@@ -209,8 +235,8 @@
 
                 successMessage = "Perfil criado com sucesso!";
                 await LoadProfiles();
-                newProfile = new();
-                newSkill = new();
+                newProfile = new TalentProfileDto();
+                newSkill = new SkillDto();
                 isEditing = false;
             }
             else
@@ -233,12 +259,12 @@
         try
         {
             isLoading = true;
-            var url = $"/talent_profiles/{newProfile.ProfileName}/update?" +
-                      $"country={newProfile.Country}" +
-                      $"&email={newProfile.Email}" +
+            var url = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/update?" +
+                      $"country={Uri.EscapeDataString(newProfile.Country)}" +
+                      $"&email={Uri.EscapeDataString(newProfile.Email)}" +
                       $"&price={newProfile.Price}" +
                       $"&privacy={newProfile.Privacy}" +
-                      $"&category={newProfile.Category}" +
+                      $"&category={Uri.EscapeDataString(newProfile.Category)}" +
                       $"&fk_user_id={newProfile.FkUserId}";
 
             var response = await Http.PutAsync(url, null);
@@ -247,8 +273,8 @@
             {
                 successMessage = "Perfil atualizado com sucesso!";
                 await LoadProfiles();
-                newProfile = new();
-                newSkill = new();
+                newProfile = new TalentProfileDto();
+                newSkill = new SkillDto();
                 isEditing = false;
             }
             else
@@ -274,7 +300,7 @@
         try
         {
             isLoading = true;
-            var response = await Http.DeleteAsync($"/talent_profiles/{profileName}/delete");
+            var response = await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(profileName)}/delete");
 
             if (response.IsSuccessStatusCode)
             {
@@ -309,7 +335,7 @@
             FkUserId = profile.FkUserId,
             Skills = new List<SkillDto>(profile.Skills)
         };
-        newSkill = new();
+        newSkill = new SkillDto();
         isEditing = true;
     }
 
@@ -323,7 +349,7 @@
                 YearsOfExperience = newSkill.YearsOfExperience
             });
 
-            newSkill = new();
+            newSkill = new SkillDto();
         }
     }
 

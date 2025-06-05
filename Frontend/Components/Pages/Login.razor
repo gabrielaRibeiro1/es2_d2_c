@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 @using System.ComponentModel.DataAnnotations
 @using Frontend.Helpers
 @rendermode InteractiveServer
@@ -64,6 +65,40 @@
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
 
+    private bool hasCheckedSession = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !hasCheckedSession)
+        {
+            hasCheckedSession = true;
+
+            var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+            var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+
+            if (!string.IsNullOrEmpty(userIdStr) && !string.IsNullOrEmpty(roleIdStr))
+            {
+                if (int.TryParse(userIdStr, out int userId) && int.TryParse(roleIdStr, out int roleId))
+                {
+                    UserSession.UserId = userId;
+                    UserSession.Username = username;
+                    UserSession.RoleId = roleId;
+
+                    if (roleId == 1)
+                    {
+                        Navigation.NavigateTo($"/SkillManagement?userId={userId}");
+                    }
+                    else if (roleId == 2)
+                    {
+                        Navigation.NavigateTo($"/talent-management?userId={userId}");
+                    }
+                }
+            }
+        }
+    }
+
+
     private async Task HandleLogin()
     {
         try
@@ -81,13 +116,29 @@
 
                 if (userData is not null)
                 {
-                    // Guardar em sessão (estático, sem token)
+                    // Guardar em sessão estática
                     UserSession.UserId = userData.user_id;
                     UserSession.Username = userData.username;
                     UserSession.RoleId = userData.fk_role_id;
 
-                    // Redirecionar com ID no URL
-                    Navigation.NavigateTo($"/SkillManagement?userId={userData.user_id}");
+                    // Guardar em sessionStorage do browser para sobreviver ao refresh
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "userId", userData.user_id.ToString());
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "username", userData.username);
+                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "roleId", userData.fk_role_id.ToString());
+
+                    // Redirecionar consoante o role
+                    if (userData.fk_role_id == 1) // Admin
+                    {
+                        Navigation.NavigateTo($"/SkillManagement?userId={userData.user_id}");
+                    }
+                    else if (userData.fk_role_id == 2) // UserManager
+                    {
+                        Navigation.NavigateTo($"/talent-management?userId={userData.user_id}");
+                    }
+                    else
+                    {
+                        errorMessage = "Função de utilizador não reconhecida.";
+                    }
                 }
                 else
                 {
