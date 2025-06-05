@@ -1,6 +1,7 @@
 ﻿@page "/talent-management"
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
 @using System.ComponentModel.DataAnnotations
 @using System.Text.Json
 @using Frontend.Helpers
@@ -126,6 +127,8 @@
     </tbody>
 </table>
 
+<button class="btn btn-warning mt-3" @onclick="Logout">Logout</button>
+
 @code {
     private List<TalentProfileDto>? profiles;
     private TalentProfileDto newProfile = new();
@@ -135,37 +138,42 @@
     private bool isEditing = false;
     private string successMessage = string.Empty;
     private string errorMessage = string.Empty;
+    private bool sessionChecked = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await GetUserIdFromQueryStringAsync();
-        await LoadProfiles();
-        await LoadAvailableSkills();
-    }
-
-    private async Task GetUserIdFromQueryStringAsync()
-    {
-        try
+        if (firstRender && !sessionChecked)
         {
-            var uri = new Uri(NavigationManager.Uri);
-            var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+            sessionChecked = true;
 
-            if (query.TryGetValue("userId", out var uidString) && int.TryParse(uidString, out var uid))
+            if (UserSession.UserId == null)
             {
-                if (UserSession.UserId == null)
+                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                     UserSession.UserId = uid;
 
-                // Preenche FK automaticamente com o UserId para criar perfil
-                newProfile.FkUserId = uid;
+                if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                    UserSession.RoleId = roleId;
+
+                if (!string.IsNullOrEmpty(username))
+                    UserSession.Username = username;
+            }
+
+            if (UserSession.UserId == null)
+            {
+                NavigationManager.NavigateTo("/Login");
+            }
+            else
+            {
+                await LoadProfiles();
+                await LoadAvailableSkills();
+                StateHasChanged();
             }
         }
-        catch
-        {
-            // Ignorar erros na leitura do query string
-        }
     }
-
-    [Inject] NavigationManager NavigationManager { get; set; } = default!;
 
     private async Task LoadProfiles()
     {
@@ -356,6 +364,20 @@
     private void RemoveSkill(SkillDto skill)
     {
         newProfile.Skills.Remove(skill);
+    }
+
+    private async Task Logout()
+    {
+        // Limpa sessão no frontend (sessionStorage)
+        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+
+        // Limpa dados do UserSession
+        UserSession.UserId = null;
+        UserSession.RoleId = null;
+        UserSession.Username = null;
+
+        // Navega para página de login
+        NavigationManager.NavigateTo("/Login");
     }
 
     public class TalentProfileDto
