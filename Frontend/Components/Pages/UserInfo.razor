@@ -8,7 +8,6 @@
 @using Microsoft.EntityFrameworkCore.Metadata.Internal
 @inject ApiHelper ApiHelper
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject NavigationManager NavigationManager
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 
@@ -145,11 +144,11 @@ else
             {
                 _users.RemoveAll(u => u.User_id == userId);
                 StateHasChanged();
-                await JSRuntime.InvokeVoidAsync("alert", "User deleted sucessfully!");
+                await JSRuntime.InvokeVoidAsync("alert", "User eliminado com sucesso!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error!");
+                await JSRuntime.InvokeVoidAsync("alert", "Erro!");
             }
         }
         catch (Exception ex)
