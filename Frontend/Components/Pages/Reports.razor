@@ -1,15 +1,26 @@
 ﻿@page "/Reports"
 @using Microsoft.AspNetCore.Components.Web
-@inject HttpClient Http
-@inject ApiHelper apiHelper
 @using System.ComponentModel.DataAnnotations
 @using Frontend.Helpers
+@inject HttpClient Http
+@inject ApiHelper apiHelper
 @inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <h3>Relatórios de Preço Médio Mensal</h3>
 
-<div class="mb-3">
+@if (!string.IsNullOrEmpty(UserSession.Username))
+{
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
+        <button class="btn btn-outline-danger" @onclick="Logout">
+            <span class="oi oi-account-logout"></span> Sair
+        </button>
+    </div>
+}
+
+<div class="mb-3 mt-3">
     <button class="btn btn-primary me-2" @onclick="LoadCategoryCountryReport">Ver Relatório por Categoria e País</button>
     <button class="btn btn-secondary" @onclick="LoadSkillReport">Ver Relatório por Skill</button>
 </div>
@@ -67,6 +78,52 @@
     private Dictionary<string, float>? categoryCountryReport;
     private Dictionary<string, float>? skillReport;
     private string errorMessage = string.Empty;
+    private bool sessionChecked = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !sessionChecked)
+        {
+            sessionChecked = true;
+
+            if (UserSession.UserId == null)
+            {
+                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                    UserSession.UserId = uid;
+
+                if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                    UserSession.RoleId = roleId;
+
+                if (!string.IsNullOrEmpty(username))
+                    UserSession.Username = username;
+            }
+
+            if (UserSession.UserId == null)
+            {
+                Navigation.NavigateTo("/Login");
+            }
+            else
+            {
+                // Opcional: podes carregar um relatório inicial aqui se quiseres
+                // await LoadCategoryCountryReport();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        UserSession.UserId = null;
+        UserSession.Username = string.Empty;
+        UserSession.RoleId = null;
+
+        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+    }
 
     private async Task LoadCategoryCountryReport()
     {

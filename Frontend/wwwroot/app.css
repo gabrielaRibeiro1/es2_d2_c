@@ -49,3 +49,48 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.responsive-table {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.wptable {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+.wptable th,
+.wptable td {
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    text-align: left;
+    vertical-align: middle;
+    word-wrap: break-word;
+}
+
+.wptable th {
+    background-color: #f9f9f9;
+    font-weight: bold;
+}
+
+.wptable td button {
+    margin-right: 5px;
+    min-width: 65px;
+}
+
+.wptable thead {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .wptable {
+        font-size: 0.9rem;
+    }
+
+    .wptable td, .wptable th {
+        padding: 8px;
+    }
+}

@@ -11,10 +11,10 @@
 
 <h3>Gestão de Skills</h3>
 
-@if (UserSession.UserId != null)
+@if (!string.IsNullOrEmpty(UserSession.Username))
 {
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <p class="text-muted">Utilizador ID: @UserSession.UserId</p>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
         <button class="btn btn-outline-danger" @onclick="Logout">
             <span class="oi oi-account-logout"></span> Sair
         </button>
@@ -140,25 +140,31 @@
         {
             sessionChecked = true;
 
+            var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+            var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+            if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                UserSession.UserId = uid;
+            else
+                UserSession.UserId = null;
+
+            if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                UserSession.RoleId = roleId;
+            else
+                UserSession.RoleId = null;
+
+            if (!string.IsNullOrEmpty(username))
+                UserSession.Username = username;
+            else
+                UserSession.Username = string.Empty;
+
+            // Se não houver sessão válida, limpa o UserSession e redireciona para Login
             if (UserSession.UserId == null)
             {
-                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
-
-                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
-                    UserSession.UserId = uid;
-
-                if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
-                    UserSession.RoleId = roleId;
-
-                if (!string.IsNullOrEmpty(username))
-                    UserSession.Username = username;
-            }
-
-            if (UserSession.UserId == null)
-            {
-                Navigation.NavigateTo("/Login");
+                UserSession.Username = string.Empty;
+                UserSession.RoleId = null;
+                Navigation.NavigateTo("/Login", forceLoad: true);
             }
             else
             {
