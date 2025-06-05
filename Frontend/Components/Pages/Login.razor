@@ -46,6 +46,7 @@
                     <span class="oi oi-account-login"></span> <span>Entrar</span>
                 }
             </button>
+            <NavLink  style="margin-top: 17px " class="btn btn-secondary" href="/create-account">Criar Conta</NavLink>
 
             @if (!string.IsNullOrEmpty(errorMessage))
             {
@@ -56,6 +57,7 @@
                 <div class="alert alert-success mt-3">@successMessage</div>
             }
         </EditForm>
+        
     </div>
 </div>
 

@@ -3,6 +3,7 @@ using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
 using ESOF.WebApp.Services.Reports;
 using ESOF.WebApp.WebAPI.DTOs;
+using ESOF.WebApp.WebAPI.Models;
 using Helpers.Models;
 using Frontend.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -955,6 +956,30 @@ app.MapGet("/skills/list", async (ApplicationDbContext db) =>
     return Results.Ok(skills); // retorna List<string>
 });
 
+//Add user with role 3 automatically
+app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, ApplicationDbContext db) =>
+{
+    if (string.IsNullOrEmpty(dto.Password))
+        return Results.BadRequest("Password cannot be empty.");
+
+    PasswordHelper.CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+
+    if (passwordHash == null || passwordSalt == null)
+        return Results.BadRequest("Error generating password hash and salt.");
+
+    var newUser = new User
+    {
+        username     = dto.Username,
+        passwordHash = passwordHash,
+        passwordSalt = passwordSalt,
+        fk_role_id   = 3
+    };
+
+    db.Users.Add(newUser);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/users/{newUser.user_id}", newUser);
+});
 
 
 

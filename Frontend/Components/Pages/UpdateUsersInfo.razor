@@ -1,15 +1,14 @@
 ﻿@page "/update-user-info/{UserId:int}"
-
 @using Frontend.Helpers
 @using Frontend.Models
-
+@inject HttpClient Http
+@inject ApiHelper apiHelper
 @inject ApiHelper ApiHelper
-
 @rendermode InteractiveServer
 
-<PageTitle>Update User</PageTitle>
+<PageTitle>Atualizar User</PageTitle>
 
-<h1>Update User</h1>
+<h1>Atualizar User</h1>
 
 @if (_user == null)
 {
@@ -26,7 +25,7 @@ else
         </div>
 
         <div class="mb-3">
-            <label for="password">New Password</label>
+            <label for="password">Nova Password</label>
             <InputText id="password" @bind-Value="_newPassword" type="password" class="form-control" placeholder="Leave blank to keep current" />
         </div>
 
@@ -39,8 +38,8 @@ else
             <div class="alert alert-success">@_successMessage</div>
         }
 
-        <button type="submit" class="btn btn-primary">Update</button>
-        <NavLink class="btn btn-secondary ms-2" href="user-info">Cancel</NavLink>
+        <button type="submit" class="btn btn-primary">Atualizar</button>
+        <NavLink class="btn btn-secondary ms-2" href="user-info">Cancelar</NavLink>
     </EditForm>
 }
 
