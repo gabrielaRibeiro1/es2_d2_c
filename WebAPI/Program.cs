@@ -3,6 +3,7 @@ using ESOF.WebApp.DBLayer.Entities;
 using ESOF.WebApp.DBLayer.Helpers;
 using ESOF.WebApp.Services.Reports;
 using ESOF.WebApp.WebAPI.DTOs;
+using ESOF.WebApp.WebAPI.Models;
 using Helpers.Models;
 using Frontend.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -35,6 +36,13 @@ if (app.Environment.IsDevelopment())
 
 app.MapPost("/create_account", async ([FromBody] UserAddModel request, ApplicationDbContext db) =>
 {
+    var exists = await db.Users.AnyAsync(u => u.username == request.Username);
+    if (exists)
+    {
+        // Retorna 409 Conflict informando que o username já está em uso
+        return Results.Conflict($"O username '{request.Username}' já está em uso.");
+    }
+    
     if (string.IsNullOrEmpty(request.Password))
         return Results.BadRequest("Password cannot be empty.");
 
@@ -205,27 +213,33 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
     return Results.Ok("Usuário atualizado com sucesso.");
 });
 
-app.MapGet("/get_user_by_id/{id:int}", 
-    async (int id, ApplicationDbContext db) =>
-    {
-        // Tenta encontrar pelo PK (assume que user_id é a chave primária)
-        var user = await db.Users.FindAsync(id);
-        if (user == null)
-        {
-            return Results.NotFound(new { message = "User not found." });
-        }
+app.MapGet("/get_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
+{
+    var user = await db.Users
+        .Include(u => u.Role)
+        .FirstOrDefaultAsync(u => u.user_id == id);
 
-        // Retorna apenas os campos necessários
-        return Results.Ok(new
-        {
-            user.user_id,
-            user.username,
-            user.fk_role_id
-        });
+    if (user == null)
+        return Results.NotFound(new { message = "User not found." });
+
+    return Results.Ok(new
+    {
+        user.user_id,
+        user.username,
+        roleId = user.fk_role_id,
+        roleName = user.Role?.role
     });
+});
 
 app.MapPost("/add_user", async (UserAddModel model, ApplicationDbContext db) =>
     {
+        // 1. Verifica se o username já existe
+        var exists = await db.Users.AnyAsync(u => u.username == model.Username);
+        if (exists)
+        {
+            return Results.Conflict($"O username '{model.Username}' já está em uso.");
+        }
+        
         if (string.IsNullOrEmpty(model.Password))
             return Results.BadRequest("Password cannot be empty.");
 
@@ -955,6 +969,35 @@ app.MapGet("/skills/list", async (ApplicationDbContext db) =>
     return Results.Ok(skills); // retorna List<string>
 });
 
+//Add user with role 3 automatically
+app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, ApplicationDbContext db) =>
+{
+    var exists = await db.Users.AnyAsync(u => u.username == dto.Username);
+    if (exists)
+    {
+        return Results.Conflict($"O username '{dto.Username}' já está em uso.");
+    }
+    if (string.IsNullOrEmpty(dto.Password))
+        return Results.BadRequest("Password cannot be empty.");
+
+    PasswordHelper.CreatePasswordHash(dto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+
+    if (passwordHash == null || passwordSalt == null)
+        return Results.BadRequest("Error generating password hash and salt.");
+
+    var newUser = new User
+    {
+        username     = dto.Username,
+        passwordHash = passwordHash,
+        passwordSalt = passwordSalt,
+        fk_role_id   = 3
+    };
+
+    db.Users.Add(newUser);
+    await db.SaveChangesAsync();
+
+    return Results.Created($"/users/{newUser.user_id}", newUser);
+});
 
 
 
