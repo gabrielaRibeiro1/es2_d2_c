@@ -1,14 +1,36 @@
 ﻿@inherits LayoutComponentBase
 
+@using Frontend.Helpers
+
+@inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
+@inject LoginEventService LoginEvents
+
 <div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
+    @if (_isLoggedIn)
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    }
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+        @if (_showTopBar)
+        {
+            <div class="top-row px-4">
+                <NavLink href="">Home</NavLink>
+
+                @if (_isLoggedIn)
+                {
+                    <p>Hello</p>
+                    <NavLink @onclick="Logout">Logout</NavLink>
+                }
+                else
+                {
+                    <NavLink href="login">Login</NavLink>
+                }
+            </div>
+        }
 
         <article class="content px-4">
             @Body
@@ -21,3 +43,65 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private bool _isLoggedIn;
+    private bool _showTopBar;
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to log state change
+        LoginEvents.OnLoginStatusChanged += RefreshLoginState;
+        
+        Navigation.LocationChanged += OnLocationChanged;
+
+        RefreshLoginState();
+        UpdateTopBarVisibility();
+    }
+    
+    private async void RefreshLoginState()
+    {
+        var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+        _isLoggedIn = !string.IsNullOrEmpty(userIdStr);
+        StateHasChanged();
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            _isLoggedIn = !string.IsNullOrEmpty(userIdStr);
+            StateHasChanged();
+        }
+    }
+    
+    private async Task Logout()
+    {
+        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "userId");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "username");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "roleId");
+
+        _isLoggedIn = false;
+        StateHasChanged();
+        Navigation.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        LoginEvents.OnLoginStatusChanged -= RefreshLoginState;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+    
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        UpdateTopBarVisibility();
+        StateHasChanged();
+    }
+    
+    private void UpdateTopBarVisibility()
+    {
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        _showTopBar = !relative.Equals("login", StringComparison.OrdinalIgnoreCase);
+    }
+}

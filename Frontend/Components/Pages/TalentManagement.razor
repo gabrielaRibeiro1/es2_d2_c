@@ -1,10 +1,11 @@
 ﻿@page "/talent-management"
+
+@using System.Text.Json
+
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
-@using System.ComponentModel.DataAnnotations
-@using System.Text.Json
-@using Frontend.Helpers
+
 @rendermode InteractiveServer
 
 <h3>Gestão de Talentos</h3>

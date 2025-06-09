@@ -1,61 +1,69 @@
-﻿@page "/"
-@page "/Login"
-@using Microsoft.AspNetCore.Components.Web
-@inject HttpClient Http
-@inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+﻿@page "/login"
+
 @using System.ComponentModel.DataAnnotations
 @using Frontend.Helpers
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
+@inject LoginEventService LoginEvents
+
 @rendermode InteractiveServer
 
-<h3>Login</h3>
+<div class="login-container">
+    <div class="login-card card">
+        <h3 class="login-title text-center mb-4">Login</h3>
+        <div class="card-body">
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-<div class="card mb-4">
-    <div class="card-body">
-        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <InputText id="username"
+                               @bind-Value="loginModel.Username"
+                               class="form-control"
+                               placeholder="Enter your username" />
+                    <ValidationMessage For="@(() => loginModel.Username)" />
+                </div>
 
-            <div class="form-group">
-                <label for="username">Nome de Utilizador *</label>
-                <InputText id="username"
-                           @bind-Value="loginModel.Username"
-                           class="form-control"
-                           placeholder="Digite seu nome de utilizador" />
-                <ValidationMessage For="@(() => loginModel.Username)" />
-            </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <InputText id="password"
+                               type="password"
+                               @bind-Value="loginModel.Password"
+                               class="form-control"
+                               placeholder="Enter your password" />
+                    <ValidationMessage For="@(() => loginModel.Password)" />
+                </div>
 
-            <div class="form-group">
-                <label for="password">Senha *</label>
-                <InputText id="password"
-                           type="password"
-                           @bind-Value="loginModel.Password"
-                           class="form-control"
-                           placeholder="Digite sua senha" />
-                <ValidationMessage For="@(() => loginModel.Password)" />
-            </div>
+                <button type="submit" class="btn btn-primary btn-block mt-3" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        <span> Signing in...</span>
+                    }
+                    else
+                    {
+                        <span class="oi oi-account-login"></span> <span>Sign In</span>
+                    }
+                </button>
 
-            <button type="submit" class="btn btn-primary mt-3" disabled="@isLoading">
-                @if (isLoading)
+                <div class="text-center mt-2">
+                    <span>Don't have an account yet? </span>
+                    <NavLink class="text-decoration-none" href="add-user">Create one here!</NavLink>
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    <span class="spinner-border spinner-border-sm" role="status"></span>
-                    <span> A entrar...</span>
+                    <div class="alert alert-danger mt-3">@errorMessage</div>
                 }
-                else
+                @if (!string.IsNullOrEmpty(successMessage))
                 {
-                    <span class="oi oi-account-login"></span> <span>Entrar</span>
+                    <div class="alert alert-success mt-3">@successMessage</div>
                 }
-            </button>
-
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger mt-3">@errorMessage</div>
-            }
-            @if (!string.IsNullOrEmpty(successMessage))
-            {
-                <div class="alert alert-success mt-3">@successMessage</div>
-            }
-        </EditForm>
+            </EditForm>
+        </div>
     </div>
 </div>
 
@@ -65,7 +73,7 @@
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
 
-    private bool hasCheckedSession = false;
+    private bool hasCheckedSession;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -73,9 +81,9 @@
         {
             hasCheckedSession = true;
 
-            var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-            var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
-            var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+            var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+            var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
 
             if (!string.IsNullOrEmpty(userIdStr) && !string.IsNullOrEmpty(roleIdStr))
             {
@@ -85,19 +93,11 @@
                     UserSession.Username = username;
                     UserSession.RoleId = roleId;
 
-                    if (roleId == 1)
-                    {
-                        Navigation.NavigateTo($"/SkillManagement?userId={userId}");
-                    }
-                    else if (roleId == 2)
-                    {
-                        Navigation.NavigateTo($"/talent-management?userId={userId}");
-                    }
+                    Navigation.NavigateTo($"/?userId={userId}");
                 }
             }
         }
     }
-
 
     private async Task HandleLogin()
     {
@@ -122,23 +122,14 @@
                     UserSession.RoleId = userData.fk_role_id;
 
                     // Guardar em sessionStorage do browser para sobreviver ao refresh
-                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "userId", userData.user_id.ToString());
-                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "username", userData.username);
-                    await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "roleId", userData.fk_role_id.ToString());
+                    await JsRuntime.InvokeVoidAsync("sessionStorage.setItem", "userId", userData.user_id.ToString());
+                    await JsRuntime.InvokeVoidAsync("sessionStorage.setItem", "username", userData.username);
+                    await JsRuntime.InvokeVoidAsync("sessionStorage.setItem", "roleId", userData.fk_role_id.ToString());
 
-                    // Redirecionar consoante o role
-                    if (userData.fk_role_id == 1) // Admin
-                    {
-                        Navigation.NavigateTo($"/SkillManagement?userId={userData.user_id}");
-                    }
-                    else if (userData.fk_role_id == 2) // UserManager
-                    {
-                        Navigation.NavigateTo($"/talent-management?userId={userData.user_id}");
-                    }
-                    else
-                    {
-                        errorMessage = "Função de utilizador não reconhecida.";
-                    }
+                    // Trigger an event HERE!
+                    LoginEvents.NotifyLoginStatusChanged();
+                    
+                    Navigation.NavigateTo($"/?userId={userData.user_id}");
                 }
                 else
                 {
@@ -181,3 +172,31 @@
         public int fk_role_id { get; set; }
     }
 }
+
+<style>
+    body {
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    }
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 2rem;
+    }
+    .login-card {
+        width: 100%;
+        max-width: 400px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background-color: #ffffff;
+        padding: 2rem;
+    }
+    .login-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+    }
+    .btn-block {
+        width: 100%;
+    }
+</style>

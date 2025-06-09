@@ -16,6 +16,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(EnvFileHelper.GetString("API_URL")) });
 builder.Services.AddScoped<ApiHelper>();
 
+builder.Services.AddSingleton<LoginEventService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
