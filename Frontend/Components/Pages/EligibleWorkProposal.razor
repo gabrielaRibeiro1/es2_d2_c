@@ -1,0 +1,209 @@
+﻿@page "/eligible-talents"
+@using System.Net
+@using System.Text.Json.Serialization
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+
+<h3 class="mt-4">Verificar Talentos Elegíveis para Propostas</h3>
+
+@if (workProposals.Count == 0)
+{
+    <p>Carregando propostas...</p>
+}
+else
+{
+    <div class="mb-3">
+        <label class="form-label">Selecione uma Proposta</label>
+        <InputSelect class="form-select" @bind-Value="selectedProposalId" @onchange="OnProposalChanged">
+            <option value="">-- Escolha uma proposta --</option>
+            @foreach (var wp in workProposals)
+            {
+                <option value="@wp.ProposalId">@wp.ProposalName</option>
+            }
+        </InputSelect>
+    </div>
+
+@if (selectedProposalId.HasValue)
+{
+    await OnProposalSelected();
+}
+}
+
+@if (eligibleTalents?.Any() == true)
+{
+    <h5 class="mt-4">Talentos Elegíveis</h5>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>País</th>
+                <th>Categoria</th>
+                <th>Preço</th>
+                <th>Total Value (€)</th>
+                <th>Skills</th>
+                <th>Experiências</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in eligibleTalents)
+            {
+                <tr>
+                    <td>@t.ProfileName</td>
+                    <td>@t.Email</td>
+                    <td>@t.Country</td>
+                    <td>@t.Category</td>
+                    <td>@t.Price</td>
+                    <td>@t.TotalValue.ToString("N2")</td>
+                    <td>
+                        @foreach (var s in t.Skills)
+                        {
+                            <span class="badge bg-info text-dark me-1">@s.SkillName (@s.YearsOfExperience)</span>
+                        }
+                    </td>
+                    <td>
+                        @foreach (var e in t.Experiences)
+                        {
+                            <span class="badge bg-secondary me-1">@e.CompanyName [@e.StartYear - @e.EndYear]</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@if (workProposals.Any())
+{
+    <h5 class="mt-4">Lista de Propostas</h5>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome da Proposta</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var wp in workProposals)
+            {
+                <tr>
+                    <td>@wp.ProposalId</td>
+                    <td>@wp.ProposalName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (isChecking)
+{
+    <p>Verificando talentos elegíveis...</p>
+}
+else if (eligibleCount.HasValue)
+{
+    <div class="alert @(eligibleCount > 0 ? "alert-success" : "alert-warning")">
+        @((MarkupString)(eligibleCount > 0
+            ? $"Foram encontrados <strong>{eligibleCount}</strong> talentos elegíveis para esta proposta."
+            : "Nenhum talento elegível encontrado para esta proposta."))
+    </div>
+}
+
+@code {
+    private List<WorkProposalDto> workProposals = new();
+    private int? selectedProposalId;
+    private int? eligibleCount;
+    private bool isChecking = false;
+    private List<TalentProfileDto> eligibleTalents = new();
+    private async Task OnProposalChanged(ChangeEventArgs e)
+    {
+        eligibleTalents.Clear();
+        eligibleCount = null;
+        if (int.TryParse(e.Value?.ToString(), out var id))
+        {
+            selectedProposalId = id;
+            await OnProposalSelected();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await WebRequestMethods.Http.GetAsync("/work_proposals");
+            if (response.IsSuccessStatusCode)
+            {
+                workProposals = await response.Content.ReadFromJsonAsync<List<WorkProposalDto>>() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Erro ao carregar propostas: {ex.Message}");
+        }
+    }
+
+    private async Task OnProposalSelected()
+    {
+        eligibleTalents.Clear();
+        eligibleCount = null;
+
+    {
+        if (selectedProposalId.HasValue)
+        {
+            isChecking = true;
+            eligibleCount = null;
+
+            try
+            {
+                var talents = await WebRequestMethods.Http.GetFromJsonAsync<List<TalentProfileDto>>($"/work_proposals/{selectedProposalId}/eligible_talents");
+                eligibleTalents = talents ?? new();
+                eligibleCount = eligibleTalents.Count;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Erro ao buscar talentos: {ex.Message}");
+            }
+            isChecking = false;
+        }
+    }
+
+    public class WorkProposalDto
+    {
+        [JsonPropertyName("proposal_id")]
+        public int ProposalId { get; set; }
+
+        [JsonPropertyName("proposal_name")]
+        public string ProposalName { get; set; } = string.Empty;
+    }
+
+    public class TalentProfileDto
+    {
+        public int ProfileId { get; set; }
+        public string ProfileName { get; set; } = string.Empty;
+        public string Country { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int Privacy { get; set; }
+        public string Category { get; set; } = string.Empty;
+        public int FkUserId { get; set; }
+        public List<SkillDto> Skills { get; set; } = new();
+        public List<ExperienceDto> Experiences { get; set; } = new();
+        public double TotalValue { get; set; }
+    }
+
+    public class SkillDto
+    {
+        public int SkillId { get; set; }
+        public string SkillName { get; set; } = string.Empty;
+        public int YearsOfExperience { get; set; }
+    }
+
+    public class ExperienceDto
+    {
+        public int ExperienceId { get; set; }
+        public string CompanyName { get; set; } = string.Empty;
+        public int StartYear { get; set; }
+        public int EndYear { get; set; }
+    }
+}å
