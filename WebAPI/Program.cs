@@ -213,24 +213,23 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
     return Results.Ok("Usuário atualizado com sucesso.");
 });
 
-app.MapGet("/get_user_by_id/{id:int}", 
-    async (int id, ApplicationDbContext db) =>
-    {
-        // Tenta encontrar pelo PK (assume que user_id é a chave primária)
-        var user = await db.Users.FindAsync(id);
-        if (user == null)
-        {
-            return Results.NotFound(new { message = "User not found." });
-        }
+app.MapGet("/get_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
+{
+    var user = await db.Users
+        .Include(u => u.Role)
+        .FirstOrDefaultAsync(u => u.user_id == id);
 
-        // Retorna apenas os campos necessários
-        return Results.Ok(new
-        {
-            user.user_id,
-            user.username,
-            user.fk_role_id
-        });
+    if (user == null)
+        return Results.NotFound(new { message = "User not found." });
+
+    return Results.Ok(new
+    {
+        user.user_id,
+        user.username,
+        roleId = user.fk_role_id,
+        roleName = user.Role?.role
     });
+});
 
 app.MapPost("/add_user", async (UserAddModel model, ApplicationDbContext db) =>
     {

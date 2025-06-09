@@ -5,7 +5,6 @@
 @inject HttpClient Http
 @inject ApiHelper apiHelper
 @using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.EntityFrameworkCore.Metadata.Internal
 @inject ApiHelper ApiHelper
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
@@ -87,7 +86,6 @@ else
                     <thead class="table-dark">
                     <tr>
                         <th>Username</th>
-                        <th>UserId</th>
                         <th>Role</th>
                         <th class="text-center">Ações</th>
                     </tr>
@@ -97,7 +95,6 @@ else
                     {
                     <tr>
                         <td>@user.Username</td>
-                        <td>@user.User_id</td>
                         <td>@user.RoleName</td>
                         <td class="text-center">
                             <div class="d-inline-flex gap-2">
