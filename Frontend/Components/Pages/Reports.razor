@@ -19,23 +19,24 @@
         </button>
     </div>
 }
-
-<div class="mb-3 mt-3">
-    <button class="btn btn-primary me-2" @onclick="LoadCategoryCountryReport">Ver Relatório por Categoria e País</button>
-    <button class="btn btn-secondary" @onclick="LoadSkillReport">Ver Relatório por Skill</button>
-</div>
-
-@if (categoryCountryReport?.Any() == true)
+@if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
 {
-    <h4>Relatório por Categoria e País</h4>
-    <table class="table table-bordered table-striped">
-        <thead>
+    <div class="mb-3 mt-3">
+        <button class="btn btn-primary me-2" @onclick="LoadCategoryCountryReport">Ver Relatório por Categoria e País</button>
+        <button class="btn btn-secondary" @onclick="LoadSkillReport">Ver Relatório por Skill</button>
+    </div>
+
+    @if (categoryCountryReport?.Any() == true)
+    {
+        <h4>Relatório por Categoria e País</h4>
+        <table class="table table-bordered table-striped">
+            <thead>
             <tr>
                 <th>Categoria - País</th>
                 <th>Preço Médio Mensal (€)</th>
             </tr>
-        </thead>
-        <tbody>
+            </thead>
+            <tbody>
             @foreach (var item in categoryCountryReport)
             {
                 <tr>
@@ -43,21 +44,21 @@
                     <td>@item.Value.ToString("F2")</td>
                 </tr>
             }
-        </tbody>
-    </table>
-}
+            </tbody>
+        </table>
+    }
 
-@if (skillReport?.Any() == true)
-{
-    <h4>Relatório por Skill</h4>
-    <table class="table table-bordered table-striped">
-        <thead>
+    @if (skillReport?.Any() == true)
+    {
+        <h4>Relatório por Skill</h4>
+        <table class="table table-bordered table-striped">
+            <thead>
             <tr>
                 <th>Skill</th>
                 <th>Preço Médio Mensal (€)</th>
             </tr>
-        </thead>
-        <tbody>
+            </thead>
+            <tbody>
             @foreach (var item in skillReport)
             {
                 <tr>
@@ -65,8 +66,9 @@
                     <td>@item.Value.ToString("F2")</td>
                 </tr>
             }
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    }
 }
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -108,8 +110,6 @@
             }
             else
             {
-                // Opcional: podes carregar um relatório inicial aqui se quiseres
-                // await LoadCategoryCountryReport();
                 StateHasChanged();
             }
         }
