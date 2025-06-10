@@ -165,7 +165,7 @@ else
             else
             {
                 // Verificar se o RoleId é igual a 1; se não for, negar acesso
-                if (UserSession.RoleId != 1)
+                if (UserSession.RoleId != 1 && UserSession.RoleId != 2)
                 {
                     accessDenied = true;
                     StateHasChanged();
