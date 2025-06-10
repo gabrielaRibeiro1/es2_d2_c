@@ -1,6 +1,16 @@
 ﻿@page "/"
 
+@inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
+
 <PageTitle>Home</PageTitle>
+
+@if (!string.IsNullOrEmpty(_username))
+{
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <p style="margin: 0;">Welcome, <strong>@_username</strong>!</p>
+    </div>
+}
 
 <!-- Hero Section -->
 <section class="hero">
@@ -27,6 +37,36 @@
         If you’re looking for opportunities in IT, sign up and create your profile in minutes. If you’re a recruiter, post jobs and manage the entire hiring process in one place.
     </p>
 </article>
+
+@code
+{
+    private int _loggedInUserId;
+    private string _username = "";
+    private bool _loadingUser = true;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var idString = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+            if (int.TryParse(idString, out int userId) && !string.IsNullOrEmpty(username))
+            {
+                _loggedInUserId = userId;
+                _username = username;
+                _loadingUser = false;
+                StateHasChanged();
+            }
+            else
+            {
+                _loadingUser = false;
+                StateHasChanged();
+                Navigation.NavigateTo("/login", true);
+            }
+        }
+    }
+}
 
 <style>
     .hero {

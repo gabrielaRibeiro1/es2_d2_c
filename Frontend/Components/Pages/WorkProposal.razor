@@ -7,7 +7,7 @@
 
 @inject ApiHelper ApiHelper
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 
 <h2 class="titles">Work Proposals</h2>
 
@@ -166,8 +166,8 @@ else
     {
         if (firstRender)
         {
-            var idString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-            var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+            var idString = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
             if (int.TryParse(idString, out int userId) && !string.IsNullOrEmpty(username))
             {
@@ -255,7 +255,7 @@ else
     {
         try
         {
-            if (proposal.TryGetValue("proposal_id", out var idObj) && idObj is not null)
+            if (proposal.TryGetValue("proposal_id", out var idObj))
             {
                 int id = ((JsonElement)idObj).GetInt32();
                 var success = await ApiHelper.DeleteFromApiAsync($"/work_proposals/{id}");
@@ -306,8 +306,8 @@ else
 
     private async Task Logout()
     {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "userId");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "username");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "userId");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "username");
         Navigation.NavigateTo("/login");
     }
 

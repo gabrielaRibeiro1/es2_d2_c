@@ -1,4 +1,3 @@
-
 using Frontend.Components;
 using Frontend.Helpers;
 using Helpers;
@@ -9,14 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
+builder.Services.AddSingleton<LoginEventService>();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(EnvFileHelper.GetString("API_URL")) });
 builder.Services.AddScoped<ApiHelper>();
-
-builder.Services.AddSingleton<LoginEventService>();
 
 var app = builder.Build();
 
