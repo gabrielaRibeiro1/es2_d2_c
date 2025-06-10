@@ -12,9 +12,14 @@ public partial class ApplicationDbContext : DbContext
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
     }
     
-    private static readonly DbContextOptions DefaultOptions = new Func<DbContextOptions>(() =>
+    private static DbContextOptions CreateDefaultOptions()
     {
-        var optionsBuilder = new DbContextOptionsBuilder();
+        var env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+        if (env == "Test")
+            throw new InvalidOperationException("DefaultOptions should not be used in test environment.");
+
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
+
         var db = EnvFileHelper.GetString("POSTGRES_DB");
         var user = EnvFileHelper.GetString("POSTGRES_USER");
         var password = EnvFileHelper.GetString("POSTGRES_PASSWORD");
@@ -30,19 +35,24 @@ public partial class ApplicationDbContext : DbContext
 
         var connectionString = $"Host={host};Port={port};Database={db};Username={user};Password={password}";
         optionsBuilder.UseNpgsql(connectionString);
+
         return optionsBuilder.Options;
-    })();
+    }
+
+
+    private static readonly Lazy<DbContextOptions> LazyDefaultOptions = new Lazy<DbContextOptions>(CreateDefaultOptions);
+    private static DbContextOptions DefaultOptions => LazyDefaultOptions.Value;
     
     public ApplicationDbContext()
         : base(DefaultOptions)
     {
     }
     
-
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
     }
+    
 
     // DbSet properties representing tables
     public DbSet<User> Users { get; set; }

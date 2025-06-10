@@ -1,0 +1,148 @@
+﻿@page "/perfil"
+@inject IJSRuntime JSRuntime
+@using Frontend.Helpers
+@using global::Helpers.Models
+@inject HttpClient Http
+@inject ApiHelper apiHelper
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ApiHelper ApiHelper
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+
+<PageTitle>Perfil</PageTitle>
+
+@if (!string.IsNullOrEmpty(UserSession.Username))
+{
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
+        <button class="btn btn-outline-danger" @onclick="Logout">
+            <span class="oi oi-account-logout"></span> Sair
+        </button>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        @if (!_sessionChecked)
+        {
+            <!-- Enquanto ainda não validámos a sessão, mostramos spinner -->
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+    
+        else if (_currentUser == null)
+        {
+            <!-- Se houve erro ao carregar ou não encontrou o utilizador -->
+            <div class="text-center py-4">
+                <p class="text-muted mb-0">@_errorMessage</p>
+            </div>
+        }
+        else
+        {
+            <h5 class="card-title">Os meus dados</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">Username:</dt>
+                        <dd class="col-sm-8">@_currentUser.Username</dd>
+
+                        <dt class="col-sm-4">Role:</dt>
+                        <dd class="col-sm-8">@_currentUser.RoleName</dd>
+
+                    </dl>
+                </div>
+                
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private UserViewModel? _currentUser;
+    private string _errorMessage = string.Empty;
+    private bool _sessionChecked = false;
+    private bool _accessDenied = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_sessionChecked)
+        {
+            // Marcar que já verificámos a sessão
+            _sessionChecked = true;
+
+            // 1) Obter dados da sessão (userId, roleId, username) a partir do sessionStorage, se ainda não estiver no UserSession
+            if (UserSession.UserId == null)
+            {
+                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                    UserSession.UserId = uid;
+
+                if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                    UserSession.RoleId = roleId;
+
+                if (!string.IsNullOrEmpty(username))
+                    UserSession.Username = username;
+            }
+
+            // 2) Se não tiver sessão (UserId nulo), redirecionar logo para login
+            if (UserSession.UserId == null)
+            {
+                Navigation.NavigateTo("/Login");
+                return;
+            }
+
+            // 3) Se quiser apenas permitir alguns roles, por exemplo RoleId == 1 (admin),
+            //    pode manter esta lógica. Caso queira permitir todos os utilizadores ver o próprio perfil,
+            //    remove este if ou adapta-o.
+            //    No exemplo abaixo, vou assumir que qualquer utilizador autenticado
+            //    (RoleId != null) pode ver o próprio perfil. Para forçar só admin, troque para: if (UserSession.RoleId != 1)
+            if (UserSession.RoleId == null)
+            {
+                _accessDenied = true;
+                StateHasChanged();
+                return;
+            }
+
+            // 4) Carregar dados do utilizador autenticado
+            await LoadCurrentUser();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadCurrentUser()
+    {
+        try
+        {
+            // Supondo que existe um endpoint na API: "get_user_by_id/{id}"
+            // Se o seu endpoint tiver outro nome, ajuste aqui em conformidade.
+            var id = UserSession.UserId!.Value;
+            _currentUser = await ApiHelper.GetFromApiAsync<UserViewModel>($"get_user_by_id/{id}");
+
+            if (_currentUser == null)
+            {
+                _errorMessage = "Não foi possível encontrar os dados do seu perfil.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Erro ao carregar os dados do perfil: {ex.Message}";
+        }
+    }
+
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        UserSession.UserId = null;
+        UserSession.Username = string.Empty;
+        UserSession.RoleId = null;
+
+        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+    }
+}

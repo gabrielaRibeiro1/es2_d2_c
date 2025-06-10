@@ -199,6 +199,7 @@
 @code {
     private List<TalentProfileDto>? profiles;
     private TalentProfileDto newProfile = new();
+    private TalentProfileDto originalProfile = new(); // Armazena o perfil original durante edição
     private SkillDto newSkill = new();
     private List<string> availableSkills = new();
     private bool isLoading = false;
@@ -320,8 +321,8 @@
                 foreach (var skill in newProfile.Skills)
                 {
                     var skillUrl = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?" +
-                                   $"skill_name={Uri.EscapeDataString(skill.SkillName)}" +
-                                   $"&years_of_experience={skill.YearsOfExperience}";
+                                 $"skill_name={Uri.EscapeDataString(skill.SkillName)}" +
+                                 $"&years_of_experience={skill.YearsOfExperience}";
 
                     var skillResponse = await Http.PostAsync(skillUrl, null);
                     if (!skillResponse.IsSuccessStatusCode)
@@ -346,10 +347,7 @@
 
                 successMessage = "Perfil criado com sucesso!";
                 await LoadProfiles();
-                newProfile = new TalentProfileDto();
-                newProfile.FkUserId = UserSession.UserId!.Value;
-                newSkill = new SkillDto();
-                isEditing = false;
+                ResetForm();
             }
             else
             {
@@ -385,12 +383,36 @@
 
             if (response.IsSuccessStatusCode)
             {
+                // Identificar skills para adicionar (presentes no newProfile mas não no original)
+                var skillsToAdd = newProfile.Skills
+                    .Where(ns => !originalProfile.Skills.Any(os => os.SkillName == ns.SkillName))
+                    .ToList();
+
+                // Identificar skills para remover (presentes no original mas não no newProfile)
+                var skillsToRemove = originalProfile.Skills
+                    .Where(os => !newProfile.Skills.Any(ns => ns.SkillName == os.SkillName))
+                    .ToList();
+
+                // Remover as skills que não estão mais no newProfile
+                foreach (var skill in skillsToRemove)
+                {
+                    var removeUrl = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/remove_skill?" +
+                                  $"skill_name={Uri.EscapeDataString(skill.SkillName)}";
+                    await Http.DeleteAsync(removeUrl);
+                }
+
+                // Adicionar as novas skills
+                foreach (var skill in skillsToAdd)
+                {
+                    var addUrl = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?" +
+                               $"skill_name={Uri.EscapeDataString(skill.SkillName)}" +
+                               $"&years_of_experience={skill.YearsOfExperience}";
+                    await Http.PostAsync(addUrl, null);
+                }
+
                 successMessage = "Perfil atualizado com sucesso!";
                 await LoadProfiles();
-                newProfile = new TalentProfileDto();
-                newProfile.FkUserId = UserSession.UserId!.Value;
-                newSkill = new SkillDto();
-                isEditing = false;
+                ResetForm();
             }
             else
             {
@@ -405,6 +427,19 @@
         {
             isLoading = false;
         }
+    }
+
+    private void ResetForm()
+    {
+        newProfile = new TalentProfileDto { FkUserId = UserSession.UserId!.Value };
+        newSkill = new SkillDto();
+        originalProfile = new TalentProfileDto();
+        isEditing = false;
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
     }
 
     private async Task DeleteProfile(string profileName)
@@ -439,6 +474,22 @@
 
     private void EditProfile(TalentProfileDto profile)
     {
+        originalProfile = new TalentProfileDto
+        {
+            ProfileName = profile.ProfileName,
+            Country = profile.Country,
+            Email = profile.Email,
+            Price = profile.Price,
+            Privacy = profile.Privacy,
+            Category = profile.Category,
+            FkUserId = profile.FkUserId,
+            Skills = profile.Skills.Select(s => new SkillDto 
+            { 
+                SkillName = s.SkillName, 
+                YearsOfExperience = s.YearsOfExperience 
+            }).ToList()
+        };
+
         newProfile = new TalentProfileDto
         {
             ProfileName = profile.ProfileName,
@@ -448,7 +499,11 @@
             Privacy = profile.Privacy,
             Category = profile.Category,
             FkUserId = profile.FkUserId,
-            Skills = profile.Skills.Select(s => new SkillDto { SkillName = s.SkillName, YearsOfExperience = s.YearsOfExperience }).ToList()
+            Skills = profile.Skills.Select(s => new SkillDto 
+            { 
+                SkillName = s.SkillName, 
+                YearsOfExperience = s.YearsOfExperience 
+            }).ToList()
         };
 
         isEditing = true;
@@ -475,7 +530,8 @@
 
     private void RemoveSkill(SkillDto skill)
     {
-        newProfile.Skills.Remove(skill);
+        newProfile.Skills.RemoveAll(s => s.SkillName == skill.SkillName);
+        StateHasChanged();
     }
 
     private async Task Logout()
