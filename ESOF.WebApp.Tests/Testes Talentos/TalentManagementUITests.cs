@@ -6,6 +6,7 @@ using OpenQA.Selenium.Support.UI;
 using Xunit;
 using Assert = Xunit.Assert;
 
+//comment
 namespace ESOF.WebApp.Tests
 {
     public class TalentManagementUITests : IDisposable
