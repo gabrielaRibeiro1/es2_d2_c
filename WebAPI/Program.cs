@@ -134,21 +134,26 @@ app.MapPost("/logout", () =>
 
 app.MapGet("/get_user/{username}", async (string username, ApplicationDbContext db) =>
 {
-    // Find user by username
-    var user = await db.Users.FirstOrDefaultAsync(u => u.username == username);
-    if (user == null)
-    {
-        return Results.NotFound("User not found.");
-    }
+    var result = await db.Users
+        .Where(u => u.username == username)
+        .Join(db.Roles,
+            u => u.fk_role_id,
+            r => r.role_id,
+            (u, r) => new UserViewModel
+            {
+                User_id    = u.user_id,
+                Username   = u.username,
+                fk_role_id = u.fk_role_id,
+                RoleName   = r.role
+            })
+        .FirstOrDefaultAsync();
 
-    // Return user info
-    return Results.Ok(new
-    {
-        user.user_id,
-        user.username,
-        user.fk_role_id
-    });
+    if (result == null)
+        return Results.NotFound("User not found.");
+
+    return Results.Ok(result);
 });
+
 
 
 
@@ -282,7 +287,11 @@ app.MapPut("/update_user2/{id:int}", async (int id, UserUpdateModel updateData, 
         user.passwordSalt = passwordSalt;
     }
 
-
+    if (updateData.RoleId >= 1 && updateData.RoleId <= 3 && user.fk_role_id != updateData.RoleId)
+    {
+        user.fk_role_id = updateData.RoleId;
+    }
+    
     await db.SaveChangesAsync();
     return Results.Ok("Usuário atualizado com sucesso.");
 });

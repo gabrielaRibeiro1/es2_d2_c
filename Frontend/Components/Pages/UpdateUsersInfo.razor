@@ -93,6 +93,17 @@ else
                         </div>
                         }
 
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <InputSelect id="role"
+                                         class="form-select"
+                                         @bind-Value="_user.RoleId">
+                                <option value="1">Admin</option>
+                                <option value="2">UserManager</option>
+                                <option value="3">User</option>
+                            </InputSelect>
+                        </div>
+
                         @* Botões de ação alinhados à direita *@
                         <div class="d-flex justify-content-end mt-4">
                             <button type="submit" class="btn btn-primary me-2">
@@ -104,6 +115,8 @@ else
                                 Cancelar
                             </NavLink>
                         </div>
+                        
+                        
                     </EditForm>
                     }
                 </div>
@@ -155,7 +168,7 @@ else
             else
             {
                 // 3. Só Admin (RoleId == 1) pode continuar; senão, negar acesso
-                if (UserSession.RoleId != 1)
+                if (UserSession.RoleId != 1 && UserSession.RoleId != 2)
                 {
                     accessDenied = true;
                     StateHasChanged();
@@ -176,6 +189,8 @@ else
         try
         {
             _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
+            _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
+
         }
         catch
         {
