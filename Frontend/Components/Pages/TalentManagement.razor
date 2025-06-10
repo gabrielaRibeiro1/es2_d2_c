@@ -1,4 +1,5 @@
-﻿@page "/talent-management"
+﻿
+@page "/talent-management"
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
@@ -7,12 +8,12 @@
 @using Frontend.Helpers
 @rendermode InteractiveServer
 
-<h3>Gestão de Talentos</h3>
+<h3 class="mt-3">Gestão de Talentos</h3>
 
 @if (!string.IsNullOrEmpty(UserSession.Username))
 {
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <p class="mb-0">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
         <button class="btn btn-outline-danger" @onclick="Logout">
             <span class="oi oi-account-logout"></span> Sair
         </button>
@@ -22,481 +23,324 @@
 <div class="card mb-4">
     <div class="card-body">
         <h4>@(isEditing ? "Editar Perfil" : "Criar Novo Perfil")</h4>
-
-        <EditForm Model="@newProfile" OnValidSubmit="@((isEditing) ? UpdateProfile : CreateProfile)">
+        <EditForm Model="@newProfile" OnValidSubmit="@(isEditing ? UpdateProfile : CreateProfile)">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <InputText class="form-control mb-2" placeholder="Nome do Perfil *" @bind-Value="newProfile.ProfileName" />
-            <InputText class="form-control mb-2" placeholder="País *" @bind-Value="newProfile.Country" />
-            <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email" />
-            <label class="form-label">Preço (em EUR) *</label>
-            <InputNumber class="form-control mb-2" placeholder="Preço *" @bind-Value="newProfile.Price" />
-            <InputText class="form-control mb-2" placeholder="Categoria" @bind-Value="newProfile.Category" />
-
-            <InputSelect class="form-control mb-2" @bind-Value="newProfile.Privacy">
-                <option value="0">Público</option>
-                <option value="1">Privado</option>
-            </InputSelect>
-
-            <hr />
-            <h5>Skills</h5>
             <div class="row">
-                <div class="col-md-5">
-                    <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
-                        <option disabled selected value="">Selecione uma Skill</option>
-                        @foreach (var skill in availableSkills)
-                        {
-                            <option value="@skill">@skill</option>
-                        }
+                <!-- Profile details -->
+                <div class="col-md-6">
+                    <InputText class="form-control mb-2" placeholder="Nome do Perfil *" @bind-Value="newProfile.ProfileName" />
+                    <InputText class="form-control mb-2" placeholder="País *" @bind-Value="newProfile.Country" />
+                    <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email" />
+                    <label class="form-label">Preço (em EUR) *</label>
+                    <InputNumber class="form-control mb-2" placeholder="Preço em EUR" @bind-Value="newProfile.Price" aria-label="Preço em euros" />
+                    <InputText class="form-control mb-2" placeholder="Categoria" @bind-Value="newProfile.Category" />
+                    <InputSelect class="form-control mb-2" @bind-Value="newProfile.Privacy">
+                        <option value="0">Público</option>
+                        <option value="1">Privado</option>
                     </InputSelect>
                 </div>
-                <div class="col-md-3">
-                    <InputNumber class="form-control mb-2" placeholder="Anos de Experiência" @bind-Value="newSkill.YearsOfExperience" />
-                </div>
-                <div class="col-md-4">
-                    <button type="button" class="btn btn-outline-primary" @onclick="AddSkill">Adicionar Skill</button>
+
+                <!-- Skills & Experiences -->
+                <div class="col-md-6">
+                    <h5>Skills</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label invisible">Adicionar</label>
+                            <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
+                                <option disabled value="">Selecione uma Skill</option>
+                                @foreach (var skill in availableSkills)
+                                {
+                                    <option value="@skill">@skill</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label">Anos de Experiencia</label>
+                            <InputNumber class="form-control mb-2" placeholder="Anos de Experiência" @bind-Value="newSkill.YearsOfExperience"/>
+                        </div>
+                        <div class="col-3 d-flex align-items-center">
+                            <button type="button" class="btn btn-outline-primary w-100" @onclick="AddSkill">Adicionar Skill</button>
+                        </div>
+                    </div>
+                    @if (newProfile.Skills.Any())
+                    {
+                        <ul class="list-group mb-3">
+                            @foreach (var s in newProfile.Skills)
+                            {
+                                <li class="list-group-item d-flex justify-content-between">
+                                    @s.SkillName (@s.YearsOfExperience) anos
+                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(s)">Remover</button>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    
+                    <label class="form-label invisible">Adicionar</label>
+                    <h5>Experiências</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <InputText class="form-control mb-2" placeholder="Empresa" @bind-Value="newExperience.CompanyName"/>
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label">Ano de Início </label>
+                            <InputNumber class="form-control mb-2" placeholder="Ano Início" @bind-Value="newExperience.StartYear" aria-label="Ano de início da experiência (ex: 2020)" />
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label">Ano de Fim </label>
+                            <InputNumber class="form-control mb-2" placeholder="Ano Fim" @bind-Value="newExperience.EndYear" aria-label="Ano de fim da experiência (ex: 2022)" />
+                        </div>
+                        <div class="col-12 d-flex justify-content-end">
+                            <button type="button" class="btn btn-outline-primary" @onclick="AddExperience">Adicionar Experiência</button>
+                        </div>
+                    </div>
+                    @if (newProfile.Experiences.Any())
+                    {
+                        <ul class="list-group mb-2">
+                            @foreach (var e in newProfile.Experiences)
+                            {
+                                <li class="list-group-item d-flex justify-content-between">
+                                    @e.CompanyName (@e.StartYear - @e.EndYear)
+                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveExperience(e)">Remover</button>
+                                </li>
+                            }
+                        </ul>
+                    }
                 </div>
             </div>
 
-            @if (newProfile.Skills.Any())
-            {
-                <ul class="list-group mb-2">
-                    @foreach (var skill in newProfile.Skills)
-                    {
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @skill.SkillName (@skill.YearsOfExperience) anos
-                            <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(skill)">
-                                Remover (pendente)
-                            </button>
-                        </li>
-                    }
-                </ul>
-            }
-
-            <button class="btn btn-success mt-2" type="submit" disabled="@isLoading">
-                @(isEditing ? "Guardar Alterações" : "Criar Perfil")
-            </button>
-            @if (isEditing)
-            {
-                <button type="button" class="btn btn-secondary mt-2 ms-2" @onclick="CancelEdit">
-                    Cancelar
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-success px-4" type="submit" disabled="@isLoading">
+                    @(isEditing ? "Guardar Alterações" : "Criar Perfil")
                 </button>
-            }
+                @if (isEditing)
+                {
+                    <button type="button" class="btn btn-secondary ms-2" @onclick="CancelEdit">Cancelar</button>
+                }
+            </div>
         </EditForm>
     </div>
 </div>
 
 @if (!string.IsNullOrEmpty(successMessage))
 {
-    <div class="alert alert-success">@successMessage</div>
+    <div class="alert alert-success mt-3">@successMessage</div>
 }
 @if (!string.IsNullOrEmpty(errorMessage))
 {
-    <div class="alert alert-danger">@errorMessage</div>
+    <div class="alert alert-danger mt-3">@errorMessage</div>
 }
 
 <h4 class="mt-4">Perfis Públicos</h4>
-
-<table class="table table-bordered">
-    <thead>
-    <tr>
-        <th>Nome</th>
-        <th>Email</th>
-        <th>País</th>
-        <th>Preço</th>
-        <th>Skills</th>
-        <th>Ações</th>
-    </tr>
-    </thead>
-    <tbody>
-    @if (profiles is null)
-    {
-        <tr><td colspan="6">Carregando...</td></tr>
-    }
-    else if (!profiles.Any())
-    {
-        <tr><td colspan="6">Nenhum perfil encontrado.</td></tr>
-    }
-    else
-    {
-        @foreach (var p in profiles)
-        {
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
             <tr>
-                <td>@p.ProfileName</td>
-                <td>@p.Email</td>
-                <td>@p.Country</td>
-                <td>@p.Price</td>
-                <td>
-                    @foreach (var skill in p.Skills)
-                    {
-                        <span class="badge bg-info text-dark me-1">@skill.SkillName (@skill.YearsOfExperience)</span>
-                    }
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-primary me-1" @onclick="@(() => EditProfile(p))">Editar</button>
-                    <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteProfile(p.ProfileName))">Excluir</button>
-                </td>
+                <th>Nome</th><th>Email</th><th>País</th><th>Preço</th><th>Skills</th><th>Experiências</th><th>Ações</th>
             </tr>
-        }
-    }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @if (profiles == null)
+            {
+                <tr><td colspan="7">Carregando...</td></tr>
+            }
+            else if (!profiles.Any())
+            {
+                <tr><td colspan="7">Nenhum perfil encontrado.</td></tr>
+            }
+            else
+            {
+                @foreach (var p in profiles)
+                {
+                    <tr>
+                        <td>@p.ProfileName</td>
+                        <td>@p.Email</td>
+                        <td>@p.Country</td>
+                        <td>@p.Price</td>
+                        <td>
+                            @foreach (var s in p.Skills)
+                            {
+                                <span class="badge bg-info text-dark me-1">@s.SkillName (@s.YearsOfExperience)</span>
+                            }
+                        </td>
+                        <td>
+                            @foreach (var e in p.Experiences)
+                            {
+                                <span class="badge bg-secondary me-1">@e.CompanyName [@e.StartYear - @e.EndYear]</span>
+                            }
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-1" @onclick="() => EditProfile(p)">Editar</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteProfile(p.ProfileName)">Excluir</button>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
 
 @code {
     private List<TalentProfileDto>? profiles;
-    private TalentProfileDto newProfile = new();
-    private TalentProfileDto originalProfile = new(); // Armazena o perfil original durante edição
+    private TalentProfileDto newProfile = new() { FkUserId = UserSession.UserId ?? 0 };
+    private TalentProfileDto originalProfile = new();
     private SkillDto newSkill = new();
+    private ExperienceDto newExperience = new();
     private List<string> availableSkills = new();
-    private bool isLoading = false;
-    private bool isEditing = false;
-    private string successMessage = string.Empty;
-    private string errorMessage = string.Empty;
-    private bool initialized = false;
+    private bool isLoading;
+    private bool isEditing;
+    private string successMessage = "";
+    private string errorMessage = "";
+    private bool initialized;
 
     protected override void OnInitialized()
     {
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
-    private async void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-    {
-        if (e.Location.EndsWith("/talent-management"))
+        NavigationManager.LocationChanged += async (s, e) =>
         {
-            await CheckSessionAsync();
-            StateHasChanged();
-        }
+            if (e.Location.EndsWith("/talent-management"))
+            {
+                await CheckSessionAsync(); StateHasChanged();
+            }
+        };
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !initialized)
         {
-            initialized = true;
-            await CheckSessionAsync();
-            StateHasChanged();
+            initialized = true; await CheckSessionAsync(); StateHasChanged();
         }
     }
 
     private async Task CheckSessionAsync()
     {
-        var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-        var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-        var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
-
-        if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
-            UserSession.UserId = uid;
-        else
-            UserSession.UserId = null;
-
-        if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
-            UserSession.RoleId = roleId;
-        else
-            UserSession.RoleId = null;
-
-        UserSession.Username = username;
-
-        if (UserSession.UserId == null)
-        {
-            NavigationManager.NavigateTo("/Login");
-        }
-        else
-        {
-            newProfile.FkUserId = UserSession.UserId.Value;
-            await LoadProfiles();
-            await LoadAvailableSkills();
-        }
+        var uid = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+        var rid = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+        UserSession.UserId = int.TryParse(uid, out var u) ? u : null;
+        UserSession.RoleId = int.TryParse(rid, out var r) ? r : null;
+        UserSession.Username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+        if (UserSession.UserId == null) { NavigationManager.NavigateTo("/Login"); return; }
+        newProfile.FkUserId = UserSession.UserId.Value;
+        await LoadProfiles(); await LoadAvailableSkills();
     }
 
     private async Task LoadProfiles()
     {
-        try
-        {
-            isLoading = true;
-            profiles = await Http.GetFromJsonAsync<List<TalentProfileDto>>("/talent_profiles/list");
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Erro ao carregar perfis: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        try { isLoading = true; profiles = await Http.GetFromJsonAsync< List<TalentProfileDto> >("/talent_profiles/list"); }
+        catch (Exception ex) { errorMessage = $"Erro ao carregar perfis: {ex.Message}"; }
+        finally { isLoading = false; }
     }
 
     private async Task LoadAvailableSkills()
     {
-        try
-        {
-            var json = await Http.GetStreamAsync("/skills/list");
-            var skills = await JsonSerializer.DeserializeAsync<List<string>>(json);
-
-            if (skills is not null)
-            {
-                availableSkills = skills;
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Erro ao carregar lista de skills: {ex.Message}";
-        }
+        try { var js = await Http.GetStreamAsync("/skills/list"); var sk = await JsonSerializer.DeserializeAsync<List<string>>(js); if (sk!=null) availableSkills=sk; }
+        catch (Exception ex) { errorMessage=$"Erro ao carregar skills: {ex.Message}"; }
     }
 
     private async Task CreateProfile()
     {
+        isLoading=true;
         try
         {
-            isLoading = true;
-            newProfile.FkUserId = UserSession.UserId!.Value;
-
-            var url = $"/talent_profile/add_profile?" +
-                      $"profile_name={Uri.EscapeDataString(newProfile.ProfileName)}" +
-                      $"&country={Uri.EscapeDataString(newProfile.Country)}" +
-                      $"&email={Uri.EscapeDataString(newProfile.Email)}" +
-                      $"&price={newProfile.Price}" +
-                      $"&privacy={newProfile.Privacy}" +
-                      $"&category={Uri.EscapeDataString(newProfile.Category)}" +
-                      $"&fk_user_id={newProfile.FkUserId}";
-
-            var response = await Http.PostAsync(url, null);
-
-            if (response.IsSuccessStatusCode)
-            {
-                foreach (var skill in newProfile.Skills)
-                {
-                    var skillUrl = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?" +
-                                 $"skill_name={Uri.EscapeDataString(skill.SkillName)}" +
-                                 $"&years_of_experience={skill.YearsOfExperience}";
-
-                    var skillResponse = await Http.PostAsync(skillUrl, null);
-                    if (!skillResponse.IsSuccessStatusCode)
-                    {
-                        errorMessage += $" Erro ao adicionar skill '{skill.SkillName}': {await skillResponse.Content.ReadAsStringAsync()}";
-                    }
-                }
-
-                successMessage = "Perfil criado com sucesso!";
-                await LoadProfiles();
-                ResetForm();
-            }
-            else
-            {
-                errorMessage = $"Erro ao criar: {await response.Content.ReadAsStringAsync()}";
-            }
+            var url=$"/talent_profile/add_profile?profile_name={Uri.EscapeDataString(newProfile.ProfileName)}"+
+                    $"&country={Uri.EscapeDataString(newProfile.Country)}"+
+                    $"&email={Uri.EscapeDataString(newProfile.Email)}"+
+                    $"&price={newProfile.Price}"+
+                    $"&privacy={newProfile.Privacy}"+
+                    $"&category={Uri.EscapeDataString(newProfile.Category)}"+
+                    $"&fk_user_id={newProfile.FkUserId}";
+            var r=await Http.PostAsync(url,null); r.EnsureSuccessStatusCode();
+            foreach(var s in newProfile.Skills)
+                await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?skill_name={Uri.EscapeDataString(s.SkillName)}&years_of_experience={s.YearsOfExperience}",null);
+            foreach(var e in newProfile.Experiences)
+                await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
+            successMessage="Perfil criado com sucesso!"; await LoadProfiles(); ResetForm();
         }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
 
     private async Task UpdateProfile()
     {
+        isLoading=true;
         try
         {
-            isLoading = true;
-            
-            // Atualizar informações básicas do perfil
-            var url = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/update?" +
-                      $"country={Uri.EscapeDataString(newProfile.Country)}" +
-                      $"&email={Uri.EscapeDataString(newProfile.Email)}" +
-                      $"&price={newProfile.Price}" +
-                      $"&privacy={newProfile.Privacy}" +
-                      $"&category={Uri.EscapeDataString(newProfile.Category)}" +
-                      $"&fk_user_id={newProfile.FkUserId}";
-
-            var response = await Http.PutAsync(url, null);
-
-            if (response.IsSuccessStatusCode)
-            {
-                // Identificar skills para adicionar (presentes no newProfile mas não no original)
-                var skillsToAdd = newProfile.Skills
-                    .Where(ns => !originalProfile.Skills.Any(os => os.SkillName == ns.SkillName))
-                    .ToList();
-
-                // Identificar skills para remover (presentes no original mas não no newProfile)
-                var skillsToRemove = originalProfile.Skills
-                    .Where(os => !newProfile.Skills.Any(ns => ns.SkillName == os.SkillName))
-                    .ToList();
-
-                // Remover as skills que não estão mais no newProfile
-                foreach (var skill in skillsToRemove)
-                {
-                    var removeUrl = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/remove_skill?" +
-                                  $"skill_name={Uri.EscapeDataString(skill.SkillName)}";
-                    await Http.DeleteAsync(removeUrl);
-                }
-
-                // Adicionar as novas skills
-                foreach (var skill in skillsToAdd)
-                {
-                    var addUrl = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?" +
-                               $"skill_name={Uri.EscapeDataString(skill.SkillName)}" +
-                               $"&years_of_experience={skill.YearsOfExperience}";
-                    await Http.PostAsync(addUrl, null);
-                }
-
-                successMessage = "Perfil atualizado com sucesso!";
-                await LoadProfiles();
-                ResetForm();
-            }
-            else
-            {
-                errorMessage = $"Erro ao atualizar: {await response.Content.ReadAsStringAsync()}";
-            }
+            // update profile
+            var url=$"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/update?country={Uri.EscapeDataString(newProfile.Country)}&email={Uri.EscapeDataString(newProfile.Email)}&price={newProfile.Price}&privacy={newProfile.Privacy}&category={Uri.EscapeDataString(newProfile.Category)}&fk_user_id={newProfile.FkUserId}";
+            var rp=await Http.PutAsync(url,null); rp.EnsureSuccessStatusCode();
+            // skills diff
+            var remS=originalProfile.Skills.Where(o=>!newProfile.Skills.Any(n=>n.SkillName==o.SkillName));
+            foreach(var s in remS) await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/remove_skill?skill_name={Uri.EscapeDataString(s.SkillName)}");
+            var addS=newProfile.Skills.Where(n=>!originalProfile.Skills.Any(o=>o.SkillName==n.SkillName));
+            foreach(var s in addS) await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?skill_name={Uri.EscapeDataString(s.SkillName)}&years_of_experience={s.YearsOfExperience}",null);
+            // experiences diff
+            var remE=originalProfile.Experiences.Where(o=>!newProfile.Experiences.Any(n=>n.ExperienceId==o.ExperienceId));
+            foreach(var e in remE) await Http.DeleteAsync($"/experiences/{e.ExperienceId}");
+            var updE=newProfile.Experiences.Where(n=>originalProfile.Experiences.Any(o=>o.ExperienceId==n.ExperienceId));
+            foreach(var e in updE) await Http.PutAsync($"/experiences/{e.ExperienceId}?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
+            var addE=newProfile.Experiences.Where(n=>n.ExperienceId==0);
+            foreach(var e in addE) await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
+            successMessage="Perfil atualizado com sucesso!"; await LoadProfiles(); ResetForm();
         }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
 
-    private void ResetForm()
+    private async Task DeleteProfile(string pn)
     {
-        newProfile = new TalentProfileDto { FkUserId = UserSession.UserId!.Value };
-        newSkill = new SkillDto();
-        originalProfile = new TalentProfileDto();
-        isEditing = false;
+        if(!await JSRuntime.InvokeAsync<bool>("confirm",$"Excluir {pn}?"))return; isLoading=true;
+        try{var r=await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(pn)}/delete"); if(r.IsSuccessStatusCode){successMessage="Perfil excluído!";await LoadProfiles();}else errorMessage=await r.Content.ReadAsStringAsync();}
+        catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
 
-    private void CancelEdit()
+    private void EditProfile(TalentProfileDto p)
     {
-        ResetForm();
-    }
-
-    private async Task DeleteProfile(string profileName)
-    {
-        if (!await JSRuntime.InvokeAsync<bool>("confirm", $"Deseja realmente excluir o perfil '{profileName}'?"))
-            return;
-
-        try
-        {
-            isLoading = true;
-            var response = await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(profileName)}/delete");
-
-            if (response.IsSuccessStatusCode)
-            {
-                successMessage = "Perfil excluído com sucesso!";
-                await LoadProfiles();
-            }
-            else
-            {
-                errorMessage = await response.Content.ReadAsStringAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = ex.Message;
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
-
-    private void EditProfile(TalentProfileDto profile)
-    {
-        originalProfile = new TalentProfileDto
-        {
-            ProfileName = profile.ProfileName,
-            Country = profile.Country,
-            Email = profile.Email,
-            Price = profile.Price,
-            Privacy = profile.Privacy,
-            Category = profile.Category,
-            FkUserId = profile.FkUserId,
-            Skills = profile.Skills.Select(s => new SkillDto 
-            { 
-                SkillName = s.SkillName, 
-                YearsOfExperience = s.YearsOfExperience 
-            }).ToList()
-        };
-
-        newProfile = new TalentProfileDto
-        {
-            ProfileName = profile.ProfileName,
-            Country = profile.Country,
-            Email = profile.Email,
-            Price = profile.Price,
-            Privacy = profile.Privacy,
-            Category = profile.Category,
-            FkUserId = profile.FkUserId,
-            Skills = profile.Skills.Select(s => new SkillDto 
-            { 
-                SkillName = s.SkillName, 
-                YearsOfExperience = s.YearsOfExperience 
-            }).ToList()
-        };
-
+        originalProfile = p.Clone();
+        newProfile = p.Clone();
         isEditing = true;
-        successMessage = string.Empty;
-        errorMessage = string.Empty;
+        successMessage = errorMessage = "";
     }
 
     private void AddSkill()
     {
-        if (!string.IsNullOrEmpty(newSkill.SkillName) && newSkill.YearsOfExperience > 0)
+        if(!string.IsNullOrEmpty(newSkill.SkillName) && newSkill.YearsOfExperience>0 && !newProfile.Skills.Any(s=>s.SkillName==newSkill.SkillName))
         {
-            if (!newProfile.Skills.Any(s => s.SkillName == newSkill.SkillName))
-            {
-                newProfile.Skills.Add(new SkillDto
-                {
-                    SkillName = newSkill.SkillName,
-                    YearsOfExperience = newSkill.YearsOfExperience
-                });
-
-                newSkill = new SkillDto();
-            }
+            newProfile.Skills.Add(newSkill.Clone());
+            newSkill=new SkillDto();
         }
     }
+    private void RemoveSkill(SkillDto s) => newProfile.Skills.Remove(s);
 
-    private void RemoveSkill(SkillDto skill)
+    private void AddExperience()
     {
-        newProfile.Skills.RemoveAll(s => s.SkillName == skill.SkillName);
-        StateHasChanged();
+        if(newExperience.IsValid()) { newProfile.Experiences.Add(newExperience.Clone()); newExperience=new ExperienceDto(); }
+    }
+    private void RemoveExperience(ExperienceDto e) => newProfile.Experiences.Remove(e);
+
+    private void CancelEdit() => ResetForm();
+
+    private void ResetForm()
+    {
+        newProfile = new TalentProfileDto { FkUserId = UserSession.UserId!.Value };
+        originalProfile = new TalentProfileDto();
+        newSkill = new SkillDto(); newExperience = new ExperienceDto(); isEditing=false;
     }
 
     private async Task Logout()
     {
         await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.RoleId = null;
-        UserSession.Username = null;
+        UserSession.UserId=null;UserSession.RoleId=null;UserSession.Username=null;
         NavigationManager.NavigateTo("/Login");
     }
 
     public class TalentProfileDto
     {
-        public string ProfileName { get; set; } = string.Empty;
-        public string Country { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public int Privacy { get; set; } = 0;
-        public string Category { get; set; } = string.Empty;
-        public int FkUserId { get; set; }
-        public List<SkillDto> Skills { get; set; } = new();
+        public string ProfileName {get;set;}="";public string Country {get;set;}="";public string Email {get;set;}="";
+        public decimal Price {get;set;}public int Privacy {get;set;}public string Category {get;set;}="";public int FkUserId {get;set;}
+        public List<SkillDto> Skills {get;set;}=new(); public List<ExperienceDto> Experiences {get;set;}=new();
+        public TalentProfileDto Clone()=>new TalentProfileDto{ProfileName=ProfileName,Country=Country,Email=Email,Price=Price,Privacy=Privacy,Category=Category,FkUserId=FkUserId,Skills=Skills.Select(s=>s.Clone()).ToList(),Experiences=Experiences.Select(e=>e.Clone()).ToList()};
     }
-
-    public class SkillDto
-    {
-        public string SkillName { get; set; } = string.Empty;
-        public int YearsOfExperience { get; set; }
-    }
-
-    public static class UserSession
-    {
-        public static int? UserId { get; set; }
-        public static int? RoleId { get; set; }
-        public static string? Username { get; set; }
-    }
+    public class SkillDto{public string SkillName{get;set;}="";public int YearsOfExperience{get;set;} public SkillDto Clone()=>(SkillDto)MemberwiseClone();}
+    public class ExperienceDto{public int ExperienceId{get;set;} public string CompanyName{get;set;}="";public int StartYear{get;set;}public int EndYear{get;set;} public ExperienceDto Clone()=>(ExperienceDto)MemberwiseClone(); public bool IsValid()=>!string.IsNullOrEmpty(CompanyName)&&StartYear>0&&EndYear>0;}
+    public static class UserSession{public static int? UserId;public static int? RoleId;public static string? Username;}
 }
+
