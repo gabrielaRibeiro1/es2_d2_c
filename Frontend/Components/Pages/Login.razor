@@ -95,6 +95,10 @@
                     {
                         Navigation.NavigateTo($"/talent-management?userId={userId}");
                     }
+                    else if (roleId == 3)
+                    {
+                        Navigation.NavigateTo($"/Reports?userId={userId}");
+                    }
                 }
             }
         }
@@ -136,6 +140,10 @@
                     else if (userData.fk_role_id == 2) // UserManager
                     {
                         Navigation.NavigateTo($"/talent-management?userId={userData.user_id}");
+                    }
+                    else if (userData.fk_role_id == 3) // User
+                    {
+                        Navigation.NavigateTo($"/Reports?userId={userData.user_id}");
                     }
                     else
                     {

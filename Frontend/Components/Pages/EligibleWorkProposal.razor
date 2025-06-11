@@ -150,10 +150,51 @@ else if (talents != null)
             }
             else
             {
-                // Opcional: podes carregar um relatório inicial aqui se quiseres
-                // await LoadCategoryCountryReport();
+                await LoadProposalsAsync(); // <- AQUI
                 StateHasChanged();
             }
+        }
+    }
+
+    private async Task LoadProposalsAsync()
+    {
+        try
+        {
+            var allProposals = await Http.GetFromJsonAsync<List<WorkProposalDto>>("/work_proposals");
+
+            if (UserSession.RoleId == 1)
+            {
+                // Admin vê tudo
+                proposals = allProposals;
+            }
+            else if (UserSession.RoleId == 2)
+            {
+                // UserManager vê próprias e dos users (RoleId 3)
+                var allUsers = await Http.GetFromJsonAsync<List<Dictionary<string, object>>>("/get_all_users");
+
+                var userIdsRole3 = allUsers
+                    .Where(u => u.TryGetValue("fk_role_id", out var roleVal) && ((JsonElement)roleVal).GetInt32() == 3)
+                    .Select(u => u.TryGetValue("user_id", out var idVal) ? ((JsonElement)idVal).GetInt32() : 0)
+                    .Where(id => id != 0)
+                    .ToHashSet();
+
+                proposals = allProposals
+                    .Where(p =>
+                        p.FkUserId == UserSession.UserId ||
+                        userIdsRole3.Contains(p.FkUserId))
+                    .ToList();
+            }
+            else if (UserSession.RoleId == 3)
+            {
+                // User vê só as próprias
+                proposals = allProposals
+                    .Where(p => p.FkUserId == UserSession.UserId)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao carregar propostas: {ex.Message}";
         }
     }
 
@@ -241,6 +282,9 @@ else if (talents != null)
 
         [JsonPropertyName("proposal_name")]
         public string ProposalName { get; set; } = string.Empty;
+        
+        [JsonPropertyName("fk_user_id")]
+        public int FkUserId { get; set; }
     }
 
 

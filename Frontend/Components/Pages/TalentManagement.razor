@@ -19,8 +19,9 @@
         </button>
     </div>
 }
-
-<div class="card mb-4">
+@if (UserSession.RoleId != 3)
+{
+    <div class="card mb-4">
     <div class="card-body">
         <h4>@(isEditing ? "Editar Perfil" : "Criar Novo Perfil")</h4>
         <EditForm Model="@newProfile" OnValidSubmit="@(isEditing ? UpdateProfile : CreateProfile)">
@@ -122,6 +123,7 @@
         </EditForm>
     </div>
 </div>
+}
 
 @if (!string.IsNullOrEmpty(successMessage))
 {
@@ -132,12 +134,15 @@
     <div class="alert alert-danger mt-3">@errorMessage</div>
 }
 
-<h4 class="mt-4">Perfis Públicos</h4>
+<h4 class="mt-4">Talentos</h4>
 <div class="table-responsive">
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Nome</th><th>Email</th><th>País</th><th>Preço</th><th>Skills</th><th>Experiências</th><th>Ações</th>
+                <th>Nome</th><th>Email</th><th>País</th><th>Preço</th><th>Skills</th><th>Experiências</th> @if (UserSession.RoleId != 3) // Apenas Admin e UserManager veem esta coluna
+                {
+                    <th>Ações</th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -171,8 +176,17 @@
                             }
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-primary me-1" @onclick="() => EditProfile(p)">Editar</button>
-                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteProfile(p.ProfileName)">Excluir</button>
+                            @if (
+                                UserSession.RoleId == 1 || // Admin pode tudo
+                                (UserSession.RoleId == 2 && (
+                                    p.Privacy == 0 || // UserManager pode editar/remover todos os públicos
+                                    (p.Privacy == 1 && p.FkUserId == UserSession.UserId) // ...e os privados que ele criou
+                                ))
+                            )
+                            {
+                                <button class="btn btn-sm btn-primary me-1" @onclick="() => EditProfile(p)">Editar</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteProfile(p.ProfileName)">Excluir</button>
+                            }
                         </td>
                     </tr>
                 }
@@ -227,10 +241,38 @@
 
     private async Task LoadProfiles()
     {
-        try { isLoading = true; profiles = await Http.GetFromJsonAsync< List<TalentProfileDto> >("/talent_profiles/list"); }
-        catch (Exception ex) { errorMessage = $"Erro ao carregar perfis: {ex.Message}"; }
-        finally { isLoading = false; }
+        try
+        {
+            isLoading = true;
+            var allProfiles = await Http.GetFromJsonAsync<List<TalentProfileDto>>("/talent_profiles/list");
+
+            if (UserSession.RoleId == 1) // admin
+            {
+                profiles = allProfiles;
+            }
+            else if (UserSession.RoleId == 2) // usermanager
+            {
+                profiles = allProfiles
+                    .Where(p => p.Privacy == 0 || p.FkUserId == UserSession.UserId)
+                    .ToList();
+            }
+            else // user
+            {
+                profiles = allProfiles
+                    .Where(p => p.Privacy == 0)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao carregar perfis: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
+
 
     private async Task LoadAvailableSkills()
     {
@@ -334,13 +376,83 @@
 
     public class TalentProfileDto
     {
-        public string ProfileName {get;set;}="";public string Country {get;set;}="";public string Email {get;set;}="";
-        public decimal Price {get;set;}public int Privacy {get;set;}public string Category {get;set;}="";public int FkUserId {get;set;}
-        public List<SkillDto> Skills {get;set;}=new(); public List<ExperienceDto> Experiences {get;set;}=new();
+        [Required(ErrorMessage = "O nome é obrigatório.")]
+        public string ProfileName { get; set; } = "";
+
+        [Required(ErrorMessage = "O país é obrigatório.")]
+        public string Country { get; set; } = "";
+
+        [Required(ErrorMessage = "O email é obrigatório.")]
+        [EmailAddress(ErrorMessage = "Email inválido.")]
+        public string Email { get; set; } = "";
+
+        [Range(1, double.MaxValue, ErrorMessage = "O preço deve ser maior do que 0.")]
+        public double Price { get; set; }
+
+        public string Category { get; set; } = "";
+
+        public int Privacy { get; set; }
+
+        public int FkUserId { get; set; }
+
+        public List<SkillDto> Skills { get; set; } = new();
+        public List<ExperienceDto> Experiences { get; set; } = new();
         public TalentProfileDto Clone()=>new TalentProfileDto{ProfileName=ProfileName,Country=Country,Email=Email,Price=Price,Privacy=Privacy,Category=Category,FkUserId=FkUserId,Skills=Skills.Select(s=>s.Clone()).ToList(),Experiences=Experiences.Select(e=>e.Clone()).ToList()};
     }
-    public class SkillDto{public string SkillName{get;set;}="";public int YearsOfExperience{get;set;} public SkillDto Clone()=>(SkillDto)MemberwiseClone();}
-    public class ExperienceDto{public int ExperienceId{get;set;} public string CompanyName{get;set;}="";public int StartYear{get;set;}public int EndYear{get;set;} public ExperienceDto Clone()=>(ExperienceDto)MemberwiseClone(); public bool IsValid()=>!string.IsNullOrEmpty(CompanyName)&&StartYear>0&&EndYear>0;}
+
+    public class SkillDto
+    {
+        [Required(ErrorMessage = "A skill é obrigatória.")]
+        public string SkillName { get; set; } = "";
+
+        [Range(1, 100, ErrorMessage = "Os anos de experiência devem ser maiores do que 0.")]
+        public int YearsOfExperience { get; set; }
+
+        public SkillDto Clone() => new SkillDto
+        {
+            SkillName = this.SkillName,
+            YearsOfExperience = this.YearsOfExperience
+        };
+    }
+
+    
+    public class ExperienceDto : IValidatableObject
+    {
+        [Required(ErrorMessage = "O nome da empresa é obrigatório.")]
+        public string CompanyName { get; set; } = "";
+
+        [Range(1, 2100, ErrorMessage = "Ano de início inválido.")]
+        public int StartYear { get; set; }
+
+        [Range(1, 2100, ErrorMessage = "Ano de fim inválido.")]
+        public int EndYear { get; set; }
+
+        public int ExperienceId { get; set; }
+
+        public ExperienceDto Clone() => new ExperienceDto
+        {
+            CompanyName = this.CompanyName,
+            StartYear = this.StartYear,
+            EndYear = this.EndYear,
+            ExperienceId = this.ExperienceId
+        };
+
+        public bool IsValid() => StartYear > 0 && EndYear > 0 && StartYear < EndYear && !string.IsNullOrWhiteSpace(CompanyName);
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (StartYear <= 0 || EndYear <= 0)
+            {
+                yield return new ValidationResult("Anos de início e fim devem ser maiores que 0.", new[] { nameof(StartYear), nameof(EndYear) });
+            }
+
+            if (StartYear >= EndYear)
+            {
+                yield return new ValidationResult("Ano de início deve ser menor que o ano de fim.", new[] { nameof(StartYear), nameof(EndYear) });
+            }
+        }
+    }
+    
     public static class UserSession{public static int? UserId;public static int? RoleId;public static string? Username;}
 }
 
