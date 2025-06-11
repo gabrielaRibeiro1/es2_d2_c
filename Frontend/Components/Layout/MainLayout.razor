@@ -5,26 +5,40 @@
 @inject NavigationManager Navigation
 @inject LoginEventService LoginEvents
 
+@inject NavigationManager NavManager
+
+
 <div class="page">
-    <div class="sidebar"><NavMenu/></div>
+  @if (!IsAuthPage)
+  {
+  <div class="sidebar">
+    <NavMenu />
+  </div>
+  }
+
   <main>
-    @if (_showTopBar)
+    @if (!IsAuthPage)
     {
-      <div class="top-row px-4">
-        <NavLink href="">Home</NavLink>
-        @if (_isLoggedIn)
-        {
-          <NavLink @onclick="Logout">Logout</NavLink>
-        }
-        else
-        {
-          <NavLink href="login">Login</NavLink>
-        }
-      </div>
+    <div class="top-row px-4">
+      <NavLink href="">Home</NavLink>
+      @if (_isLoggedIn)
+      {
+      <NavLink @onclick="Logout">Logout</NavLink>
+      }
+      else
+      {
+      <NavLink href="login">Login</NavLink>
+      }
+      <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" class="ml-4">About</a>
+    </div>
     }
-    <article class="content px-4">@Body</article>
+
+    <article class="content px-4">
+      @Body
+    </article>
   </main>
 </div>
+
 
 <div id="blazor-error-ui">
   An unhandled error has occurred.
@@ -33,6 +47,17 @@
 </div>
 
 @code {
+  private bool IsAuthPage
+  {
+    get
+    {
+      var page = NavManager
+        .ToBaseRelativePath(NavManager.Uri)
+        .Split('?', '#')[0]
+        .ToLowerInvariant();
+      return page == "login" || page == "create-account";
+    }
+  }
   private bool _isLoggedIn;
   private bool _showTopBar;
   private bool _rendererReady;
