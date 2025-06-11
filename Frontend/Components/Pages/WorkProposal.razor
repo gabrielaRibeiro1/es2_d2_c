@@ -13,8 +13,8 @@
 
 @if (!string.IsNullOrEmpty(_username))
 {
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <p style="margin: 0;">Bem-vindo, <strong>@_username</strong>!</p>
+    <div class="user-info-container">
+        <p>Bem-vindo, <strong>@_username</strong>!</p>
         <button class="btn btn-outline-danger" @onclick="Logout">
             <span class="oi oi-account-logout"></span> Sair
         </button>
@@ -28,8 +28,6 @@ else
 {
     <p style="color: red;">Usuário não autenticado. A redirecionar para login...</p>
 }
-
-<hr class="separator" />
 
 <div class="responsive-table">
     <h4 class="titles">All Work Proposals</h4>
@@ -75,8 +73,10 @@ else
                             <td><input @bind="_editingProposal.description" class="form-control" /></td>
                             <td><input type="number" @bind="_editingProposal.total_hours" class="form-control" /></td>
                             <td>
-                                <button class="btn btn-success" @onclick="UpdateProposal">Save</button>
-                                <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                                <div class="button-group">
+                                    <button class="btn btn-success" @onclick="UpdateProposal">Save</button>
+                                    <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                                </div>
                             </td>
                         }
                         else
@@ -88,8 +88,10 @@ else
                             <td>@proposal["description"]</td>
                             <td>@proposal["total_hours"]</td>
                             <td>
-                                <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
-                                <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
+                                <div class="button-group">
+                                    <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
+                                    <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
+                                </div>
                             </td>
                         }
                     </tr>
@@ -343,3 +345,89 @@ else
         public int fk_user_id { get; set; }
     }
 }
+
+<style>
+    .titles {
+        margin-bottom: 1rem;
+    }
+
+    .separator {
+        margin: 2rem 0;
+        border-top: 2px solid #ccc;
+    }
+
+    .responsive-table {
+        overflow-x: auto;
+        margin-bottom: 2rem;
+    }
+
+    .wptable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .wptable th, .wptable td {
+        padding: 0.75rem;
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .wptable th {
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+        color: white;
+    }
+
+    .btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.85rem;
+        border-radius: 5px;
+        margin: 0.1rem;
+        white-space: nowrap;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+    
+    .form-wrapper {
+        padding: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-bottom: 2rem;
+    }
+
+    .form-container > div {
+        margin-bottom: 1rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .form-container button[type="submit"] {
+        display: block;
+        margin: 1rem auto 0 auto;
+        width: 150px;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .user-info-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    td > button + button {
+        margin-left: 0.5rem;
+    }
+</style>
