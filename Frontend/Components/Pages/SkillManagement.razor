@@ -21,62 +21,66 @@
     </div>
 }
 
-<div class="card mb-4">
-    <div class="card-body">
-        <h4>@(isEditing ? "Editar Skill" : "Criar Nova Skill")</h4>
+<!-- Mostrar o formulário só para Admin e UserManager -->
+@if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h4>@(isEditing ? "Editar Skill" : "Criar Nova Skill")</h4>
 
-        <EditForm Model="@newSkill" OnValidSubmit="@((isEditing) ? UpdateSkill : CreateSkill)" FormName="createSkillForm">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+            <EditForm Model="@newSkill" OnValidSubmit="@((isEditing) ? UpdateSkill : CreateSkill)" FormName="createSkillForm">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-            <div class="form-group">
-                <label for="skillName">Nome *</label>
-                <InputText id="skillName"
-                           @bind-Value="newSkill.name"
-                           class="form-control"
-                           placeholder="Digite o nome da skill" />
-                <ValidationMessage For="@(() => newSkill.name)" />
-            </div>
+                <div class="form-group">
+                    <label for="skillName">Nome *</label>
+                    <InputText id="skillName"
+                               @bind-Value="newSkill.name"
+                               class="form-control"
+                               placeholder="Digite o nome da skill" />
+                    <ValidationMessage For="@(() => newSkill.name)" />
+                </div>
 
-            <div class="form-group">
-                <label for="skillArea">Área *</label>
-                <InputText id="skillArea"
-                           @bind-Value="newSkill.area"
-                           class="form-control"
-                           placeholder="Digite a área da skill" />
-                <ValidationMessage For="@(() => newSkill.area)" />
-            </div>
+                <div class="form-group">
+                    <label for="skillArea">Área *</label>
+                    <InputText id="skillArea"
+                               @bind-Value="newSkill.area"
+                               class="form-control"
+                               placeholder="Digite a área da skill" />
+                    <ValidationMessage For="@(() => newSkill.area)" />
+                </div>
 
-            <button type="submit" class="btn btn-success mt-3" disabled="@isLoading">
-                @if (isLoading)
-                {
-                    <span class="spinner-border spinner-border-sm" role="status"></span>
-                    <span> A Guardar...</span>
-                }
-                else
-                {
-                    @if (isEditing)
+                <button type="submit" class="btn btn-success mt-3" disabled="@isLoading">
+                    @if (isLoading)
                     {
-                        <span class="oi oi-check"></span> @("Guardar Alterações")
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        <span> A Guardar...</span>
                     }
                     else
                     {
-                        <span class="oi oi-plus"></span> @("Criar Skill")
+                        @if (isEditing)
+                        {
+                            <span class="oi oi-check"></span> @("Guardar Alterações")
+                        }
+                        else
+                        {
+                            <span class="oi oi-plus"></span> @("Criar Skill")
+                        }
                     }
-                }
-            </button>
+                </button>
 
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="alert alert-danger mt-3">@errorMessage</div>
-            }
-            @if (!string.IsNullOrEmpty(successMessage))
-            {
-                <div class="alert alert-success mt-3">@successMessage</div>
-            }
-        </EditForm>
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">@errorMessage</div>
+                }
+                @if (!string.IsNullOrEmpty(successMessage))
+                {
+                    <div class="alert alert-success mt-3">@successMessage</div>
+                }
+            </EditForm>
+        </div>
     </div>
-</div>
+}
 
 <h4 class="mt-5">Lista de Skills</h4>
 
@@ -85,14 +89,17 @@
     <tr>
         <th>Nome</th>
         <th>Área</th>
-        <th>Ações</th>
+        @if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
+        {
+            <th>Ações</th>
+        }
     </tr>
     </thead>
     <tbody>
     @if (isLoading && skills == null)
     {
         <tr>
-            <td colspan="3" class="text-center text-muted">
+            <td colspan="@(UserSession.RoleId == 1 || UserSession.RoleId == 2 ? 3 : 2)" class="text-center text-muted">
                 <span class="spinner-border spinner-border-sm" role="status"></span>
                 Carregando...
             </td>
@@ -101,7 +108,7 @@
     else if (skills == null || !skills.Any())
     {
         <tr>
-            <td colspan="3" class="text-center text-muted">Nenhuma skill encontrada</td>
+            <td colspan="@(UserSession.RoleId == 1 || UserSession.RoleId == 2 ? 3 : 2)" class="text-center text-muted">Nenhuma skill encontrada</td>
         </tr>
     }
     else
@@ -111,14 +118,18 @@
             <tr>
                 <td>@skill.name</td>
                 <td>@skill.area</td>
-                <td>
-                    <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-primary mr-2">
-                        <span class="oi oi-pencil"></span> Editar
-                    </button>
-                    <button @onclick="@(() => DeleteSkill(skill.skill_id))" class="btn btn-sm btn-danger">
-                        <span class="oi oi-trash"></span> Excluir
-                    </button>
-                </td>
+
+                @if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
+                {
+                    <td>
+                        <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-primary mr-2">
+                            <span class="oi oi-pencil"></span> Editar
+                        </button>
+                        <button @onclick="@(() => DeleteSkill(skill.skill_id))" class="btn btn-sm btn-danger">
+                            <span class="oi oi-trash"></span> Excluir
+                        </button>
+                    </td>
+                }
             </tr>
         }
     }
@@ -340,5 +351,13 @@
 
         [Required(ErrorMessage = "Área da skill é obrigatória")]
         public string area { get; set; } = string.Empty;
+    }
+
+    // Guarda dados do utilizador atual na sessão (UserSession)
+    public static class UserSession
+    {
+        public static int? UserId { get; set; }
+        public static int? RoleId { get; set; }
+        public static string Username { get; set; } = string.Empty;
     }
 }

@@ -678,8 +678,7 @@ app.MapDelete("/experiences/{id}", async (int id, ApplicationDbContext dbContext
 //TALENT PROFILES 
 app.MapGet("/talent_profiles/list", async (ApplicationDbContext db) =>
 {
-    var publicProfiles = await db.TalentProfiles
-        .Where(p => p.privacy == 0)
+    var allProfiles = await db.TalentProfiles
         .Include(p => p.TalentProfileSkills)
         .ThenInclude(s => s.Skill)
         .Include(p => p.Experiences)
@@ -709,7 +708,7 @@ app.MapGet("/talent_profiles/list", async (ApplicationDbContext db) =>
         })
         .ToListAsync();
 
-    return Results.Ok(publicProfiles);
+    return Results.Ok(allProfiles);
 });
 
 
@@ -723,9 +722,6 @@ app.MapGet("/talent_profiles/{id}/list", async (int id, ApplicationDbContext db)
 
     if (profile == null)
         return Results.NotFound();
-
-    if (profile.privacy != 0)
-        return Results.Unauthorized();
 
     var profileDto = new TalentProfileDto
     {
@@ -754,6 +750,7 @@ app.MapGet("/talent_profiles/{id}/list", async (int id, ApplicationDbContext db)
 
     return Results.Ok(profileDto);
 });
+
 
 
 app.MapPost("/talent_profile/add_profile", async (
