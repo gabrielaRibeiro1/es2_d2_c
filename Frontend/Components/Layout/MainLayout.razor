@@ -6,12 +6,11 @@
 @inject LoginEventService LoginEvents
 
 <div class="page">
-    <div class="sidebar"><NavMenu/></div>
+  <div class="sidebar"><NavMenu/></div>
   <main>
     @if (_showTopBar)
     {
       <div class="top-row px-4">
-        <NavLink href="">Home</NavLink>
         @if (_isLoggedIn)
         {
           <NavLink @onclick="Logout">Logout</NavLink>
