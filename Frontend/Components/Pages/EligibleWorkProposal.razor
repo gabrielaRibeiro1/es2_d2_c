@@ -248,9 +248,11 @@ else if (talents != null)
                 Console.WriteLine("Raw JSON: " + json);
 
                 talents = JsonSerializer.Deserialize<List<TalentProfileDto>>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                    {
+                        PropertyNameCaseInsensitive = true
+                    })?
+                    .OrderByDescending(t => t.TotalValue)
+                    .ToList();
 
                 successMessage = $"Foram encontrados {talents?.Count ?? 0} talentos elegíveis.";
             }

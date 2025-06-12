@@ -90,7 +90,7 @@
                         </div>
                         <div class="col-3">
                             <label class="form-label">Ano de Fim </label>
-                            <InputNumber class="form-control mb-2" placeholder="Ano Fim" @bind-Value="newExperience.EndYear" aria-label="Ano de fim da experiência (ex: 2022)" />
+                            <InputNumber @bind-Value="newExperience.EndYear" class="form-control mb-2" placeholder="Ano Fim" aria-label="Ano de fim da experiência (ex: 2022)" />
                         </div>
                         <div class="col-12 d-flex justify-content-end">
                             <button type="button" class="btn btn-outline-primary" @onclick="AddExperience">Adicionar Experiência</button>
@@ -172,7 +172,9 @@
                         <td>
                             @foreach (var e in p.Experiences)
                             {
-                                <span class="badge bg-secondary me-1">@e.CompanyName [@e.StartYear - @e.EndYear]</span>
+                                <span class="badge bg-secondary me-1">
+        @e.CompanyName [@e.StartYear - @(e.EndYear == 0 ? "" : e.EndYear.ToString())]
+    </span>
                             }
                         </td>
                         <td>
@@ -352,9 +354,49 @@
     }
     private void RemoveSkill(SkillDto s) => newProfile.Skills.Remove(s);
 
-    private void AddExperience()
+    private async Task AddExperience()
     {
-        if(newExperience.IsValid()) { newProfile.Experiences.Add(newExperience.Clone()); newExperience=new ExperienceDto(); }
+        errorMessage = "";
+
+        bool isEndYearValid = !newExperience.EndYear.HasValue || (newExperience.EndYear.Value > 0);
+
+        if (!string.IsNullOrWhiteSpace(newExperience.CompanyName) &&
+            newExperience.StartYear > 0 &&
+            isEndYearValid &&
+            (!newExperience.EndYear.HasValue || newExperience.StartYear < newExperience.EndYear.Value))
+        {
+            try
+            {
+                // Construir URL com end_year opcional
+                string url = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience" +
+                             $"?company_name={Uri.EscapeDataString(newExperience.CompanyName)}" +
+                             $"&start_year={newExperience.StartYear}";
+
+                if (newExperience.EndYear.HasValue)
+                    url += $"&end_year={newExperience.EndYear.Value}";
+
+                var response = await Http.PostAsync(url, null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    newProfile.Experiences.Add(newExperience.Clone());
+                    newExperience = new ExperienceDto();
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    errorMessage = $"Erro: {errorContent}";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Erro inesperado: {ex.Message}";
+            }
+        }
+        else
+        {
+            errorMessage = "Por favor, preencha os dados corretamente: nome da empresa, anos válidos, e ano início menor que fim (se preenchido).";
+        }
     }
     private void RemoveExperience(ExperienceDto e) => newProfile.Experiences.Remove(e);
 
@@ -379,33 +421,34 @@
         [Required(ErrorMessage = "O nome é obrigatório.")]
         public string ProfileName { get; set; } = "";
 
-        [Required(ErrorMessage = "O país é obrigatório.")]
         public string Country { get; set; } = "";
-
-        [Required(ErrorMessage = "O email é obrigatório.")]
-        [EmailAddress(ErrorMessage = "Email inválido.")]
         public string Email { get; set; } = "";
-
-        [Range(1, double.MaxValue, ErrorMessage = "O preço deve ser maior do que 0.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "O preço tem de ser maior que 0.")]
         public double Price { get; set; }
-
         public string Category { get; set; } = "";
-
         public int Privacy { get; set; }
-
         public int FkUserId { get; set; }
 
         public List<SkillDto> Skills { get; set; } = new();
         public List<ExperienceDto> Experiences { get; set; } = new();
-        public TalentProfileDto Clone()=>new TalentProfileDto{ProfileName=ProfileName,Country=Country,Email=Email,Price=Price,Privacy=Privacy,Category=Category,FkUserId=FkUserId,Skills=Skills.Select(s=>s.Clone()).ToList(),Experiences=Experiences.Select(e=>e.Clone()).ToList()};
+
+        public TalentProfileDto Clone() => new TalentProfileDto
+        {
+            ProfileName = ProfileName,
+            Country = Country,
+            Email = Email,
+            Price = Price,
+            Privacy = Privacy,
+            Category = Category,
+            FkUserId = FkUserId,
+            Skills = Skills.Select(s => s.Clone()).ToList(),
+            Experiences = Experiences.Select(e => e.Clone()).ToList()
+        };
     }
 
     public class SkillDto
     {
-        [Required(ErrorMessage = "A skill é obrigatória.")]
         public string SkillName { get; set; } = "";
-
-        [Range(1, 100, ErrorMessage = "Os anos de experiência devem ser maiores do que 0.")]
         public int YearsOfExperience { get; set; }
 
         public SkillDto Clone() => new SkillDto
@@ -416,16 +459,11 @@
     }
 
     
-    public class ExperienceDto : IValidatableObject
+    public class ExperienceDto
     {
         public string CompanyName { get; set; } = "";
-
-        [Range(1, 2100, ErrorMessage = "Ano de início inválido.")]
         public int StartYear { get; set; }
-
-        [Range(1, 2100, ErrorMessage = "Ano de fim inválido.")]
-        public int EndYear { get; set; }
-
+        public int? EndYear { get; set; }  
         public int ExperienceId { get; set; }
 
         public ExperienceDto Clone() => new ExperienceDto
@@ -435,21 +473,6 @@
             EndYear = this.EndYear,
             ExperienceId = this.ExperienceId
         };
-
-        public bool IsValid() => StartYear > 0 && EndYear > 0 && StartYear < EndYear && !string.IsNullOrWhiteSpace(CompanyName);
-
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-        {
-            if (StartYear <= 0 || EndYear <= 0)
-            {
-                yield return new ValidationResult("Anos de início e fim devem ser maiores que 0.", new[] { nameof(StartYear), nameof(EndYear) });
-            }
-
-            if (StartYear >= EndYear)
-            {
-                yield return new ValidationResult("Ano de início deve ser menor que o ano de fim.", new[] { nameof(StartYear), nameof(EndYear) });
-            }
-        }
     }
     
     public static class UserSession{public static int? UserId;public static int? RoleId;public static string? Username;}
