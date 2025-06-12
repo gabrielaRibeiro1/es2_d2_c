@@ -22,7 +22,6 @@
 </div>
 }
 
-@* Se o utilizador não tiver RoleId = 1, mostramos uma mensagem de “Não autorizado” *@
 @if (accessDenied)
 {
 <div class="alert alert-danger mt-5">
@@ -45,12 +44,11 @@ else
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="input-group">
-                <input
-                    type="text"
-                    class="form-control"
-                    placeholder="Pesquisar por username..."
-                    @bind="searchUsername"
-                    @bind:event="oninput" />
+                <input type="text"
+                       class="form-control"
+                       placeholder="Pesquisar por username..."
+                       @bind="SearchUsername"
+                       @bind:event="oninput" />
                 <button class="btn btn-outline-primary" @onclick="SearchUser">
                     <i class="bi bi-search"></i> Pesquisar
                 </button>
@@ -128,19 +126,19 @@ else
     private List<UserViewModel>? _users;
     private string errorMessage = string.Empty;
     private bool sessionChecked = false;
-    private bool accessDenied = false; // variável que controla se o utilizador tem permissão
+    private bool accessDenied = false; 
     
-    //barra de pesquisa
     private string searchUsername = string.Empty;
     private string searchErrorMessage = string.Empty;
+    private CancellationTokenSource? _cts;
+    private string _searchUsername = string.Empty;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !sessionChecked)
         {
             sessionChecked = true;
-
-// Carregar sessão do utilizador a partir do sessionStorage
+            
             if (UserSession.UserId == null)
             {
                 var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
@@ -156,25 +154,20 @@ else
                 if (!string.IsNullOrEmpty(username))
                 UserSession.Username = username;
             }
-
-// Se não tiver sequer session, redirecionar para o login
+            
             if (UserSession.UserId == null)
             {
                 Navigation.NavigateTo("/Login");
             }
             else
             {
-                // Verificar se o RoleId é igual a 1; se não for, negar acesso
                 if (UserSession.RoleId != 1 && UserSession.RoleId != 2)
                 {
                     accessDenied = true;
                     StateHasChanged();
-                    // Poderíamos opcionalmente redirecionar:
-                    // Navigation.NavigateTo("/Unauthorized");
                 }
                 else
                 {
-                    // Se for admin (RoleId == 1), podemos carregar normalmente os dados
                     await LoadUsers();
                     StateHasChanged();
                 }
@@ -187,12 +180,17 @@ else
         try
         {
             _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
+            if (_users != null)
+            {
+                _users = _users.OrderBy(u => u.Username).ToList();
+            }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao carregar utilizadores: {ex.Message}";
+            errorMessage = $"Error loading users: {ex.Message}";
         }
     }
+
 
     private async Task Logout()
     {
@@ -214,16 +212,16 @@ else
             {
                 _users.RemoveAll(u => u.User_id == userId);
                 StateHasChanged();
-                await JSRuntime.InvokeVoidAsync("alert", "User eliminado com sucesso!");
+                await JSRuntime.InvokeVoidAsync("alert", "User deleted successfully!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Erro ao eliminar o utilizador!");
+                await JSRuntime.InvokeVoidAsync("alert", "Error deleting user!");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro: {ex.Message}");
+            Console.WriteLine($"Error: {ex.Message}");
         }
     }
     private async Task SearchUser()
@@ -232,7 +230,6 @@ else
 
         if (string.IsNullOrWhiteSpace(searchUsername))
         {
-            // Se o campo estiver vazio, recarrega todos os utilizadores
             await LoadUsers();
             return;
         }
@@ -244,7 +241,7 @@ else
 
             if (single != null)
             {
-                _users = new List<UserViewModel> { single };
+                _users = new List<UserViewModel> { single }.OrderBy(u => u.Username).ToList();
             }
             else
             {
@@ -253,15 +250,66 @@ else
         }
         catch (ApiException apiEx) when (apiEx.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            // Se o endpoint devolveu 404, significa que não existe o username
             _users = new List<UserViewModel>();
         }
         catch (Exception ex)
         {
-            searchErrorMessage = $"Erro ao pesquisar: {ex.Message}";
+            searchErrorMessage = $"Error when searching: {ex.Message}";
             _users = new List<UserViewModel>();
         }
 
         StateHasChanged();
+    }
+    
+    private string SearchUsername
+    {
+        get => _searchUsername;
+        set
+        {
+            if (_searchUsername != value)
+            {
+                _searchUsername = value;
+                _ = SearchUsersByTypingAsync(_searchUsername);
+            }
+        }
+    }
+
+    private async Task SearchUsersByTypingAsync(string username)
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        try
+        {
+            await Task.Delay(300, token);
+
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                await LoadUsers();
+            }
+            else
+            {
+                if (_users == null)
+                {
+                    _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
+                }
+
+                _users = _users
+                    .Where(u => u.Username.Contains(username, StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(u => u.Username)
+                    .ToList();
+            }
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            searchErrorMessage = $"Error when searching: {ex.Message}";
+            _users = new List<UserViewModel>();
+            StateHasChanged();
+        }
     }
 }

@@ -20,7 +20,6 @@
 </div>
 }
 
-@* Se o utilizador não tiver RoleId = 1, mostramos uma mensagem de “Não autorizado” *@
 @if (accessDenied)
 {
 <div class="alert alert-danger mt-5">
@@ -46,8 +45,7 @@ else
                     <EditForm Model="@userModel" OnValidSubmit="HandleValidSubmit">
                         <DataAnnotationsValidator />
                         <ValidationSummary class="mb-3 text-danger" />
-
-                        @* Username *@
+                        
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <InputText id="username"
@@ -55,8 +53,7 @@ else
                                        @bind-Value="userModel.Username"
                                        placeholder="Digite o nome de utilizador" />
                         </div>
-
-                        @* Password *@
+                        
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <InputText id="password"
@@ -65,8 +62,7 @@ else
                                        @bind-Value="userModel.Password"
                                        placeholder="Digite a password" />
                         </div>
-
-                        @* Role *@
+                        
                         <div class="mb-4">
                             <label for="role" class="form-label">Role</label>
                             <InputSelect id="role"
@@ -78,8 +74,7 @@ else
                                 <option value="3">User</option>
                             </InputSelect>
                         </div>
-
-                        @* Botões de ação *@
+                        
                         <div class="d-flex justify-content-end mt-4">
                             <button type="submit" class="btn btn-success me-2">
                                 <i class="bi bi-check-circle-fill me-1"></i>
@@ -93,8 +88,7 @@ else
                     </EditForm>
                 </div>
             </div>
-
-            @* Alertas de sucesso e erro abaixo do card *@
+            
             @if (!string.IsNullOrEmpty(successMessage))
             {
             <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
@@ -121,7 +115,7 @@ else
     private string successMessage;
     private string errorMessage;
     private bool sessionChecked = false;
-    private bool accessDenied = false; // controla se o utilizador está autorizado
+    private bool accessDenied = false;
     
 
 
@@ -131,8 +125,7 @@ else
         if (firstRender && !sessionChecked)
         {
             sessionChecked = true;
-
-            // Carregar sessão do utilizador a partir do sessionStorage
+            
             if (UserSession.UserId == null)
             {
                 var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
@@ -148,25 +141,20 @@ else
                 if (!string.IsNullOrEmpty(username))
                     UserSession.Username = username;
             }
-
-            // Se não estiver logado, redireciona para o login
+            
             if (UserSession.UserId == null)
             {
                 Navigation.NavigateTo("/Login");
             }
             else
             {
-                // Verificar se tem RoleId == 1; se não tiver, negar acesso
                 if (UserSession.RoleId != 1 && UserSession.RoleId != 2)
                 {
                     accessDenied = true;
                     StateHasChanged();
-                    // Opcional: em vez de mensagem, pode redirecionar para /Unauthorized
-                    // Navigation.NavigateTo("/Unauthorized");
                 }
                 else
                 {
-                    // Se for admin (RoleId == 1), apenas renderiza o formulário normalmente
                     StateHasChanged();
                 }
             }
@@ -206,24 +194,23 @@ else
             }
             else
             {
-                errorMessage = "Erro desconhecido: o servidor não retornou dados do utilizador.";
+                errorMessage = "Unknown error: the server did not return user data.";
             }
         }
         catch (ApiException apiEx)
         {
-            // Se o status code for 409, mostraremos a mensagem de username duplicado
             if (apiEx.StatusCode == System.Net.HttpStatusCode.Conflict)
             {
-                errorMessage = apiEx.Message; // deve conter algo como "O username 'X' já está em uso."
+                errorMessage = apiEx.Message;
             }
             else
             {
-                errorMessage = $"Erro na API ({(int)apiEx.StatusCode}): {apiEx.Message}";
+                errorMessage = $"API error ({(int)apiEx.StatusCode}): {apiEx.Message}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Ocorreu um erro inesperado: {ex.Message}";
+            errorMessage = $"An unexpected error occurred: {ex.Message}";
         }
         }
     }

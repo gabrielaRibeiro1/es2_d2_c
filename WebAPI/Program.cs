@@ -39,8 +39,7 @@ app.MapPost("/create_account", async ([FromBody] UserAddModel request, Applicati
     var exists = await db.Users.AnyAsync(u => u.username == request.Username);
     if (exists)
     {
-        // Retorna 409 Conflict informando que o username já está em uso
-        return Results.Conflict($"O username '{request.Username}' já está em uso.");
+        return Results.Conflict($"The username '{request.Username}' is already in use.");
     }
     
     if (string.IsNullOrEmpty(request.Password))
@@ -161,9 +160,9 @@ app.MapGet("/get_all_users", async (ApplicationDbContext db) =>
 {
     var users = await db.Users
         .Join(db.Roles, 
-            u => u.fk_role_id,   // fk_role_id da tabela Users
-            r => r.role_id,           // id da tabela Roles
-            (u, r) => new        // Resultado do Join
+            u => u.fk_role_id,   
+            r => r.role_id,           
+            (u, r) => new        
             {
                 u.user_id,
                 u.username,
@@ -177,14 +176,12 @@ app.MapGet("/get_all_users", async (ApplicationDbContext db) =>
 
 app.MapDelete("/delete_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
 {
-    // Encontrar usuário pelo ID
     var user = await db.Users.FindAsync(id);
     if (user == null)
     {
         return Results.NotFound("User not found.");
     }
-
-    // Remover usuário do banco de dados
+    
     db.Users.Remove(user);
     await db.SaveChangesAsync();
 
@@ -197,25 +194,23 @@ app.MapPut("/update_user/{id:int}", async (int id, string? newPassword, int? new
     var user = await db.Users.FirstOrDefaultAsync(u => u.user_id == id);
     if (user == null)
     {
-        return Results.NotFound("Usuário não encontrado.");
+        return Results.NotFound("User not found.");
     }
-
-    // Atualiza a senha, se fornecida
+    
     if (!string.IsNullOrEmpty(newPassword))
     {
         PasswordHelper.CreatePasswordHash(newPassword, out byte[] passwordHash, out byte[] passwordSalt);
         user.passwordHash = passwordHash;
         user.passwordSalt = passwordSalt;
     }
-
-    // Atualiza a role, se fornecida
+    
     if (newRoleId.HasValue)
     {
         user.fk_role_id = newRoleId.Value;
     }
 
     await db.SaveChangesAsync();
-    return Results.Ok("Usuário atualizado com sucesso.");
+    return Results.Ok("User updated successfully.");
 });
 
 app.MapGet("/get_user_by_id/{id:int}", async (int id, ApplicationDbContext db) =>
@@ -242,7 +237,7 @@ app.MapPost("/add_user", async (UserAddModel model, ApplicationDbContext db) =>
         var exists = await db.Users.AnyAsync(u => u.username == model.Username);
         if (exists)
         {
-            return Results.Conflict($"O username '{model.Username}' já está em uso.");
+            return Results.Conflict($"The username '{model.Username}' is already in use.");
         }
         
         if (string.IsNullOrEmpty(model.Password))
@@ -276,10 +271,9 @@ app.MapPut("/update_user2/{id:int}", async (int id, UserUpdateModel updateData, 
     var user = await db.Users.FirstOrDefaultAsync(u => u.user_id == id);
     if (user == null)
     {
-        return Results.NotFound("Usuário não encontrado.");
+        return Results.NotFound("User not found.");
     }
-
-    // Atualiza a senha, se fornecida
+    
     if (!string.IsNullOrEmpty(updateData.Password))
     {
         PasswordHelper.CreatePasswordHash(updateData.Password, out byte[] passwordHash, out byte[] passwordSalt);
@@ -293,7 +287,7 @@ app.MapPut("/update_user2/{id:int}", async (int id, UserUpdateModel updateData, 
     }
     
     await db.SaveChangesAsync();
-    return Results.Ok("Usuário atualizado com sucesso.");
+    return Results.Ok("User updated successfully.");
 });
 
 // Endpoint to create a skill
@@ -302,7 +296,7 @@ app.MapPost("/skills", async ([FromBody] Skill skill, ApplicationDbContext db) =
     db.Skills.Add(skill);
     await db.SaveChangesAsync();
 
-    return Results.Ok($"Skill '{skill.name}' criada com sucesso!");
+    return Results.Ok($"Skill '{skill.name}' successfully created!");
 });
 
 
@@ -326,18 +320,16 @@ app.MapPut("/skills/{id}", async (int id, [FromBody] Skill updatedSkill, Applica
 {
     var skill = await db.Skills.FindAsync(id);
     if (skill == null)
-        return Results.NotFound("Skill não encontrada!");
-
-    // Atualiza os campos
+        return Results.NotFound("Skill not found!");
+    
     skill.name = updatedSkill.name;
     skill.area = updatedSkill.area;
 
     await db.SaveChangesAsync();
-    return Results.Ok($"Skill {id} atualizada com sucesso!");
+    return Results.Ok($"Skill {id} updated successfully!");
 });
 
 
-// Endpoint to delete a skill
 app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
 {
     var skill = await db.Skills
@@ -346,8 +338,10 @@ app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
 
     if (skill == null)
         return Results.NotFound("Skill not found.");
+    
+    var isUsedInTalentProfiles = await db.TalentProfileSkills.AnyAsync(tps => tps.SkillId == id);
 
-    if (skill.UserSkills.Any())
+    if (isUsedInTalentProfiles)
         return Results.BadRequest("Cannot delete skill because it is associated with one or more professionals.");
 
     db.Skills.Remove(skill);
@@ -428,33 +422,25 @@ app.MapDelete("/work_proposals/{id}", async (int id, ApplicationDbContext db) =>
 app.MapGet("/work_proposals/{proposalId}/eligible_talents", 
     async (int proposalId, ApplicationDbContext db) => 
 {
-    // 1) Busca a proposta
     var proposal = await db.WorkProposals
         .AsNoTracking()
         .FirstOrDefaultAsync(p => p.proposal_id == proposalId);
 
     if (proposal == null)
         return Results.NotFound("Work proposal not found.");
-
-    // 2) Busca talentos elegíveis: mesma categoria + público
+    
     var eligibleTalents = await db.TalentProfiles
         .Where(p => p.category == proposal.category 
                  && p.privacy == 0)
         .Include(p => p.TalentProfileSkills)
-            .ThenInclude(tps => tps.Skill)    // garante carregar Skill
+            .ThenInclude(tps => tps.Skill)
         .Include(p => p.Experiences)
         .AsNoTracking()
         .ToListAsync();
-
-    // 3) Mapeia para DTO e calcula TotalValue tratando end_year == 0
+    
     var talentDtos = eligibleTalents
         .Select(p => {
-            var totalValue = p.Experiences.Sum(e =>
-            {
-                var endYear = (e.end_year == 0 ? DateTime.Now.Year : e.end_year);
-                var years   = endYear - e.start_year;
-                return years * p.price * 1000;
-            });
+            var totalValue = p.price * proposal.total_hours;
 
             return new TalentProfileDto
             {
@@ -484,26 +470,22 @@ app.MapGet("/work_proposals/{proposalId}/eligible_talents",
                 TotalValue  = totalValue
             };
         })
-        .OrderByDescending(x => x.TotalValue)
+        .OrderBy(x => x.TotalValue)
         .ToList();
 
     return Results.Ok(talentDtos);
 });
 
 
-
-
-
 //REPORTS
-
 app.MapGet("/reports/category-country", async (ApplicationDbContext db) =>
     {
         var report = new CategoryCountryReport(db).GenerateReport();
         return Results.Ok(report);
     })
     .WithName("GetCategoryCountryReport")
-    .WithSummary("Obtém o preço médio mensal por categoria e país.")
-    .WithDescription("Baseado em 176 horas por mês, agrupa talentos por categoria e país.")
+    .WithSummary("Gets the average monthly price by category and country.")
+    .WithDescription("Based on 176 hours per month, it groups talent by category and country.\n")
     .Produces<Dictionary<string, float>>(StatusCodes.Status200OK);
 
 app.MapGet("/reports/skill", async (ApplicationDbContext db) =>
@@ -512,71 +494,57 @@ app.MapGet("/reports/skill", async (ApplicationDbContext db) =>
         return Results.Ok(report);
     })
     .WithName("GetSkillReport")
-    .WithSummary("Obtém o preço médio mensal por skill.")
-    .WithDescription("Baseado em 176 horas por mês, agrupa talentos pelas suas skills.")
+    .WithSummary("Gets the average monthly price by skill.")
+    .WithDescription("Based on 176 hours per month, it groups talent by skills.")
     .Produces<Dictionary<string, float>>(StatusCodes.Status200OK);
 
 
 //EXPERIENCES
-app.MapPost("/talent_profiles/{profile_name}/add_experience", async (
-    string profile_name,
-    [FromQuery] string company_name,
-    [FromQuery] int start_year,
-    [FromQuery] int? end_year,
-    [FromServices] ApplicationDbContext db) =>
-{
-    var profile = await db.TalentProfiles
-        .Include(p => p.Experiences)
-        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
-
-    if (profile == null)
-        return Results.NotFound($"Talent profile with name '{profile_name}' not found.");
-
-    // If end_year was not provided, assume it's the same as start_year (still working)
-    int resolvedEndYear = end_year.HasValue ? end_year.Value : start_year;
-
-    // Check for overlapping years with existing experiences
-    foreach (var existing in profile.Experiences)
+app.MapPost("/talent_profiles/{profile_name}/add_experience", 
+    async (string profile_name, 
+        [FromQuery] string company_name, 
+        [FromQuery] int start_year, 
+        [FromQuery] int? end_year, 
+        ApplicationDbContext db) =>
     {
-        int existingStart = existing.start_year;
-        int existingEnd = existing.end_year; // always set since it's int, not int?
+        if (end_year.HasValue && start_year > end_year.Value)
+            return Results.BadRequest("The starting year cannot be later than the ending year.");
+        
+        var profile = await db.TalentProfiles
+            .Include(p => p.Experiences)
+            .FirstOrDefaultAsync(p => p.profile_name == profile_name);
 
-        bool overlaps = start_year <= existingEnd && resolvedEndYear >= existingStart;
-        if (overlaps)
+        if (profile == null)
+            return Results.NotFound("Talent profile not found.");
+        
+        bool overlaps = profile.Experiences.Any(e =>
         {
-            return Results.BadRequest($"The experience period {start_year}-{resolvedEndYear} overlaps with an existing experience ({existingStart}-{existingEnd}).");
-        }
-    }
+            int eEnd = (e.end_year == 0) ? int.MaxValue : e.end_year;
+            int newEnd = end_year ?? int.MaxValue;
+            return start_year <= eEnd && newEnd >= e.start_year;
+        });
 
-    var experience = new Experience
-    {
-        company_name = company_name,
-        start_year = start_year,
-        end_year = resolvedEndYear,
-        fk_profile_id = profile.profile_id
-    };
-
-    db.Experiences.Add(experience);
-    await db.SaveChangesAsync();
-
-    return Results.Created($"/experiences/{experience.experience_id}", new
-    {
-        experience.experience_id,
-        experience.company_name,
-        experience.start_year,
-        experience.end_year,
-        fk_profile_id = profile.profile_id
+        if (overlaps)
+            return Results.BadRequest("The new experience overlaps with an existing one.");
+        
+        var newExperience = new Experience
+        {
+            company_name = company_name,
+            start_year = start_year,
+            end_year = end_year ?? 0, 
+            fk_profile_id = profile.profile_id
+        };
+        profile.Experiences.Add(newExperience);
+        await db.SaveChangesAsync();
+        
+        return Results.Ok("Experience added successfully.");
     });
-});
-
-
 
 
 app.MapGet("/experiences/by-profile", async (
     [FromQuery] string profileName,
     [FromServices] ApplicationDbContext dbContext) =>
 {
-    // Retrieve the TalentProfile by ProfileName from the query parameter
     var profile = await dbContext.TalentProfiles
         .FirstOrDefaultAsync(p => p.profile_name == profileName);
 
@@ -584,8 +552,7 @@ app.MapGet("/experiences/by-profile", async (
     {
         return Results.NotFound("Profile not found");
     }
-
-    // Retrieve all experiences related to the profile and project to anonymous objects
+    
     var experiences = await dbContext.Experiences
         .Where(e => e.fk_profile_id == profile.profile_id)
         .Select(e => new
@@ -670,7 +637,7 @@ app.MapDelete("/experiences/{id}", async (int id, ApplicationDbContext dbContext
     dbContext.Experiences.Remove(experience);
     await dbContext.SaveChangesAsync();
 
-    return Results.NoContent(); // 204 No Content
+    return Results.NoContent(); 
 });
 
 
@@ -750,8 +717,6 @@ app.MapGet("/talent_profiles/{id}/list", async (int id, ApplicationDbContext db)
 
     return Results.Ok(profileDto);
 });
-
-
 
 app.MapPost("/talent_profile/add_profile", async (
     [FromQuery] string profile_name,
@@ -957,7 +922,7 @@ app.MapGet("/talent_profiles/search_by_skills", async (
                                 CompanyName  = e.company_name,
                                 StartYear    = e.start_year,
                                 EndYear      = e.end_year,
-                                ProfileName  = p.profile_name   // optional
+                                ProfileName  = p.profile_name  
                             }).ToList()
         })
         .ToList();
@@ -972,10 +937,10 @@ app.MapGet("/skills/list", async (ApplicationDbContext db) =>
         .Select(s => s.name)
         .ToListAsync();
 
-    return Results.Ok(skills); // retorna List<string>
+    return Results.Ok(skills);
 });
 
-//Add user with role 3 automatically
+//Add user with role 1 automatically
 app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, ApplicationDbContext db) =>
 {
     var exists = await db.Users.AnyAsync(u => u.username == dto.Username);
@@ -996,7 +961,7 @@ app.MapPost("/create_account2", async ([FromBody] CreateUserDto dto, Application
         username     = dto.Username,
         passwordHash = passwordHash,
         passwordSalt = passwordSalt,
-        fk_role_id   = 3
+        fk_role_id   = 1
     };
 
     db.Users.Add(newUser);

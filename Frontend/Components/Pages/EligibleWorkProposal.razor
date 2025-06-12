@@ -150,10 +150,50 @@ else if (talents != null)
             }
             else
             {
-                // Opcional: podes carregar um relatório inicial aqui se quiseres
-                // await LoadCategoryCountryReport();
+                await LoadProposalsAsync();
                 StateHasChanged();
             }
+        }
+    }
+
+    private async Task LoadProposalsAsync()
+    {
+        try
+        {
+            var allProposals = await Http.GetFromJsonAsync<List<WorkProposalDto>>("/work_proposals");
+
+            if (UserSession.RoleId == 1)
+            {
+                proposals = allProposals
+                    .OrderBy(p => p.ProposalName)
+                    .ToList();
+            }
+            else if (UserSession.RoleId == 2)
+            {
+                var allUsers = await Http.GetFromJsonAsync<List<Dictionary<string, object>>>("/get_all_users");
+
+                var userIdsRole3 = allUsers
+                    .Where(u => u.TryGetValue("fk_role_id", out var roleVal) && ((JsonElement)roleVal).GetInt32() == 3)
+                    .Select(u => u.TryGetValue("user_id", out var idVal) ? ((JsonElement)idVal).GetInt32() : 0)
+                    .Where(id => id != 0)
+                    .ToHashSet();
+
+                proposals = allProposals
+                    .Where(p => p.FkUserId == UserSession.UserId || userIdsRole3.Contains(p.FkUserId))
+                    .OrderBy(p => p.ProposalName)
+                    .ToList();
+            }
+            else if (UserSession.RoleId == 3)
+            {
+                proposals = allProposals
+                    .Where(p => p.FkUserId == UserSession.UserId)
+                    .OrderBy(p => p.ProposalName)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading proposals: {ex.Message}";
         }
     }
 
@@ -177,7 +217,7 @@ else if (talents != null)
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao carregar propostas: {ex.Message}";
+            errorMessage = $"Error loading proposals: {ex.Message}";
         }
     }
 
@@ -195,7 +235,7 @@ else if (talents != null)
 
             if (proposalId <= 0)
             {
-                errorMessage = "Selecione uma proposta válida.";
+                errorMessage = "Select a valid proposal.";
                 return;
             }
 
@@ -207,20 +247,22 @@ else if (talents != null)
                 Console.WriteLine("Raw JSON: " + json);
 
                 talents = JsonSerializer.Deserialize<List<TalentProfileDto>>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                    {
+                        PropertyNameCaseInsensitive = true
+                    })?
+                    .OrderByDescending(t => t.TotalValue)
+                    .ToList();
 
-                successMessage = $"Foram encontrados {talents?.Count ?? 0} talentos elegíveis.";
+                successMessage = $"Were found {talents?.Count ?? 0} eligible talents.";
             }
             else
             {
-                errorMessage = $"Erro ao buscar talentos: {response.StatusCode}";
+                errorMessage = $"Error when looking for talent: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
         finally
         {
@@ -230,7 +272,7 @@ else if (talents != null)
 
     public class SearchModel
     {
-        [Required(ErrorMessage = "Selecione uma proposta.")]
+        [Required(ErrorMessage = "Select a proposal.")]
         public int ProposalId { get; set; }
     }
 
@@ -241,6 +283,9 @@ else if (talents != null)
 
         [JsonPropertyName("proposal_name")]
         public string ProposalName { get; set; } = string.Empty;
+        
+        [JsonPropertyName("fk_user_id")]
+        public int FkUserId { get; set; }
     }
 
 
