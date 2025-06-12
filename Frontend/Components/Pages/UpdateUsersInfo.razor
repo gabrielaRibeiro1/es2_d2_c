@@ -20,7 +20,6 @@
 </div>
 }
 
-@* Se o utilizador não tiver RoleId = 1, mostramos “Acesso Negado” *@
 @if (accessDenied)
 {
 <div class="alert alert-danger mt-5">
@@ -74,8 +73,7 @@ else
                                        @bind-Value="_newPassword"
                                        placeholder="Deixe em branco para manter a password atual" />
                         </div>
-
-                        @* Mensagens de sucesso/erro dentro do card *@
+                        
                         @if (!string.IsNullOrEmpty(_errorMessage))
                         {
                         <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
@@ -103,8 +101,7 @@ else
                                 <option value="3">User</option>
                             </InputSelect>
                         </div>
-
-                        @* Botões de ação alinhados à direita *@
+                        
                         <div class="d-flex justify-content-end mt-4">
                             <button type="submit" class="btn btn-primary me-2">
                                 <i class="bi bi-check-circle-fill me-1"></i>
@@ -115,8 +112,6 @@ else
                                 Cancelar
                             </NavLink>
                         </div>
-                        
-                        
                     </EditForm>
                     }
                 </div>
@@ -134,16 +129,15 @@ else
     private string? _errorMessage;
     private string? _successMessage;
     private bool sessionChecked = false;
-    private bool accessDenied = false;  // controla autorização
-    private bool loadingUser = false;    // indica estado de carregamento
+    private bool accessDenied = false;  
+    private bool loadingUser = false; 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !sessionChecked)
         {
             sessionChecked = true;
-
-            // 1. Carregar sessão a partir do sessionStorage
+            
             if (UserSession.UserId == null)
             {
                 var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
@@ -159,15 +153,13 @@ else
                 if (!string.IsNullOrEmpty(username))
                     UserSession.Username = username;
             }
-
-            // 2. Se não estiver autenticado, redirecionar para login
+            
             if (UserSession.UserId == null)
             {
                 Navigation.NavigateTo("/Login");
             }
             else
             {
-                // 3. Só Admin (RoleId == 1) pode continuar; senão, negar acesso
                 if (UserSession.RoleId != 1 && UserSession.RoleId != 2)
                 {
                     accessDenied = true;
@@ -175,7 +167,6 @@ else
                 }
                 else
                 {
-                    // 4. Se autorizado, carregar dados do utilizador
                     await LoadUserData();
                     StateHasChanged();
                 }
@@ -234,7 +225,7 @@ else
                 }
                 else
                 {
-                    _errorMessage = "Falha ao atualizar o usuário (resposta vazia).";
+                    _errorMessage = "Failed to update user (empty response).";
                 }
             }
         }
@@ -244,7 +235,7 @@ else
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Erro inesperado: {ex.Message}";
+            _errorMessage = $"Unexpected error: {ex.Message}";
         }
     }
 }

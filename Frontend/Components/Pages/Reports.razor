@@ -133,17 +133,20 @@
             var response = await Http.GetAsync("/reports/category-country");
             if (response.IsSuccessStatusCode)
             {
-                categoryCountryReport = await response.Content.ReadFromJsonAsync<Dictionary<string, float>>();
+                categoryCountryReport = (await response.Content.ReadFromJsonAsync<Dictionary<string, float>>())!
+                    .OrderByDescending(kv => kv.Value)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+
                 skillReport = null;
             }
             else
             {
-                errorMessage = $"Erro ao obter relatório: {response.StatusCode}";
+                errorMessage = $"Error getting report: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
     }
 
@@ -155,17 +158,20 @@
             var response = await Http.GetAsync("/reports/skill");
             if (response.IsSuccessStatusCode)
             {
-                skillReport = await response.Content.ReadFromJsonAsync<Dictionary<string, float>>();
-                categoryCountryReport = null;
+                skillReport = (await response.Content.ReadFromJsonAsync<Dictionary<string, float>>())!
+                    .OrderByDescending(kv => kv.Value)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                categoryCountryReport = null; 
             }
             else
             {
-                errorMessage = $"Erro ao obter relatório: {response.StatusCode}";
+                errorMessage = $"\nError getting report: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
     }
 }

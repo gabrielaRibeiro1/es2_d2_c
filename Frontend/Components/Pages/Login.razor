@@ -122,17 +122,18 @@
 
                 if (userData is not null)
                 {
-                    // Guardar em sessão estática
+                    // Save in static session
                     UserSession.UserId = userData.user_id;
                     UserSession.Username = userData.username;
                     UserSession.RoleId = userData.fk_role_id;
 
-                    // Guardar em sessionStorage do browser para sobreviver ao refresh
+                    // Save to browser sessionStorage to survive refresh
                     await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "userId", userData.user_id.ToString());
                     await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "username", userData.username);
                     await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "roleId", userData.fk_role_id.ToString());
 
-                    // Redirecionar consoante o role
+                    
+                    // Redirect depending on role
                     if (userData.fk_role_id == 1) // Admin
                     {
                         Navigation.NavigateTo($"/SkillManagement?userId={userData.user_id}");
@@ -147,26 +148,26 @@
                     }
                     else
                     {
-                        errorMessage = "Função de utilizador não reconhecida.";
+                        errorMessage = "User role not recognized.";
                     }
                 }
                 else
                 {
-                    errorMessage = "Erro ao processar os dados do utilizador.";
+                    errorMessage = "Error processing user data.";
                 }
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
-                errorMessage = "Usuário ou senha inválidos.";
+                errorMessage = "Invalid username or password.";
             }
             else
             {
-                errorMessage = $"Erro no login: {response.StatusCode}";
+                errorMessage = $"Login error: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
         finally
         {
@@ -177,10 +178,10 @@
 
     public class LoginModel
     {
-        [Required(ErrorMessage = "Nome de utilizador é obrigatório")]
+        [Required(ErrorMessage = "Username is required")]
         public string Username { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Senha é obrigatória")]
+        [Required(ErrorMessage = "Password is required")]
         public string Password { get; set; } = string.Empty;
     }
 

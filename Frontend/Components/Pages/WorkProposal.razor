@@ -215,18 +215,17 @@ else
 {
     try
     {
-        // Obter todas as propostas da API
         var allProposals = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/work_proposals");
 
         switch (_roleId)
         {
             case 1:
-                // Admin: vê todas as propostas
-                _workProposals = allProposals;
+                _workProposals = allProposals
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                    .ToList();
                 break;
 
             case 2:
-                // UserManager: vê as suas propostas e as dos utilizadores com roleId == 3 (users)
                 var allUsers = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/get_all_users");
 
                 var userIdsRole3 = allUsers
@@ -240,20 +239,21 @@ else
                     .Where(p =>
                         p.TryGetValue("fk_user_id", out var userIdElement) &&
                         (
-                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||     // suas próprias
-                            userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())   // dos users
+                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||
+                            userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())
                         )
                     )
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
                     .ToList();
                 break;
 
             case 3:
-                // User: vê apenas as suas propostas
                 _workProposals = allProposals
                     .Where(p =>
                         p.TryGetValue("fk_user_id", out var userIdElement) &&
                         ((JsonElement)userIdElement).GetInt32() == _loggedInUserId
                     )
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
                     .ToList();
                 break;
 
@@ -403,22 +403,22 @@ else
     {
         public int proposal_id { get; set; }
 
-        [Required(ErrorMessage = "O nome é obrigatório.")]
+        [Required(ErrorMessage = "Name is required.")]
         public string proposal_name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "A categoria é obrigatória.")]
+        [Required(ErrorMessage = "Category is required.")]
         public string category { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "As skills são necessárias.")]
+        [Required(ErrorMessage = "Skills are necessary.")]
         public string necessary_skills { get; set; } = string.Empty;
 
-        [Range(1, int.MaxValue, ErrorMessage = "Os anos de experiência têm de ser maiores do que 0.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Years of experience must be greater than 0.")]
         public int years_of_experience { get; set; }
 
-        [Required(ErrorMessage = "A descrição é obrigatória.")]
+        [Required(ErrorMessage = "Description is mandatory.")]
         public string description { get; set; } = string.Empty;
 
-        [Range(1, int.MaxValue, ErrorMessage = "As horas têm de ser maiores do que 0.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Hours must be greater than 0.")]
         public int total_hours { get; set; }
 
         public int fk_user_id { get; set; }
