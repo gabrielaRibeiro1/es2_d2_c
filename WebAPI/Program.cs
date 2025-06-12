@@ -337,7 +337,6 @@ app.MapPut("/skills/{id}", async (int id, [FromBody] Skill updatedSkill, Applica
 });
 
 
-// Endpoint to delete a skill
 app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
 {
     var skill = await db.Skills
@@ -347,7 +346,10 @@ app.MapDelete("/skills/{id}", async (int id, ApplicationDbContext db) =>
     if (skill == null)
         return Results.NotFound("Skill not found.");
 
-    if (skill.UserSkills.Any())
+    // Verifica se existe algum TalentProfileSkill associado a esta skill
+    var isUsedInTalentProfiles = await db.TalentProfileSkills.AnyAsync(tps => tps.SkillId == id);
+
+    if (isUsedInTalentProfiles)
         return Results.BadRequest("Cannot delete skill because it is associated with one or more professionals.");
 
     db.Skills.Remove(skill);
@@ -441,20 +443,15 @@ app.MapGet("/work_proposals/{proposalId}/eligible_talents",
         .Where(p => p.category == proposal.category 
                  && p.privacy == 0)
         .Include(p => p.TalentProfileSkills)
-            .ThenInclude(tps => tps.Skill)    // garante carregar Skill
+            .ThenInclude(tps => tps.Skill)
         .Include(p => p.Experiences)
         .AsNoTracking()
         .ToListAsync();
 
-    // 3) Mapeia para DTO e calcula TotalValue tratando end_year == 0
+    // 3) Mapeia para DTO e calcula TotalValue = preço por hora × total de horas da proposta
     var talentDtos = eligibleTalents
         .Select(p => {
-            var totalValue = p.Experiences.Sum(e =>
-            {
-                var endYear = (e.end_year == 0 ? DateTime.Now.Year : e.end_year);
-                var years   = endYear - e.start_year;
-                return years * p.price * 1000;
-            });
+            var totalValue = p.price * proposal.total_hours;
 
             return new TalentProfileDto
             {
@@ -484,14 +481,11 @@ app.MapGet("/work_proposals/{proposalId}/eligible_talents",
                 TotalValue  = totalValue
             };
         })
-        .OrderByDescending(x => x.TotalValue)
+        .OrderBy(x => x.TotalValue) // ordena por mais barato
         .ToList();
 
     return Results.Ok(talentDtos);
 });
-
-
-
 
 
 //REPORTS
@@ -518,58 +512,54 @@ app.MapGet("/reports/skill", async (ApplicationDbContext db) =>
 
 
 //EXPERIENCES
-app.MapPost("/talent_profiles/{profile_name}/add_experience", async (
-    string profile_name,
-    [FromQuery] string company_name,
-    [FromQuery] int start_year,
-    [FromQuery] int? end_year,
-    [FromServices] ApplicationDbContext db) =>
-{
-    var profile = await db.TalentProfiles
-        .Include(p => p.Experiences)
-        .FirstOrDefaultAsync(p => p.profile_name == profile_name);
-
-    if (profile == null)
-        return Results.NotFound($"Talent profile with name '{profile_name}' not found.");
-
-    // If end_year was not provided, assume it's the same as start_year (still working)
-    int resolvedEndYear = end_year.HasValue ? end_year.Value : start_year;
-
-    // Check for overlapping years with existing experiences
-    foreach (var existing in profile.Experiences)
+app.MapPost("/talent_profiles/{profile_name}/add_experience", 
+    async (string profile_name, 
+        [FromQuery] string company_name, 
+        [FromQuery] int start_year, 
+        [FromQuery] int? end_year, // torna opcional
+        ApplicationDbContext db) =>
     {
-        int existingStart = existing.start_year;
-        int existingEnd = existing.end_year; // always set since it's int, not int?
+        // 1️⃣ Validação básica de data
+        if (end_year.HasValue && start_year > end_year.Value)
+            return Results.BadRequest("O ano de início não pode ser posterior ao ano de fim.");
 
-        bool overlaps = start_year <= existingEnd && resolvedEndYear >= existingStart;
-        if (overlaps)
+        // 2️⃣ Obter o perfil com experiências
+        var profile = await db.TalentProfiles
+            .Include(p => p.Experiences)
+            .FirstOrDefaultAsync(p => p.profile_name == profile_name);
+
+        if (profile == null)
+            return Results.NotFound("Perfil de talento não encontrado.");
+
+        // 3️⃣ Verificar sobreposição de períodos
+        bool overlaps = profile.Experiences.Any(e =>
         {
-            return Results.BadRequest($"The experience period {start_year}-{resolvedEndYear} overlaps with an existing experience ({existingStart}-{existingEnd}).");
-        }
-    }
+            // Se a experiência existente tem end_year 0 ou null, considera que está aberta (sem fim)
+            int eEnd = (e.end_year == 0) ? int.MaxValue : e.end_year;
 
-    var experience = new Experience
-    {
-        company_name = company_name,
-        start_year = start_year,
-        end_year = resolvedEndYear,
-        fk_profile_id = profile.profile_id
-    };
+            // Verifica se os períodos se sobrepõem
+            // (novo início <= fim existente) E (novo fim >= início existente)
+            int newEnd = end_year ?? int.MaxValue;
+            return start_year <= eEnd && newEnd >= e.start_year;
+        });
 
-    db.Experiences.Add(experience);
-    await db.SaveChangesAsync();
+        if (overlaps)
+            return Results.BadRequest("A nova experiência sobrepõe-se com uma já existente.");
 
-    return Results.Created($"/experiences/{experience.experience_id}", new
-    {
-        experience.experience_id,
-        experience.company_name,
-        experience.start_year,
-        experience.end_year,
-        fk_profile_id = profile.profile_id
+        // 4️⃣ Adicionar a nova experiência
+        var newExperience = new Experience
+        {
+            company_name = company_name,
+            start_year = start_year,
+            end_year = end_year ?? 0, // grava 0 para indicar ainda trabalha
+            fk_profile_id = profile.profile_id
+        };
+        profile.Experiences.Add(newExperience);
+        await db.SaveChangesAsync();
+
+        // 5️⃣ Retorno de sucesso
+        return Results.Ok("Experiência adicionada com sucesso.");
     });
-});
-
-
 
 
 app.MapGet("/experiences/by-profile", async (
