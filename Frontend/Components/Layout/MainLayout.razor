@@ -6,7 +6,10 @@
 @inject LoginEventService LoginEvents
 
 <div class="page">
-    <div class="sidebar"><NavMenu/></div>
+  @if (_isLoggedIn)
+  {
+  <div class="sidebar"><NavMenu/></div>
+  }
   <main>
     @if (_showTopBar)
     {

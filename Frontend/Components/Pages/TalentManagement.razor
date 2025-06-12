@@ -8,7 +8,7 @@
 
 @rendermode InteractiveServer
 
-<h3>Gestão de Talentos</h3>
+<h2>Talent Management</h2>
 
 @if (!string.IsNullOrEmpty(UserSession.Username))
 {
@@ -22,22 +22,22 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <h4>@(isEditing ? "Editar Perfil" : "Criar Novo Perfil")</h4>
+        <h4>@(isEditing ? "Edit Talent Profile" : "Create New Talent")</h4>
 
         <EditForm Model="@newProfile" OnValidSubmit="@((isEditing) ? UpdateProfile : CreateProfile)">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <InputText class="form-control mb-2" placeholder="Nome do Perfil *" @bind-Value="newProfile.ProfileName" />
-            <InputText class="form-control mb-2" placeholder="País *" @bind-Value="newProfile.Country" />
+            <InputText class="form-control mb-2" placeholder="Talent Name *" @bind-Value="newProfile.ProfileName" />
+            <InputText class="form-control mb-2" placeholder="Country *" @bind-Value="newProfile.Country" />
             <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email" />
-            <label class="form-label">Preço (em EUR) *</label>
-            <InputNumber class="form-control mb-2" placeholder="Preço *" @bind-Value="newProfile.Price" />
-            <InputText class="form-control mb-2" placeholder="Categoria" @bind-Value="newProfile.Category" />
+            <label class="form-label">Price (in EUR) *</label>
+            <InputNumber class="form-control mb-2" placeholder="Price *" @bind-Value="newProfile.Price" />
+            <InputText class="form-control mb-2" placeholder="Category" @bind-Value="newProfile.Category" />
 
             <InputSelect class="form-control mb-2" @bind-Value="newProfile.Privacy">
-                <option value="0">Público</option>
-                <option value="1">Privado</option>
+                <option value="0">Public</option>
+                <option value="1">Private</option>
             </InputSelect>
 
             <hr />
@@ -45,7 +45,7 @@
             <div class="row">
                 <div class="col-md-5">
                     <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
-                        <option disabled selected value="">Selecione uma Skill</option>
+                        <option disabled selected value="">Select a Skill</option>
                         @foreach (var skill in availableSkills)
                         {
                             <option value="@skill">@skill</option>
@@ -53,10 +53,10 @@
                     </InputSelect>
                 </div>
                 <div class="col-md-3">
-                    <InputNumber class="form-control mb-2" placeholder="Anos de Experiência" @bind-Value="newSkill.YearsOfExperience" />
+                    <InputNumber class="form-control mb-2" placeholder="Years of Experience" @bind-Value="newSkill.YearsOfExperience" />
                 </div>
                 <div class="col-md-4">
-                    <button type="button" class="btn btn-outline-primary" @onclick="AddSkill">Adicionar Skill</button>
+                    <button type="button" class="btn btn-outline-primary" @onclick="AddSkill">Add Skill</button>
                 </div>
             </div>
 
@@ -66,15 +66,15 @@
                     @foreach (var skill in newProfile.Skills)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center">
-                            @skill.SkillName (@skill.YearsOfExperience) anos
-                            <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(skill)">Remover</button>
+                            @skill.SkillName (@skill.YearsOfExperience) years
+                            <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(skill)">Remove</button>
                         </li>
                     }
                 </ul>
             }
 
             <button class="btn btn-success mt-2" type="submit" disabled="@isLoading">
-                @(isEditing ? "Guardar Alterações" : "Criar Perfil")
+                @(isEditing ? "Save Changes" : "Add Talent")
             </button>
         </EditForm>
     </div>
@@ -89,27 +89,27 @@
     <div class="alert alert-danger">@errorMessage</div>
 }
 
-<h4 class="mt-4">Perfis Públicos</h4>
+<h4 class="mt-4">Public Talent Profiles</h4>
 
 <table class="table table-bordered">
     <thead>
     <tr>
-        <th>Nome</th>
+        <th>Name</th>
         <th>Email</th>
-        <th>País</th>
-        <th>Preço</th>
+        <th>Country</th>
+        <th>Price</th>
         <th>Skills</th>
-        <th>Ações</th>
+        <th>Actions</th>
     </tr>
     </thead>
     <tbody>
     @if (profiles is null)
     {
-        <tr><td colspan="6">Carregando...</td></tr>
+        <tr><td colspan="6">Loading...</td></tr>
     }
     else if (!profiles.Any())
     {
-        <tr><td colspan="6">Nenhum perfil encontrado.</td></tr>
+        <tr><td colspan="6">No talent profiles found.</td></tr>
     }
     else
     {
@@ -127,8 +127,8 @@
                     }
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-primary me-1" @onclick="@(() => EditProfile(p))">Editar</button>
-                    <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteProfile(p.ProfileName))">Excluir</button>
+                    <button class="btn btn-sm btn-warning me-1" @onclick="@(() => EditProfile(p))">Edit</button>
+                    <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteProfile(p.ProfileName))">Delete</button>
                 </td>
             </tr>
         }
@@ -438,3 +438,50 @@
         public static string? Username { get; set; }
     }
 }
+
+<style>
+    h3 {
+        margin-bottom: 1.5rem;
+    }
+
+    .card.mb-4 {
+        margin-bottom: 2rem !important;
+    }
+
+    .table th {
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+        color: white;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 5px;
+        margin: 0.1rem;
+    }
+
+    .btn-sm {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .me-1 {
+        margin-right: 0.5rem;
+    }
+
+    .form-label {
+        font-weight: bold;
+    }
+
+    .list-group-item button {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.6rem;
+    }
+</style>
