@@ -222,7 +222,9 @@ else
         {
             case 1:
                 // Admin: vê todas as propostas
-                _workProposals = allProposals;
+                _workProposals = allProposals
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                    .ToList();
                 break;
 
             case 2:
@@ -240,10 +242,11 @@ else
                     .Where(p =>
                         p.TryGetValue("fk_user_id", out var userIdElement) &&
                         (
-                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||     // suas próprias
-                            userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())   // dos users
+                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||
+                            userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())
                         )
                     )
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
                     .ToList();
                 break;
 
@@ -254,6 +257,7 @@ else
                         p.TryGetValue("fk_user_id", out var userIdElement) &&
                         ((JsonElement)userIdElement).GetInt32() == _loggedInUserId
                     )
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
                     .ToList();
                 break;
 

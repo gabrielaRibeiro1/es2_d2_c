@@ -165,11 +165,12 @@ else if (talents != null)
             if (UserSession.RoleId == 1)
             {
                 // Admin vê tudo
-                proposals = allProposals;
+                proposals = allProposals
+                    .OrderBy(p => p.ProposalName)
+                    .ToList();
             }
             else if (UserSession.RoleId == 2)
             {
-                // UserManager vê próprias e dos users (RoleId 3)
                 var allUsers = await Http.GetFromJsonAsync<List<Dictionary<string, object>>>("/get_all_users");
 
                 var userIdsRole3 = allUsers
@@ -179,16 +180,15 @@ else if (talents != null)
                     .ToHashSet();
 
                 proposals = allProposals
-                    .Where(p =>
-                        p.FkUserId == UserSession.UserId ||
-                        userIdsRole3.Contains(p.FkUserId))
+                    .Where(p => p.FkUserId == UserSession.UserId || userIdsRole3.Contains(p.FkUserId))
+                    .OrderBy(p => p.ProposalName)
                     .ToList();
             }
             else if (UserSession.RoleId == 3)
             {
-                // User vê só as próprias
                 proposals = allProposals
                     .Where(p => p.FkUserId == UserSession.UserId)
+                    .OrderBy(p => p.ProposalName)
                     .ToList();
             }
         }

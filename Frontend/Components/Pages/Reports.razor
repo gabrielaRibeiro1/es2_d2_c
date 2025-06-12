@@ -133,8 +133,11 @@
             var response = await Http.GetAsync("/reports/category-country");
             if (response.IsSuccessStatusCode)
             {
-                categoryCountryReport = await response.Content.ReadFromJsonAsync<Dictionary<string, float>>();
-                skillReport = null;
+                categoryCountryReport = (await response.Content.ReadFromJsonAsync<Dictionary<string, float>>())!
+                    .OrderByDescending(kv => kv.Value)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                skillReport = null; // ← limpa o relatório anterior
             }
             else
             {
@@ -155,8 +158,11 @@
             var response = await Http.GetAsync("/reports/skill");
             if (response.IsSuccessStatusCode)
             {
-                skillReport = await response.Content.ReadFromJsonAsync<Dictionary<string, float>>();
-                categoryCountryReport = null;
+                skillReport = (await response.Content.ReadFromJsonAsync<Dictionary<string, float>>())!
+                    .OrderByDescending(kv => kv.Value)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                categoryCountryReport = null; // ← limpa o relatório anterior
             }
             else
             {

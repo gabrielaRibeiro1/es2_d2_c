@@ -113,12 +113,11 @@
     }
     else
     {
-        @foreach (var skill in skills)
+        @foreach (var skill in skills.OrderBy(s => s.name))
         {
             <tr>
                 <td>@skill.name</td>
                 <td>@skill.area</td>
-
                 @if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
                 {
                     <td>
