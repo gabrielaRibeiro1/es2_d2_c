@@ -1,5 +1,4 @@
-﻿
-@page "/talent-management"
+﻿@page "/talent-management"
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
@@ -19,8 +18,9 @@
         </button>
     </div>
 }
-
-<div class="card mb-4">
+@if (UserSession.RoleId != 3)
+{
+    <div class="card mb-4">
     <div class="card-body">
         <h4>@(isEditing ? "Editar Perfil" : "Criar Novo Perfil")</h4>
         <EditForm Model="@newProfile" OnValidSubmit="@(isEditing ? UpdateProfile : CreateProfile)">
@@ -89,7 +89,7 @@
                         </div>
                         <div class="col-3">
                             <label class="form-label">Ano de Fim </label>
-                            <InputNumber class="form-control mb-2" placeholder="Ano Fim" @bind-Value="newExperience.EndYear" aria-label="Ano de fim da experiência (ex: 2022)" />
+                            <InputNumber @bind-Value="newExperience.EndYear" class="form-control mb-2" placeholder="Ano Fim" aria-label="Ano de fim da experiência (ex: 2022)" />
                         </div>
                         <div class="col-12 d-flex justify-content-end">
                             <button type="button" class="btn btn-outline-primary" @onclick="AddExperience">Adicionar Experiência</button>
@@ -122,6 +122,7 @@
         </EditForm>
     </div>
 </div>
+}
 
 @if (!string.IsNullOrEmpty(successMessage))
 {
@@ -131,13 +132,63 @@
 {
     <div class="alert alert-danger mt-3">@errorMessage</div>
 }
+<h5 class="mt-4">Pesquisar por Skills</h5>
+<div class="row mb-3">
+    <div class="col-md-6">
+        <InputSelect class="form-control" @bind-Value="selectedSkillToSearch">
+            <option disabled value="">Selecione uma Skill</option>
+            @foreach (var skill in availableSkills)
+            {
+            <option value="@skill">@skill</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-outline-primary w-100" @onclick="AddSkillToSearch"
+                disabled="@string.IsNullOrEmpty(selectedSkillToSearch)">
+            Adicionar Skill
+        </button>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-success w-100" @onclick="SearchBySkills"
+                disabled="@(!searchSkills.Any())">
+            Pesquisar
+        </button>
+    </div>
+</div>
 
-<h4 class="mt-4">Perfis Públicos</h4>
+@if (searchSkills.Any())
+{
+<div class="mb-3">
+    <h6>Skills selecionadas:</h6>
+    @foreach (var skill in searchSkills)
+    {
+    <span class="badge bg-primary me-2">
+                @skill
+        <button class="btn-close btn-close-white btn-sm ms-1" @onclick="() => RemoveSkillFromSearch(skill)"></button>
+            </span>
+    }
+</div>
+}
+
+@if (isLoadingSearch)
+{
+<div class="text-center mt-2">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
+    </div>
+</div>
+}
+
+<h4 class="mt-4">Talentos</h4>
 <div class="table-responsive">
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Nome</th><th>Email</th><th>País</th><th>Preço</th><th>Skills</th><th>Experiências</th><th>Ações</th>
+                <th>Nome</th><th>Email</th><th>País</th><th>Preço</th><th>Skills</th><th>Experiências</th> @if (UserSession.RoleId != 3) // Apenas Admin e UserManager veem esta coluna
+                {
+                    <th>Ações</th>
+                }
             </tr>
         </thead>
         <tbody>
@@ -167,12 +218,23 @@
                         <td>
                             @foreach (var e in p.Experiences)
                             {
-                                <span class="badge bg-secondary me-1">@e.CompanyName [@e.StartYear - @e.EndYear]</span>
+                                <span class="badge bg-secondary me-1">
+        @e.CompanyName [@e.StartYear - @(e.EndYear == 0 ? "" : e.EndYear.ToString())]
+    </span>
                             }
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-primary me-1" @onclick="() => EditProfile(p)">Editar</button>
-                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteProfile(p.ProfileName)">Excluir</button>
+                            @if (
+                                UserSession.RoleId == 1 || // Admin pode tudo
+                                (UserSession.RoleId == 2 && (
+                                    p.Privacy == 0 || // UserManager pode editar/remover todos os públicos
+                                    (p.Privacy == 1 && p.FkUserId == UserSession.UserId) // ...e os privados que ele criou
+                                ))
+                            )
+                            {
+                                <button class="btn btn-sm btn-primary me-1" @onclick="() => EditProfile(p)">Editar</button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteProfile(p.ProfileName)">Excluir</button>
+                            }
                         </td>
                     </tr>
                 }
@@ -193,6 +255,9 @@
     private string successMessage = "";
     private string errorMessage = "";
     private bool initialized;
+    private string selectedSkillToSearch = "";
+    private List<string> searchSkills = new();
+    private bool isLoadingSearch = false;
 
     protected override void OnInitialized()
     {
@@ -227,10 +292,43 @@
 
     private async Task LoadProfiles()
     {
-        try { isLoading = true; profiles = await Http.GetFromJsonAsync< List<TalentProfileDto> >("/talent_profiles/list"); }
-        catch (Exception ex) { errorMessage = $"Erro ao carregar perfis: {ex.Message}"; }
-        finally { isLoading = false; }
+        try
+        {
+            isLoading = true;
+            var allProfiles = await Http.GetFromJsonAsync<List<TalentProfileDto>>("/talent_profiles/list");
+
+            List<TalentProfileDto> filteredProfiles;
+
+            if (UserSession.RoleId == 1) // admin
+            {
+                filteredProfiles = allProfiles;
+            }
+            else if (UserSession.RoleId == 2) // usermanager
+            {
+                filteredProfiles = allProfiles
+                    .Where(p => p.Privacy == 0 || p.FkUserId == UserSession.UserId)
+                    .ToList();
+            }
+            else // user
+            {
+                filteredProfiles = allProfiles
+                    .Where(p => p.Privacy == 0)
+                    .ToList();
+            }
+
+            // Ordenar os perfis alfabeticamente pelo nome
+            profiles = filteredProfiles.OrderBy(p => p.ProfileName).ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao carregar perfis: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
+
 
     private async Task LoadAvailableSkills()
     {
@@ -310,9 +408,49 @@
     }
     private void RemoveSkill(SkillDto s) => newProfile.Skills.Remove(s);
 
-    private void AddExperience()
+    private async Task AddExperience()
     {
-        if(newExperience.IsValid()) { newProfile.Experiences.Add(newExperience.Clone()); newExperience=new ExperienceDto(); }
+        errorMessage = "";
+
+        bool isEndYearValid = !newExperience.EndYear.HasValue || (newExperience.EndYear.Value > 0);
+
+        if (!string.IsNullOrWhiteSpace(newExperience.CompanyName) &&
+            newExperience.StartYear > 0 &&
+            isEndYearValid &&
+            (!newExperience.EndYear.HasValue || newExperience.StartYear < newExperience.EndYear.Value))
+        {
+            try
+            {
+                // Construir URL com end_year opcional
+                string url = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience" +
+                             $"?company_name={Uri.EscapeDataString(newExperience.CompanyName)}" +
+                             $"&start_year={newExperience.StartYear}";
+
+                if (newExperience.EndYear.HasValue)
+                    url += $"&end_year={newExperience.EndYear.Value}";
+
+                var response = await Http.PostAsync(url, null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    newProfile.Experiences.Add(newExperience.Clone());
+                    newExperience = new ExperienceDto();
+                }
+                else
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    errorMessage = $"Erro: {errorContent}";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Erro inesperado: {ex.Message}";
+            }
+        }
+        else
+        {
+            errorMessage = "Por favor, preencha os dados corretamente: nome da empresa, anos válidos, e ano início menor que fim (se preenchido).";
+        }
     }
     private void RemoveExperience(ExperienceDto e) => newProfile.Experiences.Remove(e);
 
@@ -324,6 +462,78 @@
         originalProfile = new TalentProfileDto();
         newSkill = new SkillDto(); newExperience = new ExperienceDto(); isEditing=false;
     }
+    
+    private async Task SearchBySkills()
+    {
+        if (!searchSkills.Any())
+        {
+            errorMessage = "Selecione pelo menos uma skill para pesquisar";
+            return;
+        }
+
+        try
+        {
+            isLoadingSearch = true;
+            errorMessage = "";
+            successMessage = "";
+            StateHasChanged();
+
+            // Versão com GET
+            var query = string.Join(",", searchSkills.Select(Uri.EscapeDataString));
+            var response = await Http.GetAsync($"/talent_profiles/search_by_skills?skill_names={query}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<List<TalentProfileDto>>();
+                profiles = result?.OrderBy(p => p.ProfileName).ToList();
+            
+                if (profiles?.Count == 0)
+                {
+                    successMessage = "Nenhum perfil encontrado com as skills selecionadas";
+                }
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = $"Erro na pesquisa: {response.StatusCode}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro na pesquisa: {ex.Message}";
+            Console.WriteLine($"Erro detalhado: {ex}");
+        }
+        finally
+        {
+            isLoadingSearch = false;
+            StateHasChanged(); 
+        }
+    }
+
+    private void AddSkillToSearch()
+    {
+        if (!string.IsNullOrEmpty(selectedSkillToSearch) &&
+            !searchSkills.Contains(selectedSkillToSearch))
+        {
+            searchSkills.Add(selectedSkillToSearch);
+            selectedSkillToSearch = "";
+            errorMessage = "";
+            StateHasChanged();
+        }
+        else if (searchSkills.Contains(selectedSkillToSearch))
+        {
+            errorMessage = "Esta skill já foi adicionada";
+        }
+    }
+
+    private void RemoveSkillFromSearch(string skill)
+    {
+        searchSkills.Remove(skill);
+        StateHasChanged();
+    }
 
     private async Task Logout()
     {
@@ -334,13 +544,62 @@
 
     public class TalentProfileDto
     {
-        public string ProfileName {get;set;}="";public string Country {get;set;}="";public string Email {get;set;}="";
-        public decimal Price {get;set;}public int Privacy {get;set;}public string Category {get;set;}="";public int FkUserId {get;set;}
-        public List<SkillDto> Skills {get;set;}=new(); public List<ExperienceDto> Experiences {get;set;}=new();
-        public TalentProfileDto Clone()=>new TalentProfileDto{ProfileName=ProfileName,Country=Country,Email=Email,Price=Price,Privacy=Privacy,Category=Category,FkUserId=FkUserId,Skills=Skills.Select(s=>s.Clone()).ToList(),Experiences=Experiences.Select(e=>e.Clone()).ToList()};
+        [Required(ErrorMessage = "O nome é obrigatório.")]
+        public string ProfileName { get; set; } = "";
+
+        public string Country { get; set; } = "";
+        public string Email { get; set; } = "";
+        [Range(0.01, double.MaxValue, ErrorMessage = "O preço tem de ser maior que 0.")]
+        public double Price { get; set; }
+        public string Category { get; set; } = "";
+        public int Privacy { get; set; }
+        public int FkUserId { get; set; }
+
+        public List<SkillDto> Skills { get; set; } = new();
+        public List<ExperienceDto> Experiences { get; set; } = new();
+
+        public TalentProfileDto Clone() => new TalentProfileDto
+        {
+            ProfileName = ProfileName,
+            Country = Country,
+            Email = Email,
+            Price = Price,
+            Privacy = Privacy,
+            Category = Category,
+            FkUserId = FkUserId,
+            Skills = Skills.Select(s => s.Clone()).ToList(),
+            Experiences = Experiences.Select(e => e.Clone()).ToList()
+        };
     }
-    public class SkillDto{public string SkillName{get;set;}="";public int YearsOfExperience{get;set;} public SkillDto Clone()=>(SkillDto)MemberwiseClone();}
-    public class ExperienceDto{public int ExperienceId{get;set;} public string CompanyName{get;set;}="";public int StartYear{get;set;}public int EndYear{get;set;} public ExperienceDto Clone()=>(ExperienceDto)MemberwiseClone(); public bool IsValid()=>!string.IsNullOrEmpty(CompanyName)&&StartYear>0&&EndYear>0;}
+
+    public class SkillDto
+    {
+        public string SkillName { get; set; } = "";
+        public int YearsOfExperience { get; set; }
+
+        public SkillDto Clone() => new SkillDto
+        {
+            SkillName = this.SkillName,
+            YearsOfExperience = this.YearsOfExperience
+        };
+    }
+
+    
+    public class ExperienceDto
+    {
+        public string CompanyName { get; set; } = "";
+        public int StartYear { get; set; }
+        public int? EndYear { get; set; }  
+        public int ExperienceId { get; set; }
+
+        public ExperienceDto Clone() => new ExperienceDto
+        {
+            CompanyName = this.CompanyName,
+            StartYear = this.StartYear,
+            EndYear = this.EndYear,
+            ExperienceId = this.ExperienceId
+        };
+    }
+    
     public static class UserSession{public static int? UserId;public static int? RoleId;public static string? Username;}
 }
-
