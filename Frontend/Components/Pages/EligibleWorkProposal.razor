@@ -150,7 +150,7 @@ else if (talents != null)
             }
             else
             {
-                await LoadProposalsAsync(); // <- AQUI
+                await LoadProposalsAsync();
                 StateHasChanged();
             }
         }
@@ -164,7 +164,6 @@ else if (talents != null)
 
             if (UserSession.RoleId == 1)
             {
-                // Admin vê tudo
                 proposals = allProposals
                     .OrderBy(p => p.ProposalName)
                     .ToList();
@@ -194,7 +193,7 @@ else if (talents != null)
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao carregar propostas: {ex.Message}";
+            errorMessage = $"Error loading proposals: {ex.Message}";
         }
     }
 
@@ -218,7 +217,7 @@ else if (talents != null)
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao carregar propostas: {ex.Message}";
+            errorMessage = $"Error loading proposals: {ex.Message}";
         }
     }
 
@@ -236,7 +235,7 @@ else if (talents != null)
 
             if (proposalId <= 0)
             {
-                errorMessage = "Selecione uma proposta válida.";
+                errorMessage = "Select a valid proposal.";
                 return;
             }
 
@@ -254,16 +253,16 @@ else if (talents != null)
                     .OrderByDescending(t => t.TotalValue)
                     .ToList();
 
-                successMessage = $"Foram encontrados {talents?.Count ?? 0} talentos elegíveis.";
+                successMessage = $"Were found {talents?.Count ?? 0} eligible talents.";
             }
             else
             {
-                errorMessage = $"Erro ao buscar talentos: {response.StatusCode}";
+                errorMessage = $"Error when looking for talent: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
         finally
         {
@@ -273,7 +272,7 @@ else if (talents != null)
 
     public class SearchModel
     {
-        [Required(ErrorMessage = "Selecione uma proposta.")]
+        [Required(ErrorMessage = "Select a proposal.")]
         public int ProposalId { get; set; }
     }
 

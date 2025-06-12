@@ -26,7 +26,6 @@
     <div class="card-body">
         @if (!_sessionChecked)
         {
-            <!-- Enquanto ainda não validámos a sessão, mostramos spinner -->
             <div class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -36,7 +35,6 @@
     
         else if (_currentUser == null)
         {
-            <!-- Se houve erro ao carregar ou não encontrou o utilizador -->
             <div class="text-center py-4">
                 <p class="text-muted mb-0">@_errorMessage</p>
             </div>
@@ -71,10 +69,8 @@
     {
         if (firstRender && !_sessionChecked)
         {
-            // Marcar que já verificámos a sessão
             _sessionChecked = true;
-
-            // 1) Obter dados da sessão (userId, roleId, username) a partir do sessionStorage, se ainda não estiver no UserSession
+            
             if (UserSession.UserId == null)
             {
                 var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
@@ -90,27 +86,20 @@
                 if (!string.IsNullOrEmpty(username))
                     UserSession.Username = username;
             }
-
-            // 2) Se não tiver sessão (UserId nulo), redirecionar logo para login
+            
             if (UserSession.UserId == null)
             {
                 Navigation.NavigateTo("/Login");
                 return;
             }
-
-            // 3) Se quiser apenas permitir alguns roles, por exemplo RoleId == 1 (admin),
-            //    pode manter esta lógica. Caso queira permitir todos os utilizadores ver o próprio perfil,
-            //    remove este if ou adapta-o.
-            //    No exemplo abaixo, vou assumir que qualquer utilizador autenticado
-            //    (RoleId != null) pode ver o próprio perfil. Para forçar só admin, troque para: if (UserSession.RoleId != 1)
+            
             if (UserSession.RoleId == null)
             {
                 _accessDenied = true;
                 StateHasChanged();
                 return;
             }
-
-            // 4) Carregar dados do utilizador autenticado
+            
             await LoadCurrentUser();
             StateHasChanged();
         }
@@ -120,19 +109,17 @@
     {
         try
         {
-            // Supondo que existe um endpoint na API: "get_user_by_id/{id}"
-            // Se o seu endpoint tiver outro nome, ajuste aqui em conformidade.
             var id = UserSession.UserId!.Value;
             _currentUser = await ApiHelper.GetFromApiAsync<UserViewModel>($"get_user_by_id/{id}");
 
             if (_currentUser == null)
             {
-                _errorMessage = "Não foi possível encontrar os dados do seu perfil.";
+                _errorMessage = "Your profile data could not be found.";
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Erro ao carregar os dados do perfil: {ex.Message}";
+            _errorMessage = $"Error loading profile data: {ex.Message}";
         }
     }
 

@@ -137,16 +137,16 @@
                     .OrderByDescending(kv => kv.Value)
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-                skillReport = null; // ← limpa o relatório anterior
+                skillReport = null;
             }
             else
             {
-                errorMessage = $"Erro ao obter relatório: {response.StatusCode}";
+                errorMessage = $"Error getting report: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
     }
 
@@ -162,16 +162,16 @@
                     .OrderByDescending(kv => kv.Value)
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
 
-                categoryCountryReport = null; // ← limpa o relatório anterior
+                categoryCountryReport = null; 
             }
             else
             {
-                errorMessage = $"Erro ao obter relatório: {response.StatusCode}";
+                errorMessage = $"\nError getting report: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
     }
 }

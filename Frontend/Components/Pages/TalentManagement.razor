@@ -179,10 +179,10 @@
                         </td>
                         <td>
                             @if (
-                                UserSession.RoleId == 1 || // Admin pode tudo
+                                UserSession.RoleId == 1 || 
                                 (UserSession.RoleId == 2 && (
-                                    p.Privacy == 0 || // UserManager pode editar/remover todos os públicos
-                                    (p.Privacy == 1 && p.FkUserId == UserSession.UserId) // ...e os privados que ele criou
+                                    p.Privacy == 0 || 
+                                    (p.Privacy == 1 && p.FkUserId == UserSession.UserId) 
                                 ))
                             )
                             {
@@ -248,11 +248,11 @@
             isLoading = true;
             var allProfiles = await Http.GetFromJsonAsync<List<TalentProfileDto>>("/talent_profiles/list");
 
-            if (UserSession.RoleId == 1) // admin
+            if (UserSession.RoleId == 1) 
             {
                 profiles = allProfiles;
             }
-            else if (UserSession.RoleId == 2) // usermanager
+            else if (UserSession.RoleId == 2) 
             {
                 profiles = allProfiles
                     .Where(p => p.Privacy == 0 || p.FkUserId == UserSession.UserId)
@@ -267,7 +267,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao carregar perfis: {ex.Message}";
+            errorMessage = $"Error loading profiles: {ex.Message}";
         }
         finally
         {
@@ -279,7 +279,7 @@
     private async Task LoadAvailableSkills()
     {
         try { var js = await Http.GetStreamAsync("/skills/list"); var sk = await JsonSerializer.DeserializeAsync<List<string>>(js); if (sk!=null) availableSkills=sk; }
-        catch (Exception ex) { errorMessage=$"Erro ao carregar skills: {ex.Message}"; }
+        catch (Exception ex) { errorMessage=$"Error loading skills: {ex.Message}"; }
     }
 
     private async Task CreateProfile()
@@ -309,15 +309,12 @@
         isLoading=true;
         try
         {
-            // update profile
             var url=$"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/update?country={Uri.EscapeDataString(newProfile.Country)}&email={Uri.EscapeDataString(newProfile.Email)}&price={newProfile.Price}&privacy={newProfile.Privacy}&category={Uri.EscapeDataString(newProfile.Category)}&fk_user_id={newProfile.FkUserId}";
             var rp=await Http.PutAsync(url,null); rp.EnsureSuccessStatusCode();
-            // skills diff
             var remS=originalProfile.Skills.Where(o=>!newProfile.Skills.Any(n=>n.SkillName==o.SkillName));
             foreach(var s in remS) await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/remove_skill?skill_name={Uri.EscapeDataString(s.SkillName)}");
             var addS=newProfile.Skills.Where(n=>!originalProfile.Skills.Any(o=>o.SkillName==n.SkillName));
             foreach(var s in addS) await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?skill_name={Uri.EscapeDataString(s.SkillName)}&years_of_experience={s.YearsOfExperience}",null);
-            // experiences diff
             var remE=originalProfile.Experiences.Where(o=>!newProfile.Experiences.Any(n=>n.ExperienceId==o.ExperienceId));
             foreach(var e in remE) await Http.DeleteAsync($"/experiences/{e.ExperienceId}");
             var updE=newProfile.Experiences.Where(n=>originalProfile.Experiences.Any(o=>o.ExperienceId==n.ExperienceId));
@@ -367,7 +364,6 @@
         {
             try
             {
-                // Construir URL com end_year opcional
                 string url = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience" +
                              $"?company_name={Uri.EscapeDataString(newExperience.CompanyName)}" +
                              $"&start_year={newExperience.StartYear}";
@@ -385,17 +381,17 @@
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    errorMessage = $"Erro: {errorContent}";
+                    errorMessage = $"Error: {errorContent}";
                 }
             }
             catch (Exception ex)
             {
-                errorMessage = $"Erro inesperado: {ex.Message}";
+                errorMessage = $"Unexpected error: {ex.Message}";
             }
         }
         else
         {
-            errorMessage = "Por favor, preencha os dados corretamente: nome da empresa, anos válidos, e ano início menor que fim (se preenchido).";
+            errorMessage = "\nPlease fill in the data correctly: company name, valid years, and start year less than end (if completed).";
         }
     }
     private void RemoveExperience(ExperienceDto e) => newProfile.Experiences.Remove(e);
@@ -418,12 +414,12 @@
 
     public class TalentProfileDto
     {
-        [Required(ErrorMessage = "O nome é obrigatório.")]
+        [Required(ErrorMessage = "Name is required.")]
         public string ProfileName { get; set; } = "";
 
         public string Country { get; set; } = "";
         public string Email { get; set; } = "";
-        [Range(0.01, double.MaxValue, ErrorMessage = "O preço tem de ser maior que 0.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "The price must be greater than 0.")]
         public double Price { get; set; }
         public string Category { get; set; } = "";
         public int Privacy { get; set; }

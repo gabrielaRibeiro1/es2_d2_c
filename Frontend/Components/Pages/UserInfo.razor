@@ -22,7 +22,6 @@
 </div>
 }
 
-@* Se o utilizador não tiver RoleId = 1, mostramos uma mensagem de “Não autorizado” *@
 @if (accessDenied)
 {
 <div class="alert alert-danger mt-5">
@@ -127,9 +126,8 @@ else
     private List<UserViewModel>? _users;
     private string errorMessage = string.Empty;
     private bool sessionChecked = false;
-    private bool accessDenied = false; // variável que controla se o utilizador tem permissão
+    private bool accessDenied = false; 
     
-    //barra de pesquisa
     private string searchUsername = string.Empty;
     private string searchErrorMessage = string.Empty;
     private CancellationTokenSource? _cts;
@@ -140,8 +138,7 @@ else
         if (firstRender && !sessionChecked)
         {
             sessionChecked = true;
-
-// Carregar sessão do utilizador a partir do sessionStorage
+            
             if (UserSession.UserId == null)
             {
                 var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
@@ -157,25 +154,20 @@ else
                 if (!string.IsNullOrEmpty(username))
                 UserSession.Username = username;
             }
-
-// Se não tiver sequer session, redirecionar para o login
+            
             if (UserSession.UserId == null)
             {
                 Navigation.NavigateTo("/Login");
             }
             else
             {
-                // Verificar se o RoleId é igual a 1; se não for, negar acesso
                 if (UserSession.RoleId != 1 && UserSession.RoleId != 2)
                 {
                     accessDenied = true;
                     StateHasChanged();
-                    // Poderíamos opcionalmente redirecionar:
-                    // Navigation.NavigateTo("/Unauthorized");
                 }
                 else
                 {
-                    // Se for admin (RoleId == 1), podemos carregar normalmente os dados
                     await LoadUsers();
                     StateHasChanged();
                 }
@@ -195,7 +187,7 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao carregar utilizadores: {ex.Message}";
+            errorMessage = $"Error loading users: {ex.Message}";
         }
     }
 
@@ -220,16 +212,16 @@ else
             {
                 _users.RemoveAll(u => u.User_id == userId);
                 StateHasChanged();
-                await JSRuntime.InvokeVoidAsync("alert", "User eliminado com sucesso!");
+                await JSRuntime.InvokeVoidAsync("alert", "User deleted successfully!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Erro ao eliminar o utilizador!");
+                await JSRuntime.InvokeVoidAsync("alert", "Error deleting user!");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro: {ex.Message}");
+            Console.WriteLine($"Error: {ex.Message}");
         }
     }
     private async Task SearchUser()
@@ -238,7 +230,6 @@ else
 
         if (string.IsNullOrWhiteSpace(searchUsername))
         {
-            // Se o campo estiver vazio, recarrega todos os utilizadores
             await LoadUsers();
             return;
         }
@@ -263,7 +254,7 @@ else
         }
         catch (Exception ex)
         {
-            searchErrorMessage = $"Erro ao pesquisar: {ex.Message}";
+            searchErrorMessage = $"Error when searching: {ex.Message}";
             _users = new List<UserViewModel>();
         }
 
@@ -313,11 +304,10 @@ else
         }
         catch (TaskCanceledException)
         {
-            // ignorar cancelamento
         }
         catch (Exception ex)
         {
-            searchErrorMessage = $"Erro ao pesquisar: {ex.Message}";
+            searchErrorMessage = $"Error when searching: {ex.Message}";
             _users = new List<UserViewModel>();
             StateHasChanged();
         }
