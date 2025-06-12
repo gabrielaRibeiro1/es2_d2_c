@@ -11,16 +11,6 @@
 
 <h2>User's Info</h2>
 
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-<div style="display: flex; justify-content: space-between; align-items: center;">
-    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-    <button class="btn btn-outline-danger" @onclick="Logout">
-        <span class="oi oi-account-logout"></span> Sair
-    </button>
-</div>
-}
-
 @if (accessDenied)
 {
 <div class="alert alert-danger mt-5">
@@ -81,7 +71,7 @@ else
             else
             {
             <div class="table-responsive">
-                <table class="table table-striped table-hover table-bordered mb-0">
+                <table class="table table-bordered mb-0">
                     <thead class="table-dark">
                     <tr>
                         <th>Username</th>
@@ -98,14 +88,14 @@ else
                         <td class="text-center">
                             <div class="d-inline-flex gap-2">
                                
-                                <NavLink class="btn btn-sm btn-outline-secondary"
+                                <NavLink class="btn btn-sm btn-warning"
                                          href="@($"update-user-info/{user.User_id}")"
                                          title="Edit">
                                     <i class="bi bi-pencil-fill"></i>
                                 </NavLink>
 
                                 
-                                <button class="btn btn-sm btn-outline-danger"
+                                <button class="btn btn-sm btn-danger"
                                         @onclick="() => DeleteUserById(user.User_id)"
                                         title="Delete">
                                     <i class="bi bi-trash-fill"></i>
@@ -190,17 +180,6 @@ else
         {
             errorMessage = $"Error loading users: {ex.Message}";
         }
-    }
-
-
-    private async Task Logout()
-    {
-        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
     }
 
     private async Task DeleteUserById(int userId)
@@ -320,7 +299,7 @@ else
         text-align: center;
     }
     table {
-        max-width: 900px;
+        width: 100%;
         margin-left: auto;
         margin-right: auto;
     }
@@ -329,15 +308,6 @@ else
         padding: 0.35rem 0.5rem;
         vertical-align: middle;
         text-align: center;
-    }
-    
-    .action-btn {
-        min-width: 90px;
-        height: 36px;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .table th {

@@ -1,14 +1,18 @@
 ﻿@page "/"
+@using Frontend.Helpers
 
 @inject NavigationManager Navigation
 @inject IJSRuntime JsRuntime
 
 <PageTitle>Home</PageTitle>
 
-@if (!string.IsNullOrEmpty(_username))
+@if (!string.IsNullOrEmpty(UserSession.Username))
 {
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <p style="margin: 0;">Welcome, <strong>@_username</strong>!</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+        <h2>Welcome, <strong>@UserSession.Username</strong>!</h2>
+        <button class="btn btn-outline-danger" @onclick="Logout">
+            <span class="oi oi-account-logout"></span> Logout
+        </button>
     </div>
 }
 
@@ -65,6 +69,16 @@
                 Navigation.NavigateTo("/login", true);
             }
         }
+    }
+    
+    private async Task Logout()
+    {
+        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
+        UserSession.UserId = null;
+        UserSession.Username = string.Empty;
+        UserSession.RoleId = null;
+
+        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
     }
 }
 

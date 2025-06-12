@@ -10,16 +10,6 @@
 
 <h3>Skill Management</h3>
 
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Sair
-        </button>
-    </div>
-}
-
 @if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
 {
     <div class="card mb-4">
@@ -179,16 +169,6 @@
                 StateHasChanged();
             }
         }
-    }
-
-    private async Task Logout()
-    {
-        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
     }
 
     private async Task LoadSkills()

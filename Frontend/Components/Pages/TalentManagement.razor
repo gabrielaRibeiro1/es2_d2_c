@@ -11,15 +11,6 @@
 
 <h2>Talent Management</h2>
 
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <p class="mb-0">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Sair
-        </button>
-    </div>
-}
 @if (UserSession.RoleId != 3)
 {
     <div class="card mb-4">
@@ -31,7 +22,7 @@
 
                 <div class="row">
                     <!-- Profile details -->
-                    <div class="col-md-6">
+                    <div class="mb4">
                         <InputText class="form-control mb-2" placeholder="Talent Name *" @bind-Value="newProfile.ProfileName"/>
                         <InputText class="form-control mb-2" placeholder="Country *" @bind-Value="newProfile.Country"/>
                         <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email"/>
@@ -45,74 +36,80 @@
                         </InputSelect>
                     </div>
 
-                    <!-- Skills & Experiences -->
-                    <div class="col-md-6">
-                        <h5>Skills</h5>
-                        <div class="row">
-                            <div class="col-6">
-                                <label class="form-label invisible">Add</label>
-                                <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
-                                    <option disabled selected value="">Select a Skill</option>
-                                    @foreach (var skill in availableSkills)
-                                    {
-                                        <option value="@skill">@skill</option>
-                                    }
-                                </InputSelect>
-                            </div>
-                            <div class="col-3">
-                                <label class="form-label">Years of Experience</label>
-                                <InputNumber class="form-control mb-2" placeholder="Years of Experience" @bind-Value="newSkill.YearsOfExperience"/>
-                            </div>
-                            <div class="col-3 d-flex align-items-center">
-                                <button type="button" class="btn btn-outline-primary w-100" @onclick="AddSkill">Add Skill</button>
-                            </div>
-                        </div>
-                        @if (newProfile.Skills.Any())
-                        {
-                            <ul class="list-group mb-3">
-                                @foreach (var s in newProfile.Skills)
+                    <hr class="separator" />
+                    
+                    <!-- Skills -->
+                    <h4>Skills</h4>
+                    <div class="row align-items-start">
+                        <div class="col-6">
+                            <label class="form-label">Skill</label>
+                            <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
+                                <option disabled selected value="">Select a Skill</option>
+                                @foreach (var skill in availableSkills)
                                 {
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        @s.SkillName (@s.YearsOfExperience) years
-                                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(s)">Remove</button>
-                                    </li>
+                                    <option value="@skill">@skill</option>
                                 }
-                            </ul>
-                        }
-
-                        <label class="form-label invisible">Add</label>
-                        <h5>Experiences</h5>
-                        <div class="row">
-                            <div class="col-6">
-                                <InputText class="form-control mb-2" placeholder="Company" @bind-Value="newExperience.CompanyName"/>
-                            </div>
-                            <div class="col-3">
-                                <label class="form-label">Start Year </label>
-                                <InputNumber class="form-control mb-2" placeholder="Starting Year" @bind-Value="newExperience.StartYear" aria-label="Start year of the experience (ex: 2020)"/>
-                            </div>
-                            <div class="col-3">
-                                <label class="form-label">End Year </label>
-                                <InputNumber @bind-Value="newExperience.EndYear" class="form-control mb-2" placeholder="End Year" aria-label="End year of the experience (ex: 2022)"/>
-                            </div>
-                            <div class="col-12 d-flex justify-content-end">
-                                <button type="button" class="btn btn-outline-primary" @onclick="AddExperience">Add Experience</button>
-                            </div>
+                            </InputSelect>
                         </div>
-                        @if (newProfile.Experiences.Any())
-                        {
-                            <ul class="list-group mb-2">
-                                @foreach (var e in newProfile.Experiences)
-                                {
-                                    <li class="list-group-item d-flex justify-content-between">
-                                        @e.CompanyName (@e.StartYear - @e.EndYear)
-                                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveExperience(e)">Remove</button>
-                                    </li>
-                                }
-                            </ul>
-                        }
+                        <div class="col-3">
+                            <label class="form-label">Years of Experience</label>
+                            <InputNumber class="form-control mb-2" placeholder="Years of Experience" @bind-Value="newSkill.YearsOfExperience"/>
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label invisible">Add Skill</label>
+                            <button type="button" class="btn btn-primary w-100" @onclick="AddSkill">Add Skill</button>
+                        </div>
                     </div>
-                </div>
+                    @if (newProfile.Skills.Any())
+                    {
+                        <ul class="list-group mb-3">
+                            @foreach (var s in newProfile.Skills)
+                            {
+                                <li class="list-group-item d-flex justify-content-between item">
+                                    @s.SkillName (@s.YearsOfExperience) years
+                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(s)">Remove</button>
+                                </li>
+                            }
+                        </ul>
+                    }
 
+                    <hr class="separator" />
+                    
+                    <!-- Experiences -->
+                    <h4>Experiences</h4>
+                    <div class="row">
+                        <div class="col-md-9">
+                            <label class="form-label">Company</label>
+                            <InputText class="form-control mb-2" placeholder="Company" @bind-Value="newExperience.CompanyName"/>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" @onclick="AddExperience">Add Experience</button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Start Year</label>
+                            <InputNumber class="form-control mb-2" placeholder="Starting Year" @bind-Value="newExperience.StartYear" aria-label="Start year of the experience (ex: 2020)"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">End Year</label>
+                            <InputNumber class="form-control mb-2" placeholder="End Year" @bind-Value="newExperience.EndYear" aria-label="End year of the experience (ex: 2022)"/>
+                        </div>
+                    </div>
+                    @if (newProfile.Experiences.Any())
+                    {
+                        <ul class="list-group mb-2">
+                            @foreach (var e in newProfile.Experiences)
+                            {
+                                <li class="list-group-item d-flex justify-content-between item">
+                                    @e.CompanyName (@e.StartYear - @e.EndYear)
+                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveExperience(e)">Remove</button>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
                 <div class="d-flex justify-content-end mt-3">
                     <button class="btn btn-success mt-2" type="submit" disabled="@isLoading">
                         @(isEditing ? "Save Changes" : "Add Talent")
@@ -406,13 +403,6 @@
         newSkill = new SkillDto(); newExperience = new ExperienceDto(); isEditing=false;
     }
 
-    private async Task Logout()
-    {
-        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId=null;UserSession.RoleId=null;UserSession.Username=null;
-        NavigationManager.NavigateTo("/login");
-    }
-
     public class TalentProfileDto
     {
         [Required(ErrorMessage = "Name is required.")]
@@ -480,8 +470,21 @@
         margin-bottom: 1.5rem;
     }
 
+    .separator {
+        margin: 2rem 0;
+        border-top: 2px solid #ccc;
+    }
+
     .card.mb-4 {
         margin-bottom: 2rem !important;
+    }
+
+    .item {
+        max-width: 600px;
+        border: 1px solid #053167;
+        border-radius: 6px;
+        padding: 10px;
+        margin: 8px;
     }
 
     .table th {
@@ -501,6 +504,16 @@
         font-size: 0.9rem;
         border-radius: 5px;
         margin: 0.1rem;
+    }
+
+    .btn-primary {
+        background-color: #053167;
+        border-color: #053167;
+    }
+
+    .btn-primary:hover {
+        background-color: #042750;
+        border-color: #042750;
     }
 
     .btn-sm {

@@ -12,23 +12,64 @@
 
 <h2 class="titles">Work Proposals</h2>
 
-@if (!string.IsNullOrEmpty(_username))
-{
-    <div class="user-info-container">
-        <p>Bem-vindo, <strong>@_username</strong>!</p>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Sair
-        </button>
-    </div>
-}
-else if (_loadingUser)
+@if (_loadingUser)
 {
     <p>Loading user info...</p>
 }
-else
+else if (string.IsNullOrEmpty(_username))
 {
     <p style="color: red;">User not authenticated. Redirecting to login...</p>
 }
+
+<div class="form-wrapper">
+    <div class="form-container">
+        <h4>Create Work Proposal</h4>
+
+        @if (!string.IsNullOrEmpty(_formMessage))
+        {
+            <p style="color:@_formMessageColor;">@_formMessage</p>
+        }
+
+        <EditForm Model="_proposal" OnValidSubmit="SubmitProposal">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div>
+                <label>Proposal Name:</label>
+                <InputText @bind-Value="_proposal.proposal_name" class="form-control" required />
+            </div>
+
+            <div>
+                <label>Category:</label>
+                <InputText @bind-Value="_proposal.category" class="form-control" required />
+            </div>
+
+            <div>
+                <label>Necessary Skills:</label>
+                <InputText @bind-Value="_proposal.necessary_skills" class="form-control" required />
+            </div>
+
+            <div>
+                <label>Years of Experience:</label>
+                <InputNumber @bind-Value="_proposal.years_of_experience" class="form-control" required />
+            </div>
+
+            <div>
+                <label>Description:</label>
+                <InputTextArea @bind-Value="_proposal.description" class="form-control" required />
+            </div>
+
+            <div>
+                <label>Total Hours:</label>
+                <InputNumber @bind-Value="_proposal.total_hours" class="form-control" required />
+            </div>
+
+            <button class="btn btn-success mt-3" type="submit">Add</button>
+        </EditForm>
+    </div>
+</div>
+
+<hr class="separator" />
 
 <div class="responsive-table">
     <h4 class="titles">All Work Proposals</h4>
@@ -116,56 +157,6 @@ else
         </tbody>
     </table>
 }
-</div>
-    
-<hr class="separator" />
-
-<div class="form-wrapper">
-    <div class="form-container">
-        <h4>Create Work Proposal</h4>
-
-        @if (!string.IsNullOrEmpty(_formMessage))
-        {
-            <p style="color:@_formMessageColor;">@_formMessage</p>
-        }
-
-        <EditForm Model="_proposal" OnValidSubmit="SubmitProposal">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-
-            <div>
-                <label>Proposal Name:</label>
-                <InputText @bind-Value="_proposal.proposal_name" class="form-control" required />
-            </div>
-
-            <div>
-                <label>Category:</label>
-                <InputText @bind-Value="_proposal.category" class="form-control" required />
-            </div>
-
-            <div>
-                <label>Necessary Skills:</label>
-                <InputText @bind-Value="_proposal.necessary_skills" class="form-control" required />
-            </div>
-
-            <div>
-                <label>Years of Experience:</label>
-                <InputNumber @bind-Value="_proposal.years_of_experience" class="form-control" required />
-            </div>
-
-            <div>
-                <label>Description:</label>
-                <InputTextArea @bind-Value="_proposal.description" class="form-control" required />
-            </div>
-
-            <div>
-                <label>Total Hours:</label>
-                <InputNumber @bind-Value="_proposal.total_hours" class="form-control" required />
-            </div>
-
-            <button class="btn btn-success mt-3" type="submit">Add</button>
-        </EditForm>
-    </div>
 </div>
 
 @code {
@@ -379,13 +370,6 @@ else
         }
     }
 
-    private async Task Logout()
-    {
-        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "userId");
-        await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "username");
-        Navigation.NavigateTo("/login");
-    }
-
     private async Task ShowFormMessage(string message, string color)
     {
         _formMessage = message;
@@ -504,13 +488,6 @@ else
         width: 150px;
         font-size: 1rem;
         padding: 0.5rem 1rem;
-    }
-
-    .user-info-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
     }
 
     td > button + button {

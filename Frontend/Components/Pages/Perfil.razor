@@ -9,17 +9,7 @@
 
 @rendermode InteractiveServer
 
-<PageTitle>Profile</PageTitle>
-
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Sair
-        </button>
-    </div>
-}
+<h2>Profile</h2>
 
 <div class="card shadow-sm">
     <div class="card-body">
@@ -120,15 +110,5 @@
         {
             _errorMessage = $"Error loading profile data: {ex.Message}";
         }
-    }
-
-    private async Task Logout()
-    {
-        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
     }
 }

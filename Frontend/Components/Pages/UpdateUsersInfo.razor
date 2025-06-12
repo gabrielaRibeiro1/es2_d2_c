@@ -11,16 +11,6 @@
 
 <h2>Update User</h2>
 
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-<div style="display: flex; justify-content: space-between; align-items: center;">
-    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-    <button class="btn btn-outline-danger" @onclick="Logout">
-        <span class="oi oi-account-logout"></span> Sair
-    </button>
-</div>
-}
-
 @if (accessDenied)
 {
 <div class="alert alert-danger mt-5">
@@ -34,7 +24,7 @@ else
     <div class="row justify-content-center">
         <div class="col-lg-6 col-md-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header text-white">
                     <h3 class="mb-0">
                         <i class="bi bi-pencil-square me-2"></i>
                         Update User
@@ -104,11 +94,11 @@ else
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
-                            <button type="submit" class="btn btn-primary me-2">
+                            <button type="submit" class="btn btn-warning me-2">
                                 <i class="bi bi-check-circle-fill me-1"></i>
                                 Update
                             </button>
-                            <NavLink class="btn btn-outline-secondary" href="user-info">
+                            <NavLink class="btn btn-secondary" href="user-info">
                                 <i class="bi bi-x-circle-fill me-1"></i>
                                 Cancel
                             </NavLink>
@@ -194,16 +184,6 @@ else
         }
     }
 
-    private async Task Logout()
-    {
-        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
-    }
-
     private async Task HandleValidSubmit()
     {
         _errorMessage = null;
@@ -240,3 +220,9 @@ else
         }
     }
 }
+
+<style>
+    .card-header{
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    }
+</style>
