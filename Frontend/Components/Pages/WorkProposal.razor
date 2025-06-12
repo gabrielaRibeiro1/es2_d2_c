@@ -1,5 +1,6 @@
 ﻿@page "/work-proposal"
 
+@using System.ComponentModel.DataAnnotations
 @using System.Text.Json
 @using Frontend.Helpers
 
@@ -63,44 +64,60 @@ else
                     int currentId = ((JsonElement)proposal["proposal_id"]).GetInt32();
                     bool isEditingRow = currentId == _editingRowId;
 
-                    <tr>
-                        @if (isEditingRow)
-                        {
-                            <td><input @bind="_editingProposal.proposal_name" class="form-control" /></td>
-                            <td><input @bind="_editingProposal.category" class="form-control" /></td>
-                            <td><input @bind="_editingProposal.necessary_skills" class="form-control" /></td>
-                            <td><input type="number" @bind="_editingProposal.years_of_experience" class="form-control" /></td>
-                            <td><input @bind="_editingProposal.description" class="form-control" /></td>
-                            <td><input type="number" @bind="_editingProposal.total_hours" class="form-control" /></td>
-                            <td>
-                                <div class="button-group">
-                                    <button class="btn btn-success" @onclick="UpdateProposal">Save</button>
-                                    <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
-                                </div>
-                            </td>
-                        }
-                        else
-                        {
-                            <td>@proposal["proposal_name"]</td>
-                            <td>@proposal["category"]</td>
-                            <td>@proposal["necessary_skills"]</td>
-                            <td>@proposal["years_of_experience"]</td>
-                            <td>@proposal["description"]</td>
-                            <td>@proposal["total_hours"]</td>
-                            <td>
+                <tr>
+                    @if (isEditingRow)
+                    {
+                        <td><input @bind="_editingProposal.proposal_name" class="form-control" /></td>
+                        <td><input @bind="_editingProposal.category" class="form-control" /></td>
+                        <td><input @bind="_editingProposal.necessary_skills" class="form-control" /></td>
+                        <td><input type="number" @bind="_editingProposal.years_of_experience" class="form-control" /></td>
+                        <td><input @bind="_editingProposal.description" class="form-control" /></td>
+                        <td><input type="number" @bind="_editingProposal.total_hours" class="form-control" /></td>
+                        <td>
+                            <div class="button-group">
+                                <button class="btn btn-success" @onclick="UpdateProposal">Save</button>
+                                <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                            </div>
+                        </td>
+                    }
+                    else
+                    {
+                        <td>@proposal["proposal_name"]</td>
+                        <td>@proposal["category"]</td>
+                        <td>@proposal["necessary_skills"]</td>
+                        <td>@proposal["years_of_experience"]</td>
+                        <td>@proposal["description"]</td>
+                        <td>@proposal["total_hours"]</td>
+                        <td>
+                            @{
+                                int creatorId = ((JsonElement)proposal["fk_user_id"]).GetInt32();
+                                int creatorRole = proposal.TryGetValue("fk_user_role_id", out var r) ? ((JsonElement)r).GetInt32() : 0;
+
+                                bool canEditOrDelete = _roleId switch
+                                {
+                                    1 => true,
+                                    2 => creatorId == _loggedInUserId || (_userIdsRole3.Contains(creatorId) && creatorId != 0),
+                                    3 => creatorId == _loggedInUserId,
+                                    _ => false
+                                };
+                            }
+
+                            @if (canEditOrDelete)
+                            {
                                 <div class="button-group">
                                     <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
                                     <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
                                 </div>
-                            </td>
-                        }
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 </div>
-
+    
 <hr class="separator" />
 
 <div class="form-wrapper">
@@ -163,6 +180,8 @@ else
     private int _loggedInUserId;
     private string _username = "";
     private bool _loadingUser = true;
+    private int _roleId;
+    private HashSet<int> _userIdsRole3 = new();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -170,11 +189,15 @@ else
         {
             var idString = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
             var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+            var roleString = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
 
-            if (int.TryParse(idString, out int userId) && !string.IsNullOrEmpty(username))
+            if (int.TryParse(idString, out int userId) &&
+                !string.IsNullOrEmpty(username) &&
+                int.TryParse(roleString, out int roleId))
             {
                 _loggedInUserId = userId;
                 _username = username;
+                _roleId = roleId;
                 _loadingUser = false;
                 await LoadProposals();
                 StateHasChanged();
@@ -189,21 +212,64 @@ else
     }
 
     private async Task LoadProposals()
+{
+    try
     {
-        try
+        var allProposals = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/work_proposals");
+
+        switch (_roleId)
         {
-            _workProposals = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/work_proposals");
-        }
-        catch (Exception ex)
-        {
-            await ShowFormMessage("Error loading proposals!", "red");
-            Console.WriteLine($"Error: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-            }
+            case 1:
+                _workProposals = allProposals
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                    .ToList();
+                break;
+
+            case 2:
+                var allUsers = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/get_all_users");
+
+                var userIdsRole3 = allUsers
+                    .Where(u => u.TryGetValue("fk_role_id", out var roleVal) && ((JsonElement)roleVal).GetInt32() == 3)
+                    .Select(u => u.TryGetValue("user_id", out var idVal) ? ((JsonElement)idVal).GetInt32() : 0)
+                    .Where(id => id != 0)
+                    .ToHashSet();
+                _userIdsRole3 = userIdsRole3;
+
+                _workProposals = allProposals
+                    .Where(p =>
+                        p.TryGetValue("fk_user_id", out var userIdElement) &&
+                        (
+                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||
+                            userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())
+                        )
+                    )
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                    .ToList();
+                break;
+
+            case 3:
+                _workProposals = allProposals
+                    .Where(p =>
+                        p.TryGetValue("fk_user_id", out var userIdElement) &&
+                        ((JsonElement)userIdElement).GetInt32() == _loggedInUserId
+                    )
+                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                    .ToList();
+                break;
+
+            default:
+                _workProposals = new();
+                break;
         }
     }
+    catch (Exception ex)
+    {
+        await ShowFormMessage("Error loading proposals!", "red");
+        Console.WriteLine($"Error loading proposals: {ex.Message}");
+    }
+}
+
+
 
     private void EditProposal(Dictionary<string, object> proposal)
     {
@@ -336,12 +402,25 @@ else
     private class WorkProposalModel
     {
         public int proposal_id { get; set; }
+
+        [Required(ErrorMessage = "Name is required.")]
         public string proposal_name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Category is required.")]
         public string category { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Skills are necessary.")]
         public string necessary_skills { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue, ErrorMessage = "Years of experience must be greater than 0.")]
         public int years_of_experience { get; set; }
+
+        [Required(ErrorMessage = "Description is mandatory.")]
         public string description { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue, ErrorMessage = "Hours must be greater than 0.")]
         public int total_hours { get; set; }
+
         public int fk_user_id { get; set; }
     }
 }

@@ -3,72 +3,211 @@
 @using Frontend.Helpers
 @using global::Helpers.Models
 
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
+@inject HttpClient Http
+@inject ApiHelper apiHelper
+@using Microsoft.AspNetCore.Components.Authorization
 @inject ApiHelper ApiHelper
-
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
 <h2>User's Info</h2>
 
-<div class="text-center mb-3">
-    <NavLink  class="btn btn-success mb-3" href="add-user">
-         Add New User
-    </NavLink>
-</div>
+<PageTitle>Informação Users</PageTitle>
 
-<hr class="separator" />
-
-@if (_users == null)
+@if (!string.IsNullOrEmpty(UserSession.Username))
 {
-    <p><em>Loading...</em></p>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
+    <button class="btn btn-outline-danger" @onclick="Logout">
+        <span class="oi oi-account-logout"></span> Sair
+    </button>
+</div>
+}
+
+@if (accessDenied)
+{
+<div class="alert alert-danger mt-5">
+    <h4>Acceso Negado</h4>
+    <p>Você não tem permissões suficientes para aceder a esta página.</p>
+</div>
 }
 else
 {
-    <table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>UserId</th>
-            <th>Role</th>
-            <th>Actions</th>
-            
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var user in _users)
-        {
-            <tr>
-                <td>@user.Username</td>
-                <td>@user.User_id</td>
-                <td>@user.RoleName</td>
 
-                <td>
-                    <div class="d-flex justify-content-center gap-2">
-                        <NavLink class="btn btn-warning action-btn"
-                                 href="@($"update-user-info/{user.User_id}")">
-                            Edit
-                        </NavLink>
-                        <button class="btn btn-danger action-btn" @onclick="() => DeleteUserById(user.User_id)">
-                            Delete
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Lista de Utilizadores</h2>
+        <NavLink class="btn btn-success" href="add-user">
+            <i class="bi bi-plus-circle-fill me-1"></i>
+            Add New User
+        </NavLink>
+    </div>
+
+    <hr class="separator" />
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text"
+                       class="form-control"
+                       placeholder="Search by username..."
+                       @bind="SearchUsername"
+                       @bind:event="oninput" />
+                <button class="btn btn-outline-primary" @onclick="SearchUser">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(searchErrorMessage))
+            {
+            <div class="text-danger mt-2">@searchErrorMessage</div>
+            }
+        </div>
+    </div>
+    
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (_users == null)
+            {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            }
+            else if (!_users.Any())
+            {
+            <div class="text-center py-4">
+                <p class="text-muted mb-0">No users found.</p>
+            </div>
+            }
+            else
+            {
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-bordered mb-0">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var user in _users)
+                    {
+                    <tr>
+                        <td>@user.Username</td>
+                        <td>@user.RoleName</td>
+                        <td class="text-center">
+                            <div class="d-inline-flex gap-2">
+                               
+                                <NavLink class="btn btn-sm btn-outline-secondary"
+                                         href="@($"update-user-info/{user.User_id}")"
+                                         title="Edit">
+                                    <i class="bi bi-pencil-fill"></i>
+                                </NavLink>
+
+                                
+                                <button class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => DeleteUserById(user.User_id)"
+                                        title="Delete">
+                                    <i class="bi bi-trash-fill"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            }
+        </div>
+    </div>
+</div>
 }
 
 @code {
     private List<UserViewModel>? _users;
+    private string errorMessage = string.Empty;
+    private bool sessionChecked = false;
+    private bool accessDenied = false; 
     
-    protected override async Task OnInitializedAsync()
+    private string searchUsername = string.Empty;
+    private string searchErrorMessage = string.Empty;
+    private CancellationTokenSource? _cts;
+    private string _searchUsername = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        
+        if (firstRender && !sessionChecked)
+        {
+            sessionChecked = true;
+            
+            if (UserSession.UserId == null)
+            {
+                var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                UserSession.UserId = uid;
+
+                if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                UserSession.RoleId = roleId;
+
+                if (!string.IsNullOrEmpty(username))
+                UserSession.Username = username;
+            }
+            
+            if (UserSession.UserId == null)
+            {
+                Navigation.NavigateTo("/Login");
+            }
+            else
+            {
+                if (UserSession.RoleId != 1 && UserSession.RoleId != 2)
+                {
+                    accessDenied = true;
+                    StateHasChanged();
+                }
+                else
+                {
+                    await LoadUsers();
+                    StateHasChanged();
+                }
+            }
+        }
+}
+
+    private async Task LoadUsers()
+    {
+        try
+        {
             _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
-        
+            if (_users != null)
+            {
+                _users = _users.OrderBy(u => u.Username).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading users: {ex.Message}";
+        }
     }
-    
+
+
+    private async Task Logout()
+    {
+        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
+        UserSession.UserId = null;
+        UserSession.Username = string.Empty;
+        UserSession.RoleId = null;
+
+        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+    }
+
     private async Task DeleteUserById(int userId)
     {
         try
@@ -79,16 +218,104 @@ else
             {
                 _users.RemoveAll(u => u.User_id == userId);
                 StateHasChanged();
-                await JSRuntime.InvokeVoidAsync("alert", "User deleted sucessfully!");
+                await JsRuntime.InvokeVoidAsync("alert", "User deleted successfully!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error!");
+                await JsRuntime.InvokeVoidAsync("alert", "Error deleting user!");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro: {ex.Message}");
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+    private async Task SearchUser()
+    {
+        searchErrorMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(searchUsername))
+        {
+            await LoadUsers();
+            return;
+        }
+
+        try
+        {
+            var encoded = Uri.EscapeDataString(searchUsername.Trim());
+            var single = await ApiHelper.GetFromApiAsync<UserViewModel>($"get_user/{encoded}");
+
+            if (single != null)
+            {
+                _users = new List<UserViewModel> { single }.OrderBy(u => u.Username).ToList();
+            }
+            else
+            {
+                _users = new List<UserViewModel>();
+            }
+        }
+        catch (ApiException apiEx) when (apiEx.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            _users = new List<UserViewModel>();
+        }
+        catch (Exception ex)
+        {
+            searchErrorMessage = $"Error when searching: {ex.Message}";
+            _users = new List<UserViewModel>();
+        }
+
+        StateHasChanged();
+    }
+    
+    private string SearchUsername
+    {
+        get => _searchUsername;
+        set
+        {
+            if (_searchUsername != value)
+            {
+                _searchUsername = value;
+                _ = SearchUsersByTypingAsync(_searchUsername);
+            }
+        }
+    }
+
+    private async Task SearchUsersByTypingAsync(string username)
+    {
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        try
+        {
+            await Task.Delay(300, token);
+
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                await LoadUsers();
+            }
+            else
+            {
+                if (_users == null)
+                {
+                    _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
+                }
+
+                _users = _users
+                    .Where(u => u.Username.Contains(username, StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(u => u.Username)
+                    .ToList();
+            }
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            searchErrorMessage = $"Error when searching: {ex.Message}";
+            _users = new List<UserViewModel>();
+            StateHasChanged();
         }
     }
 }

@@ -1,49 +1,125 @@
 ﻿@page "/update-user-info/{UserId:int}"
-
 @using Frontend.Helpers
 @using Frontend.Models
-
+@inject HttpClient Http
+@inject ApiHelper apiHelper
 @inject ApiHelper ApiHelper
-
 @rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
-<PageTitle>Update User</PageTitle>
+<PageTitle>Atualizar User</PageTitle>
 
-<h1>Update User</h1>
-
-@if (_user == null)
+@if (!string.IsNullOrEmpty(UserSession.Username))
 {
-    <p><em>Loading...</em></p>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
+    <button class="btn btn-outline-danger" @onclick="Logout">
+        <span class="oi oi-account-logout"></span> Sair
+    </button>
+</div>
+}
+
+@if (accessDenied)
+{
+<div class="alert alert-danger mt-5">
+    <h4>Acesso Negado</h4>
+    <p>Você não tem permissões suficientes para aceder a esta página.</p>
+</div>
 }
 else
 {
-    <EditForm Model="_user" OnValidSubmit="HandleValidSubmit" FormName="UpdateUserForm">
-        <DataAnnotationsValidator />
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        Atualizar Utilizador
+                    </h3>
+                </div>
 
-        <div class="mb-3">
-            <label for="username">Username</label>
-            <InputText id="username" @bind-Value="_user.Username" class="form-control" Disabled="true" />
+                <div class="card-body">
+                    @if (loadingUser)
+                    {
+                    <p class="text-center"><em>Loading...</em></p>
+                    }
+                    else if (_user == null)
+                    {
+                    <p class="text-center text-danger"><em>Não foi possível carregar os dados do utilizador.</em></p>
+                    }
+                    else
+                    {
+                    <EditForm Model="_user" OnValidSubmit="HandleValidSubmit" FormName="UpdateUserForm">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="mb-3 text-danger" />
+
+                        @* Username (campo desabilitado) *@
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <InputText id="username"
+                                       class="form-control"
+                                       @bind-Value="_user.Username"
+                                       Disabled="true" />
+                        </div>
+
+                        @* Nova Password *@
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Nova Password</label>
+                            <InputText id="password"
+                                       type="password"
+                                       class="form-control"
+                                       @bind-Value="_newPassword"
+                                       placeholder="Deixe em branco para manter a password atual" />
+                        </div>
+                        
+                        @if (!string.IsNullOrEmpty(_errorMessage))
+                        {
+                        <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            @_errorMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        }
+                        else if (!string.IsNullOrEmpty(_successMessage))
+                        {
+                        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                            <i class="bi bi-check-lg me-1"></i>
+                            @_successMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        }
+
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <InputSelect id="role"
+                                         class="form-select"
+                                         @bind-Value="_user.RoleId">
+                                <option value="1">Admin</option>
+                                <option value="2">UserManager</option>
+                                <option value="3">User</option>
+                            </InputSelect>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="bi bi-check-circle-fill me-1"></i>
+                                Atualizar
+                            </button>
+                            <NavLink class="btn btn-outline-secondary" href="user-info">
+                                <i class="bi bi-x-circle-fill me-1"></i>
+                                Cancelar
+                            </NavLink>
+                        </div>
+                    </EditForm>
+                    }
+                </div>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label for="password">New Password</label>
-            <InputText id="password" @bind-Value="_newPassword" type="password" class="form-control" placeholder="Leave blank to keep current" />
-        </div>
-
-        @if (!string.IsNullOrEmpty(_errorMessage))
-        {
-            <div class="alert alert-danger">@_errorMessage</div>
-        }
-        else if (!string.IsNullOrEmpty(_successMessage))
-        {
-            <div class="alert alert-success">@_successMessage</div>
-        }
-
-        <button type="submit" class="btn btn-primary">Update</button>
-        <NavLink class="btn btn-secondary ms-2" href="user-info">Cancel</NavLink>
-    </EditForm>
+    </div>
+</div>
 }
-
 @code {
     [Parameter]
     public int UserId { get; set; }
@@ -52,10 +128,79 @@ else
     private string? _newPassword;
     private string? _errorMessage;
     private string? _successMessage;
+    private bool sessionChecked = false;
+    private bool accessDenied = false;  
+    private bool loadingUser = false; 
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
+        if (firstRender && !sessionChecked)
+        {
+            sessionChecked = true;
+            
+            if (UserSession.UserId == null)
+            {
+                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                    UserSession.UserId = uid;
+
+                if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                    UserSession.RoleId = roleId;
+
+                if (!string.IsNullOrEmpty(username))
+                    UserSession.Username = username;
+            }
+            
+            if (UserSession.UserId == null)
+            {
+                Navigation.NavigateTo("/Login");
+            }
+            else
+            {
+                if (UserSession.RoleId != 1 && UserSession.RoleId != 2)
+                {
+                    accessDenied = true;
+                    StateHasChanged();
+                }
+                else
+                {
+                    await LoadUserData();
+                    StateHasChanged();
+                }
+            }
+        }
+    }
+
+    private async Task LoadUserData()
+    {
+        loadingUser = true;
+        try
+        {
+            _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
+            _user = await ApiHelper.GetFromApiAsync<UserUpdateModel>($"get_user_by_id/{UserId}");
+
+        }
+        catch
+        {
+            _user = null;
+        }
+        finally
+        {
+            loadingUser = false;
+        }
+    }
+
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        UserSession.UserId = null;
+        UserSession.Username = string.Empty;
+        UserSession.RoleId = null;
+
+        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
     }
 
     private async Task HandleValidSubmit()
@@ -65,20 +210,23 @@ else
 
         try
         {
-            if (!string.IsNullOrWhiteSpace(_newPassword))
+            if (!string.IsNullOrWhiteSpace(_newPassword) && _user != null)
             {
-                _user!.Password = _newPassword;
+                _user.Password = _newPassword;
             }
 
-            var result = await ApiHelper.PutToApiAsync<UserUpdateModel, string>($"update_user2/{UserId}", _user!);
+            if (_user != null)
+            {
+                var result = await ApiHelper.PutToApiAsync<UserUpdateModel, string>($"update_user2/{UserId}", _user);
 
-            if (!string.IsNullOrEmpty(result))
-            {
-                _successMessage = result;
-            }
-            else
-            {
-                _errorMessage = "Falha ao atualizar o usuário (resposta vazia).";
+                if (!string.IsNullOrEmpty(result))
+                {
+                    _successMessage = result;
+                }
+                else
+                {
+                    _errorMessage = "Failed to update user (empty response).";
+                }
             }
         }
         catch (ApiException apiEx)
@@ -87,7 +235,7 @@ else
         }
         catch (Exception ex)
         {
-            _errorMessage = $"Erro inesperado: {ex.Message}";
+            _errorMessage = $"Unexpected error: {ex.Message}";
         }
     }
 }

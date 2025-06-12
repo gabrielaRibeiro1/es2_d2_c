@@ -93,7 +93,18 @@
                     UserSession.Username = username;
                     UserSession.RoleId = roleId;
 
-                    Navigation.NavigateTo($"/?userId={userId}");
+                    if (roleId == 1)
+                    {
+                        Navigation.NavigateTo($"/SkillManagement?userId={userId}");
+                    }
+                    else if (roleId == 2)
+                    {
+                        Navigation.NavigateTo($"/talent-management?userId={userId}");
+                    }
+                    else if (roleId == 3)
+                    {
+                        Navigation.NavigateTo($"/Reports?userId={userId}");
+                    }
                 }
             }
         }
@@ -116,12 +127,12 @@
 
                 if (userData is not null)
                 {
-                    // Guardar em sessão estática
+                    // Save in static session
                     UserSession.UserId = userData.user_id;
                     UserSession.Username = userData.username;
                     UserSession.RoleId = userData.fk_role_id;
 
-                    // Guardar em sessionStorage do browser para sobreviver ao refresh
+                    // Save to browser sessionStorage to survive refresh
                     await JsRuntime.InvokeVoidAsync("sessionStorage.setItem", "userId", userData.user_id.ToString());
                     await JsRuntime.InvokeVoidAsync("sessionStorage.setItem", "username", userData.username);
                     await JsRuntime.InvokeVoidAsync("sessionStorage.setItem", "roleId", userData.fk_role_id.ToString());
@@ -129,25 +140,41 @@
                     // Trigger an event HERE!
                     LoginEvents.NotifyLoginStatusChanged();
                     
-                    Navigation.NavigateTo($"/?userId={userData.user_id}");
+                    // Redirect depending on role
+                    if (userData.fk_role_id == 1) // Admin
+                    {
+                        Navigation.NavigateTo($"/SkillManagement?userId={userData.user_id}");
+                    }
+                    else if (userData.fk_role_id == 2) // UserManager
+                    {
+                        Navigation.NavigateTo($"/talent-management?userId={userData.user_id}");
+                    }
+                    else if (userData.fk_role_id == 3) // User
+                    {
+                        Navigation.NavigateTo($"/Reports?userId={userData.user_id}");
+                    }
+                    else
+                    {
+                        errorMessage = "User role not recognized.";
+                    }
                 }
                 else
                 {
-                    errorMessage = "Erro ao processar os dados do utilizador.";
+                    errorMessage = "Error processing user data.";
                 }
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
-                errorMessage = "Usuário ou senha inválidos.";
+                errorMessage = "Invalid username or password.";
             }
             else
             {
-                errorMessage = $"Erro no login: {response.StatusCode}";
+                errorMessage = $"Login error: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
         finally
         {
@@ -158,10 +185,10 @@
 
     public class LoginModel
     {
-        [Required(ErrorMessage = "Nome de utilizador é obrigatório")]
+        [Required(ErrorMessage = "Username is required")]
         public string Username { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Senha é obrigatória")]
+        [Required(ErrorMessage = "Password is required")]
         public string Password { get; set; } = string.Empty;
     }
 

@@ -19,54 +19,56 @@
         </button>
     </div>
 }
-
-<div class="mb-3 mt-3">
-    <button class="btn btn-primary me-2" @onclick="LoadCategoryCountryReport">Reports by Category and Country</button>
-    <button class="btn btn-primary" @onclick="LoadSkillReport">Reports by Skill</button>
-</div>
-
-@if (categoryCountryReport?.Any() == true)
+@if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
 {
-    <h4>Reports by Category and Country</h4>
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>Category - Country</th>
-            <th>Average Monthly Price (€)</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var item in categoryCountryReport)
-        {
-            <tr>
-                <td>@item.Key</td>
-                <td>@item.Value.ToString("F2")</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+    <div class="mb-3 mt-3">
+        <button class="btn btn-primary me-2" @onclick="LoadCategoryCountryReport">Reports by Category and Country</button>
+        <button class="btn btn-secondary" @onclick="LoadSkillReport">Reports by Skill</button>
+    </div>
 
-@if (skillReport?.Any() == true)
-{
-    <h4>Reports by Skill</h4>
-    <table class="table table-bordered">
-        <thead>
-        <tr>
-            <th>Skill</th>
-            <th>Average Monthly Price (€)</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var item in skillReport)
-        {
+    @if (categoryCountryReport?.Any() == true)
+    {
+        <h4>Reports by Category and Country</h4>
+        <table class="table table-bordered">
+            <thead>
             <tr>
-                <td>@item.Key</td>
-                <td>@item.Value.ToString("F2")</td>
+                <th>Category - Country</th>
+                <th>Average Monthly Price (€)</th>
             </tr>
-        }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            @foreach (var item in categoryCountryReport)
+            {
+                <tr>
+                    <td>@item.Key</td>
+                    <td>@item.Value.ToString("F2")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    @if (skillReport?.Any() == true)
+    {
+        <h4>Reports by Skill</h4>
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>Skill</th>
+                <th>Average Monthly Price (€)</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in skillReport)
+            {
+                <tr>
+                    <td>@item.Key</td>
+                    <td>@item.Value.ToString("F2")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
 }
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -108,8 +110,6 @@
             }
             else
             {
-                // Opcional: podes carregar um relatório inicial aqui se quiseres
-                // await LoadCategoryCountryReport();
                 StateHasChanged();
             }
         }
@@ -133,17 +133,20 @@
             var response = await Http.GetAsync("/reports/category-country");
             if (response.IsSuccessStatusCode)
             {
-                categoryCountryReport = await response.Content.ReadFromJsonAsync<Dictionary<string, float>>();
+                categoryCountryReport = (await response.Content.ReadFromJsonAsync<Dictionary<string, float>>())!
+                    .OrderByDescending(kv => kv.Value)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+
                 skillReport = null;
             }
             else
             {
-                errorMessage = $"Erro ao obter relatório: {response.StatusCode}";
+                errorMessage = $"Error getting report: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
     }
 
@@ -155,17 +158,20 @@
             var response = await Http.GetAsync("/reports/skill");
             if (response.IsSuccessStatusCode)
             {
-                skillReport = await response.Content.ReadFromJsonAsync<Dictionary<string, float>>();
-                categoryCountryReport = null;
+                skillReport = (await response.Content.ReadFromJsonAsync<Dictionary<string, float>>())!
+                    .OrderByDescending(kv => kv.Value)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                categoryCountryReport = null; 
             }
             else
             {
-                errorMessage = $"Erro ao obter relatório: {response.StatusCode}";
+                errorMessage = $"\nError getting report: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro: {ex.Message}";
+            errorMessage = $"Error: {ex.Message}";
         }
     }
 }

@@ -1,0 +1,321 @@
+﻿@page "/eligible-talents"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@using System.ComponentModel.DataAnnotations
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using Frontend.Helpers
+@inject NavigationManager Navigation
+
+@rendermode InteractiveServer
+
+<h3>Eligible Talents by Work Proposal</h3>
+
+@if (!string.IsNullOrEmpty(UserSession.Username))
+{
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
+    <button class="btn btn-outline-danger" @onclick="Logout">
+        <span class="oi oi-account-logout"></span> Sair
+    </button>
+</div>
+}
+
+
+<div class="card mb-4">
+    <div class="card-body">
+        <EditForm Model="searchModel" OnValidSubmit="LoadEligibleTalents" FormName="eligibleTalentsForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="proposalSelect">Selecione a Proposta *</label>
+                <InputSelect id="proposalSelect" @bind-Value="searchModel.ProposalId" class="form-control">
+                    <option value="">-- Escolha uma proposta --</option>
+                    @foreach (var proposal in proposals)
+                    {
+                        <option value="@proposal.ProposalId">@proposal.ProposalName</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => searchModel.ProposalId)" />
+            </div>
+
+            <button class="btn btn-primary mt-3" type="submit" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    <span> A procurar...</span>
+                }
+                else
+                {
+                    <span class="oi oi-magnifying-glass"></span> <span>Procurar</span>
+                }
+            </button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger mt-3">@errorMessage</div>
+        }
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success mt-3">@successMessage</div>
+        }
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <p>A carregar...</p>
+}
+else if (talents is not null && talents.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Country</th>
+                <th>Email</th>
+                <th>Price</th>
+                <th>Total Value</th>
+                <th>Skills</th>
+                <th>Experiences</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var talent in talents)
+            {
+                <tr>
+                    <td>@talent.ProfileName</td>
+                    <td>@talent.Country</td>
+                    <td>@talent.Email</td>
+                    <td>@talent.Price</td>
+                    <td>@talent.TotalValue</td>
+                    <td>
+                        @foreach (var skill in talent.Skills)
+                        {
+                            <div>@skill.SkillName (@skill.YearsOfExperience yrs)</div>
+                        }
+                    </td>
+                    <td>
+                        @foreach (var exp in talent.Experiences)
+                        {
+                            <div>@exp.CompanyName: @exp.StartYear - @(exp.EndYear == 0 ? "Present" : exp.EndYear.ToString())</div>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (talents != null)
+{
+    <p>Nenhum talento elegível encontrado.</p>
+}
+
+@code {
+    private SearchModel searchModel = new();
+    private List<TalentProfileDto> talents;
+    private List<WorkProposalDto> proposals = new();
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+    private bool sessionChecked = false;
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !sessionChecked)
+        {
+            sessionChecked = true;
+
+            if (UserSession.UserId == null)
+            {
+                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+
+                if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
+                    UserSession.UserId = uid;
+
+                if (!string.IsNullOrEmpty(roleIdStr) && int.TryParse(roleIdStr, out var roleId))
+                    UserSession.RoleId = roleId;
+
+                if (!string.IsNullOrEmpty(username))
+                    UserSession.Username = username;
+            }
+
+            if (UserSession.UserId == null)
+            {
+                Navigation.NavigateTo("/Login");
+            }
+            else
+            {
+                await LoadProposalsAsync();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task LoadProposalsAsync()
+    {
+        try
+        {
+            var allProposals = await Http.GetFromJsonAsync<List<WorkProposalDto>>("/work_proposals");
+
+            if (UserSession.RoleId == 1)
+            {
+                proposals = allProposals
+                    .OrderBy(p => p.ProposalName)
+                    .ToList();
+            }
+            else if (UserSession.RoleId == 2)
+            {
+                var allUsers = await Http.GetFromJsonAsync<List<Dictionary<string, object>>>("/get_all_users");
+
+                var userIdsRole3 = allUsers
+                    .Where(u => u.TryGetValue("fk_role_id", out var roleVal) && ((JsonElement)roleVal).GetInt32() == 3)
+                    .Select(u => u.TryGetValue("user_id", out var idVal) ? ((JsonElement)idVal).GetInt32() : 0)
+                    .Where(id => id != 0)
+                    .ToHashSet();
+
+                proposals = allProposals
+                    .Where(p => p.FkUserId == UserSession.UserId || userIdsRole3.Contains(p.FkUserId))
+                    .OrderBy(p => p.ProposalName)
+                    .ToList();
+            }
+            else if (UserSession.RoleId == 3)
+            {
+                proposals = allProposals
+                    .Where(p => p.FkUserId == UserSession.UserId)
+                    .OrderBy(p => p.ProposalName)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading proposals: {ex.Message}";
+        }
+    }
+
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        UserSession.UserId = null;
+        UserSession.Username = string.Empty;
+        UserSession.RoleId = null;
+
+        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Console.WriteLine("Loading proposals...");
+            proposals = await Http.GetFromJsonAsync<List<WorkProposalDto>>("/work_proposals");
+            Console.WriteLine($"Found {proposals?.Count ?? 0} proposals");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading proposals: {ex.Message}";
+        }
+    }
+
+
+    private async Task LoadEligibleTalents()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+        talents = null;
+
+        try
+        {
+            var proposalId = searchModel.ProposalId;
+
+            if (proposalId <= 0)
+            {
+                errorMessage = "Select a valid proposal.";
+                return;
+            }
+
+            var response = await Http.GetAsync($"/work_proposals/{proposalId}/eligible_talents");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("Raw JSON: " + json);
+
+                talents = JsonSerializer.Deserialize<List<TalentProfileDto>>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    })?
+                    .OrderByDescending(t => t.TotalValue)
+                    .ToList();
+
+                successMessage = $"Were found {talents?.Count ?? 0} eligible talents.";
+            }
+            else
+            {
+                errorMessage = $"Error when looking for talent: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class SearchModel
+    {
+        [Required(ErrorMessage = "Select a proposal.")]
+        public int ProposalId { get; set; }
+    }
+
+    public class WorkProposalDto
+    {
+        [JsonPropertyName("proposal_id")]
+        public int ProposalId { get; set; }
+
+        [JsonPropertyName("proposal_name")]
+        public string ProposalName { get; set; } = string.Empty;
+        
+        [JsonPropertyName("fk_user_id")]
+        public int FkUserId { get; set; }
+    }
+
+
+    public class TalentProfileDto
+    {
+        public int ProfileId { get; set; }
+        public string ProfileName { get; set; }
+        public string Country { get; set; }
+        public string Email { get; set; }
+        public float Price { get; set; }
+        public int Privacy { get; set; }
+        public string Category { get; set; }
+        public int FkUserId { get; set; }
+        public List<SkillDto> Skills { get; set; } = new();
+        public List<ExperienceDto> Experiences { get; set; } = new();
+        public double TotalValue { get; set; }
+    }
+
+    public class SkillDto
+    {
+        public int SkillId { get; set; }
+        public string SkillName { get; set; }
+        public int YearsOfExperience { get; set; }
+    }
+
+    public class ExperienceDto
+    {
+        public int ExperienceId { get; set; }
+        public string CompanyName { get; set; }
+        public int StartYear { get; set; }
+        public int EndYear { get; set; }
+    }
+}
