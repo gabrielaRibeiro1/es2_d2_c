@@ -27,7 +27,7 @@ else if (_loadingUser)
 }
 else
 {
-    <p style="color: red;">Usuário não autenticado. A redirecionar para login...</p>
+    <p style="color: red;">User not authenticated. Redirecting to login...</p>
 }
 
 <div class="responsive-table">
@@ -163,7 +163,7 @@ else
                 <InputNumber @bind-Value="_proposal.total_hours" class="form-control" required />
             </div>
 
-            <button class="btn btn-success mt-3" type="submit">Criar</button>
+            <button class="btn btn-success mt-3" type="submit">Add</button>
         </EditForm>
     </div>
 </div>
@@ -220,41 +220,48 @@ else
         switch (_roleId)
         {
             case 1:
-                _workProposals = allProposals
-                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
-                    .ToList();
+                if (allProposals != null)
+                    _workProposals = allProposals
+                        .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                        .ToList();
                 break;
 
             case 2:
                 var allUsers = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/get_all_users");
 
-                var userIdsRole3 = allUsers
-                    .Where(u => u.TryGetValue("fk_role_id", out var roleVal) && ((JsonElement)roleVal).GetInt32() == 3)
-                    .Select(u => u.TryGetValue("user_id", out var idVal) ? ((JsonElement)idVal).GetInt32() : 0)
-                    .Where(id => id != 0)
-                    .ToHashSet();
-                _userIdsRole3 = userIdsRole3;
+                if (allUsers != null)
+                {
+                    var userIdsRole3 = allUsers
+                        .Where(u => u.TryGetValue("fk_role_id", out var roleVal) && ((JsonElement)roleVal).GetInt32() == 3)
+                        .Select(u => u.TryGetValue("user_id", out var idVal) ? ((JsonElement)idVal).GetInt32() : 0)
+                        .Where(id => id != 0)
+                        .ToHashSet();
+                    _userIdsRole3 = userIdsRole3;
 
-                _workProposals = allProposals
-                    .Where(p =>
-                        p.TryGetValue("fk_user_id", out var userIdElement) &&
-                        (
-                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||
-                            userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())
-                        )
-                    )
-                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
-                    .ToList();
+                    if (allProposals != null)
+                        _workProposals = allProposals
+                            .Where(p =>
+                                p.TryGetValue("fk_user_id", out var userIdElement) &&
+                                (
+                                    ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||
+                                    userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())
+                                )
+                            )
+                            .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                            .ToList();
+                }
+
                 break;
 
             case 3:
-                _workProposals = allProposals
-                    .Where(p =>
-                        p.TryGetValue("fk_user_id", out var userIdElement) &&
-                        ((JsonElement)userIdElement).GetInt32() == _loggedInUserId
-                    )
-                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
-                    .ToList();
+                if (allProposals != null)
+                    _workProposals = allProposals
+                        .Where(p =>
+                            p.TryGetValue("fk_user_id", out var userIdElement) &&
+                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId
+                        )
+                        .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                        .ToList();
                 break;
 
             default:

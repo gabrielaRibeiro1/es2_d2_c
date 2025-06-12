@@ -1,7 +1,6 @@
 ﻿@page "/skill-management"
 
 @using System.ComponentModel.DataAnnotations
-@using Frontend.Helpers
 
 @inject HttpClient Http
 @inject IJSRuntime JsRuntime
@@ -137,11 +136,11 @@
 @code {
     private List<Skill>? skills;
     private Skill newSkill = new();
-    private bool isLoading = false;
-    private bool isEditing = false;
+    private bool isLoading;
+    private bool isEditing;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
-    private bool sessionChecked = false;
+    private bool sessionChecked;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -172,7 +171,7 @@
             {
                 UserSession.Username = string.Empty;
                 UserSession.RoleId = null;
-                Navigation.NavigateTo("/Login", forceLoad: true);
+                Navigation.NavigateTo("/login", forceLoad: true);
             }
             else
             {
@@ -189,7 +188,7 @@
         UserSession.Username = string.Empty;
         UserSession.RoleId = null;
 
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
     }
 
     private async Task LoadSkills()

@@ -4,10 +4,8 @@
 @using global::Helpers.Models
 
 @inject ApiHelper ApiHelper
-@inject HttpClient Http
-@inject ApiHelper apiHelper
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 
 @rendermode InteractiveServer
 
@@ -55,7 +53,7 @@ else
                             <InputText id="username"
                                        class="form-control"
                                        @bind-Value="userModel.Username"
-                                       placeholder="Digite o nome de utilizador" />
+                                       placeholder="Type the username" />
                         </div>
                         
                         <div class="mb-3">
@@ -64,7 +62,7 @@ else
                                        type="password"
                                        class="form-control"
                                        @bind-Value="userModel.Password"
-                                       placeholder="Digite a password" />
+                                       placeholder="Type the password" />
                         </div>
                         
                         <div class="mb-4">
@@ -72,7 +70,7 @@ else
                             <InputSelect id="role"
                                          class="form-select"
                                          @bind-Value="userModel.RoleId">
-                                <option value="" disabled>Selecionar Role...</option>
+                                <option value="" disabled>Select Role...</option>
                                 <option value="1">Admin</option>
                                 <option value="2">UserManager</option>
                                 <option value="3">User</option>
@@ -82,11 +80,11 @@ else
                         <div class="d-flex justify-content-end mt-4">
                             <button type="submit" class="btn btn-success me-2">
                                 <i class="bi bi-check-circle-fill me-1"></i>
-                                Guardar
+                                Add
                             </button>
-                            <NavLink class="btn btn-outline-secondary" href="user-info">
+                            <NavLink class="btn btn-secondary" href="user-info">
                                 <i class="bi bi-x-circle-fill me-1"></i>
-                                Cancelar
+                                Cancel
                             </NavLink>
                         </div>
                     </EditForm>
@@ -118,12 +116,9 @@ else
     private UserAddModel userModel = new();
     private string successMessage;
     private string errorMessage;
-    private bool sessionChecked = false;
-    private bool accessDenied = false;
+    private bool sessionChecked;
+    private bool accessDenied;
     
-
-
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !sessionChecked)
@@ -132,9 +127,9 @@ else
             
             if (UserSession.UserId == null)
             {
-                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+                var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
                 if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                     UserSession.UserId = uid;
@@ -148,7 +143,7 @@ else
             
             if (UserSession.UserId == null)
             {
-                Navigation.NavigateTo("/Login");
+                Navigation.NavigateTo("/login");
             }
             else
             {
@@ -167,12 +162,12 @@ else
 
     private async Task Logout()
     {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
         UserSession.UserId = null;
         UserSession.Username = string.Empty;
         UserSession.RoleId = null;
 
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
     }
     
  
@@ -195,6 +190,7 @@ else
             {
                 successMessage = $"User '{createdUser.Username}' (ID {createdUser.UserId}) successfully created!";
                 userModel = new UserAddModel();
+                Navigation.NavigateTo("/user-info");
             }
             else
             {

@@ -51,7 +51,7 @@
 
                 <div class="text-center mt-2">
                     <span>Don't have an account yet? </span>
-                    <NavLink class="text-decoration-none" href="add-user">Create one here!</NavLink>
+                    <NavLink class="text-decoration-none" href="create-account">Create one here!</NavLink>
                 </div>
 
                 @if (!string.IsNullOrEmpty(errorMessage))
@@ -93,18 +93,7 @@
                     UserSession.Username = username;
                     UserSession.RoleId = roleId;
 
-                    if (roleId == 1)
-                    {
-                        Navigation.NavigateTo($"/SkillManagement?userId={userId}");
-                    }
-                    else if (roleId == 2)
-                    {
-                        Navigation.NavigateTo($"/talent-management?userId={userId}");
-                    }
-                    else if (roleId == 3)
-                    {
-                        Navigation.NavigateTo($"/Reports?userId={userId}");
-                    }
+                    Navigation.NavigateTo($"/?userId={userId}");
                 }
             }
         }
@@ -140,23 +129,7 @@
                     // Trigger an event HERE!
                     LoginEvents.NotifyLoginStatusChanged();
                     
-                    // Redirect depending on role
-                    if (userData.fk_role_id == 1) // Admin
-                    {
-                        Navigation.NavigateTo($"/SkillManagement?userId={userData.user_id}");
-                    }
-                    else if (userData.fk_role_id == 2) // UserManager
-                    {
-                        Navigation.NavigateTo($"/talent-management?userId={userData.user_id}");
-                    }
-                    else if (userData.fk_role_id == 3) // User
-                    {
-                        Navigation.NavigateTo($"/Reports?userId={userData.user_id}");
-                    }
-                    else
-                    {
-                        errorMessage = "User role not recognized.";
-                    }
+                    Navigation.NavigateTo($"/?userId={userData.user_id}");
                 }
                 else
                 {

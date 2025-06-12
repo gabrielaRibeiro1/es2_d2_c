@@ -3,7 +3,7 @@
 @using Frontend.Helpers
 
 @inject HttpClient Http
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 @inject NavigationManager Navigation
 
 @rendermode InteractiveServer
@@ -80,7 +80,7 @@
     private Dictionary<string, float>? categoryCountryReport;
     private Dictionary<string, float>? skillReport;
     private string errorMessage = string.Empty;
-    private bool sessionChecked = false;
+    private bool sessionChecked;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -90,9 +90,9 @@
 
             if (UserSession.UserId == null)
             {
-                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+                var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
                 if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                     UserSession.UserId = uid;
@@ -106,7 +106,7 @@
 
             if (UserSession.UserId == null)
             {
-                Navigation.NavigateTo("/Login");
+                Navigation.NavigateTo("/login");
             }
             else
             {
@@ -117,12 +117,12 @@
 
     private async Task Logout()
     {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
         UserSession.UserId = null;
         UserSession.Username = string.Empty;
         UserSession.RoleId = null;
 
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
     }
 
     private async Task LoadCategoryCountryReport()

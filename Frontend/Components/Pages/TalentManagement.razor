@@ -1,5 +1,6 @@
 ﻿@page "/talent-management"
 
+@using System.ComponentModel.DataAnnotations
 @using System.Text.Json
 
 @inject HttpClient Http
@@ -22,108 +23,109 @@
 @if (UserSession.RoleId != 3)
 {
     <div class="card mb-4">
-    <div class="card-body">
-        <h4>@(isEditing ? "Edit Talent Profile" : "Create New Talent")</h4>
-        <EditForm Model="@newProfile" OnValidSubmit="@(isEditing ? UpdateProfile : CreateProfile)">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <div class="card-body">
+            <h4>@(isEditing ? "Edit Talent Profile" : "Create New Talent")</h4>
+            <EditForm Model="@newProfile" OnValidSubmit="@(isEditing ? UpdateProfile : CreateProfile)">
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
 
-            <div class="row">
-                <!-- Profile details -->
-                <div class="col-md-6">
-                    <InputText class="form-control mb-2" placeholder="Talent Name *" @bind-Value="newProfile.ProfileName" />
-                    <InputText class="form-control mb-2" placeholder="Country *" @bind-Value="newProfile.Country" />
-                    <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email" />
-                    <label class="form-label">Price (in EUR) *</label>
-                    <InputNumber class="form-control mb-2" placeholder="Price *" @bind-Value="newProfile.Price" />
-                    <InputText class="form-control mb-2" placeholder="Category" @bind-Value="newProfile.Category" />
+                <div class="row">
+                    <!-- Profile details -->
+                    <div class="col-md-6">
+                        <InputText class="form-control mb-2" placeholder="Talent Name *" @bind-Value="newProfile.ProfileName"/>
+                        <InputText class="form-control mb-2" placeholder="Country *" @bind-Value="newProfile.Country"/>
+                        <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email"/>
+                        <label class="form-label">Price (in EUR) *</label>
+                        <InputNumber class="form-control mb-2" placeholder="Price *" @bind-Value="newProfile.Price"/>
+                        <InputText class="form-control mb-2" placeholder="Category" @bind-Value="newProfile.Category"/>
 
-                    <InputSelect class="form-control mb-2" @bind-Value="newProfile.Privacy">
-                        <option value="0">Public</option>
-                        <option value="1">Private</option>
-                    </InputSelect>
-                </div>
+                        <InputSelect class="form-control mb-2" @bind-Value="newProfile.Privacy">
+                            <option value="0">Public</option>
+                            <option value="1">Private</option>
+                        </InputSelect>
+                    </div>
 
-                <!-- Skills & Experiences -->
-                <div class="col-md-6">
-                    <h5>Skills</h5>
-                    <div class="row">
-                        <div class="col-6">
-                            <label class="form-label invisible">Add</label>
-                            <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
-                                <option disabled selected value="">Select a Skill</option>
-                                @foreach (var skill in availableSkills)
+                    <!-- Skills & Experiences -->
+                    <div class="col-md-6">
+                        <h5>Skills</h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label invisible">Add</label>
+                                <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
+                                    <option disabled selected value="">Select a Skill</option>
+                                    @foreach (var skill in availableSkills)
+                                    {
+                                        <option value="@skill">@skill</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label">Years of Experience</label>
+                                <InputNumber class="form-control mb-2" placeholder="Years of Experience" @bind-Value="newSkill.YearsOfExperience"/>
+                            </div>
+                            <div class="col-3 d-flex align-items-center">
+                                <button type="button" class="btn btn-outline-primary w-100" @onclick="AddSkill">Add Skill</button>
+                            </div>
+                        </div>
+                        @if (newProfile.Skills.Any())
+                        {
+                            <ul class="list-group mb-3">
+                                @foreach (var s in newProfile.Skills)
                                 {
-                                    <option value="@skill">@skill</option>
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        @s.SkillName (@s.YearsOfExperience) years
+                                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(s)">Remove</button>
+                                    </li>
                                 }
-                            </InputSelect>
+                            </ul>
+                        }
+
+                        <label class="form-label invisible">Add</label>
+                        <h5>Experiences</h5>
+                        <div class="row">
+                            <div class="col-6">
+                                <InputText class="form-control mb-2" placeholder="Company" @bind-Value="newExperience.CompanyName"/>
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label">Start Year </label>
+                                <InputNumber class="form-control mb-2" placeholder="Starting Year" @bind-Value="newExperience.StartYear" aria-label="Start year of the experience (ex: 2020)"/>
+                            </div>
+                            <div class="col-3">
+                                <label class="form-label">End Year </label>
+                                <InputNumber @bind-Value="newExperience.EndYear" class="form-control mb-2" placeholder="End Year" aria-label="End year of the experience (ex: 2022)"/>
+                            </div>
+                            <div class="col-12 d-flex justify-content-end">
+                                <button type="button" class="btn btn-outline-primary" @onclick="AddExperience">Add Experience</button>
+                            </div>
                         </div>
-                        <div class="col-3">
-                            <label class="form-label">Years of Experience</label>
-                            <InputNumber class="form-control mb-2" placeholder="Anos de Experiência" @bind-Value="newSkill.YearsOfExperience"/>
-                        </div>
-                        <div class="col-3 d-flex align-items-center">
-                            <button type="button" class="btn btn-outline-primary w-100" @onclick="AddSkill">Add Skill</button>
-                        </div>
+                        @if (newProfile.Experiences.Any())
+                        {
+                            <ul class="list-group mb-2">
+                                @foreach (var e in newProfile.Experiences)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        @e.CompanyName (@e.StartYear - @e.EndYear)
+                                        <button class="btn btn-sm btn-danger" @onclick="() => RemoveExperience(e)">Remove</button>
+                                    </li>
+                                }
+                            </ul>
+                        }
                     </div>
-                    @if (newProfile.Skills.Any())
+                </div>
+
+                <div class="d-flex justify-content-end mt-3">
+                    <button class="btn btn-success mt-2" type="submit" disabled="@isLoading">
+                        @(isEditing ? "Save Changes" : "Add Talent")
+                    </button>
+                    @if (isEditing)
                     {
-                        <ul class="list-group mb-3">
-                            @foreach (var s in newProfile.Skills)
-                            {
-                                <li class="list-group-item d-flex justify-content-between">
-                                    @s.SkillName (@s.YearsOfExperience) years
-                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(s)">Remove</button>
-                                </li>
-                            }
-                        </ul>
-                    }
-                    
-                    <label class="form-label invisible">Add</label>
-                    <h5>Experiences</h5>
-                    <div class="row">
-                        <div class="col-6">
-                            <InputText class="form-control mb-2" placeholder="Company" @bind-Value="newExperience.CompanyName"/>
-                        </div>
-                        <div class="col-3">
-                            <label class="form-label">Start Year </label>
-                            <InputNumber class="form-control mb-2" placeholder="Starting Year" @bind-Value="newExperience.StartYear" aria-label="Start year of the experience (ex: 2020)" />
-                        </div>
-                        <div class="col-3">
-                            <label class="form-label">End Year </label>
-                            <InputNumber @bind-Value="newExperience.EndYear" class="form-control mb-2" placeholder="End Year" aria-label="End year of the experience (ex: 2022)" />
-                        </div>
-                        <div class="col-12 d-flex justify-content-end">
-                            <button type="button" class="btn btn-outline-primary" @onclick="AddExperience">Add Experience</button>
-                        </div>
-                    </div>
-                    @if (newProfile.Experiences.Any())
-                    {
-                        <ul class="list-group mb-2">
-                            @foreach (var e in newProfile.Experiences)
-                            {
-                                <li class="list-group-item d-flex justify-content-between">
-                                    @e.CompanyName (@e.StartYear - @e.EndYear)
-                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveExperience(e)">Remove</button>
-                                </li>
-                            }
-                        </ul>
+                        <button type="button" class="btn btn-secondary ms-2" @onclick="CancelEdit">Cancel</button>
                     }
                 </div>
-            </div>
-
-            <div class="d-flex justify-content-end mt-3">
-                <button class="btn btn-success mt-2" type="submit" disabled="@isLoading">
-                    @(isEditing ? "Save Changes" : "Add Talent")
-                </button>
-                @if (isEditing)
-                {
-                    <button type="button" class="btn btn-secondary ms-2" @onclick="CancelEdit">Cancel</button>
-                }
-            </div>
-        </EditForm>
+            </EditForm>
+        </div>
     </div>
-</div>
+}
 
 @if (!string.IsNullOrEmpty(successMessage))
 {
@@ -236,7 +238,7 @@
         UserSession.UserId = int.TryParse(uid, out var u) ? u : null;
         UserSession.RoleId = int.TryParse(rid, out var r) ? r : null;
         UserSession.Username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
-        if (UserSession.UserId == null) { NavigationManager.NavigateTo("/Login"); return; }
+        if (UserSession.UserId == null) { NavigationManager.NavigateTo("/login"); return; }
         newProfile.FkUserId = UserSession.UserId.Value;
         await LoadProfiles(); await LoadAvailableSkills();
     }
@@ -408,7 +410,7 @@
     {
         await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
         UserSession.UserId=null;UserSession.RoleId=null;UserSession.Username=null;
-        NavigationManager.NavigateTo("/Login");
+        NavigationManager.NavigateTo("/login");
     }
 
     public class TalentProfileDto

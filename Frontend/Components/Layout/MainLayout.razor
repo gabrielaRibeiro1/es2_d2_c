@@ -6,10 +6,7 @@
 @inject LoginEventService LoginEvents
 
 <div class="page">
-  @if (_isLoggedIn)
-  {
   <div class="sidebar"><NavMenu/></div>
-  }
   <main>
     @if (_showTopBar)
     {
@@ -42,7 +39,6 @@
 
   protected override void OnInitialized()
   {
-    // Only subscribe the *scheduler*. No JS interop here.
     LoginEvents.OnLoginStatusChanged += TriggerSessionRefresh;
     Navigation.LocationChanged       += OnLocationChanged;
     UpdateTopBarVisibility();
@@ -62,7 +58,6 @@
   {
     if (_rendererReady)
     {
-      // safe—will run JS interop inside the async Task
       _ = RefreshLoginStateAsync();
     }
   }
@@ -84,8 +79,6 @@
   private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
   {
     UpdateTopBarVisibility();
-    // Also re‐read sessionStorage on every navigation so that
-    // after login→NavigateTo, we still pick up the new userId:
     if (_rendererReady)
     { 
       _ = RefreshLoginStateAsync();

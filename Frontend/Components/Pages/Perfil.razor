@@ -1,16 +1,15 @@
 ﻿@page "/perfil"
-@inject IJSRuntime JSRuntime
+
 @using Frontend.Helpers
 @using global::Helpers.Models
-@inject HttpClient Http
-@inject ApiHelper apiHelper
-@using Microsoft.AspNetCore.Components.Authorization
-@inject ApiHelper ApiHelper
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@rendermode InteractiveServer
-@inject NavigationManager Navigation
 
-<PageTitle>Perfil</PageTitle>
+@inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
+@inject ApiHelper ApiHelper
+
+@rendermode InteractiveServer
+
+<PageTitle>Profile</PageTitle>
 
 @if (!string.IsNullOrEmpty(UserSession.Username))
 {
@@ -41,7 +40,7 @@
         }
         else
         {
-            <h5 class="card-title">Os meus dados</h5>
+            <h5 class="card-title">My Info</h5>
             <div class="row">
                 <div class="col-md-6">
                     <dl class="row">
@@ -62,8 +61,8 @@
 @code {
     private UserViewModel? _currentUser;
     private string _errorMessage = string.Empty;
-    private bool _sessionChecked = false;
-    private bool _accessDenied = false;
+    private bool _sessionChecked;
+    private bool _accessDenied;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -73,9 +72,9 @@
             
             if (UserSession.UserId == null)
             {
-                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+                var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
                 if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                     UserSession.UserId = uid;
@@ -89,7 +88,7 @@
             
             if (UserSession.UserId == null)
             {
-                Navigation.NavigateTo("/Login");
+                Navigation.NavigateTo("/login");
                 return;
             }
             
@@ -125,11 +124,11 @@
 
     private async Task Logout()
     {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
         UserSession.UserId = null;
         UserSession.Username = string.Empty;
         UserSession.RoleId = null;
 
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
     }
 }
