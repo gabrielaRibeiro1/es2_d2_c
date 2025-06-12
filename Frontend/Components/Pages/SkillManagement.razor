@@ -9,7 +9,7 @@
 
 @rendermode InteractiveServer
 
-<h3>Skill Management</h3>
+<h3>Gestão de Skills</h3>
 
 @if (!string.IsNullOrEmpty(UserSession.Username))
 {
@@ -23,27 +23,27 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <h4>@(isEditing ? "Edit Skill" : "Create New Skill")</h4>
+        <h4>@(isEditing ? "Editar Skill" : "Criar Nova Skill")</h4>
 
         <EditForm Model="@newSkill" OnValidSubmit="@((isEditing) ? UpdateSkill : CreateSkill)" FormName="createSkillForm">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
             <div class="form-group">
-                <label for="skillName">Name *</label>
+                <label for="skillName">Nome *</label>
                 <InputText id="skillName"
                            @bind-Value="newSkill.name"
                            class="form-control"
-                           placeholder="Type the skill's name" />
+                           placeholder="Digite o nome da skill" />
                 <ValidationMessage For="@(() => newSkill.name)" />
             </div>
 
             <div class="form-group">
-                <label for="skillArea">Area *</label>
+                <label for="skillArea">Área *</label>
                 <InputText id="skillArea"
                            @bind-Value="newSkill.area"
                            class="form-control"
-                           placeholder="Type the skill's applicable area" />
+                           placeholder="Digite a área da skill" />
                 <ValidationMessage For="@(() => newSkill.area)" />
             </div>
 
@@ -51,17 +51,17 @@
                 @if (isLoading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status"></span>
-                    <span> Saving...</span>
+                    <span> A Guardar...</span>
                 }
                 else
                 {
                     @if (isEditing)
                     {
-                        <span class="oi oi-check"></span> @("Save Changes")
+                        <span class="oi oi-check"></span> @("Guardar Alterações")
                     }
                     else
                     {
-                        <span class="oi oi-plus"></span> @("Add Skill")
+                        <span class="oi oi-plus"></span> @("Criar Skill")
                     }
                 }
             </button>
@@ -78,14 +78,14 @@
     </div>
 </div>
 
-<h4 class="mt-5">Existing Skill List</h4>
+<h4 class="mt-5">Lista de Skills</h4>
 
-<table class="table table-bordered">
+<table class="table table-striped table-hover">
     <thead class="thead-dark">
     <tr>
-        <th>Name</th>
-        <th>Area</th>
-        <th>Actions</th>
+        <th>Nome</th>
+        <th>Área</th>
+        <th>Ações</th>
     </tr>
     </thead>
     <tbody>
@@ -94,14 +94,14 @@
         <tr>
             <td colspan="3" class="text-center text-muted">
                 <span class="spinner-border spinner-border-sm" role="status"></span>
-                Loading...
+                Carregando...
             </td>
         </tr>
     }
     else if (skills == null || !skills.Any())
     {
         <tr>
-            <td colspan="3" class="text-center text-muted">No skills found.</td>
+            <td colspan="3" class="text-center text-muted">Nenhuma skill encontrada</td>
         </tr>
     }
     else
@@ -112,11 +112,11 @@
                 <td>@skill.name</td>
                 <td>@skill.area</td>
                 <td>
-                    <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-warning mr-2">
-                        <span class="oi oi-pencil"></span> Edit
+                    <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-primary mr-2">
+                        <span class="oi oi-pencil"></span> Editar
                     </button>
                     <button @onclick="@(() => DeleteSkill(skill.skill_id))" class="btn btn-sm btn-danger">
-                        <span class="oi oi-trash"></span> Delete
+                        <span class="oi oi-trash"></span> Excluir
                     </button>
                 </td>
             </tr>
@@ -342,62 +342,3 @@
         public string area { get; set; } = string.Empty;
     }
 }
-
-<style>
-    h3 {
-        margin-bottom: 1.5rem;
-    }
-
-    .header-session {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .logout-btn {
-        padding: 0.35rem 0.6rem;
-        font-size: 0.9rem;
-    }
-
-    .card.mb-4 {
-        margin-bottom: 2rem !important;
-    }
-
-    .table th {
-        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-        color: white;
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    .table td {
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    .btn {
-        padding: 0.4rem 0.75rem;
-        font-size: 0.9rem;
-        border-radius: 5px;
-        margin: 0.1rem;
-    }
-
-    .btn-sm {
-        padding: 0.35rem 0.6rem;
-        font-size: 0.8rem;
-    }
-
-    .me-1 {
-        margin-right: 0.5rem;
-    }
-
-    .form-label {
-        font-weight: bold;
-    }
-
-    .list-group-item button {
-        font-size: 0.8rem;
-        padding: 0.35rem 0.6rem;
-    }
-</style>

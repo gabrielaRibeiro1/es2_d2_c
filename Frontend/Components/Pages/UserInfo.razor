@@ -8,15 +8,16 @@
 
 @rendermode InteractiveServer
 
-<h2>User's Info</h2>
+<PageTitle>User Info</PageTitle>
 
-<div class="text-center mb-3">
-    <NavLink  class="btn btn-success mb-3" href="add-user">
-         Add New User
-    </NavLink>
-</div>
 
-<hr class="separator" />
+<h1>User Info</h1>
+
+
+
+<NavLink  class="btn btn-primary mb-3" href="add-user">
+     Add User
+</NavLink>
 
 @if (_users == null)
 {
@@ -24,9 +25,10 @@
 }
 else
 {
-    <table class="table table-bordered">
-    <thead>
+    <table class="table">
+        <thead>
         <tr>
+          
             <th>Username</th>
             <th>UserId</th>
             <th>Role</th>
@@ -38,21 +40,25 @@ else
         @foreach (var user in _users)
         {
             <tr>
+                
                 <td>@user.Username</td>
                 <td>@user.User_id</td>
                 <td>@user.RoleName</td>
 
                 <td>
-                    <div class="d-flex justify-content-center gap-2">
-                        <NavLink class="btn btn-warning action-btn"
+                    <div class="d-flex gap-2">
+
+                        <NavLink class="btn btn-secondary btn-sm"
                                  href="@($"update-user-info/{user.User_id}")">
-                            Edit
+                            <i class="bi bi-pencil"></i>
                         </NavLink>
-                        <button class="btn btn-danger action-btn" @onclick="() => DeleteUserById(user.User_id)">
-                            Delete
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteUserById(user.User_id)">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </td>
+
+
             </tr>
         }
         </tbody>
@@ -61,13 +67,17 @@ else
 
 @code {
     private List<UserViewModel>? _users;
-    
+ 
+
     protected override async Task OnInitializedAsync()
     {
         
             _users = await ApiHelper.GetFromApiAsync<List<UserViewModel>>("get_all_users");
         
     }
+    
+    
+    
     
     private async Task DeleteUserById(int userId)
     {
@@ -92,34 +102,3 @@ else
         }
     }
 }
-
-<style>
-    h2 {
-        text-align: center;
-    }
-    table {
-        max-width: 900px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .table th, .table td {
-        padding: 0.35rem 0.5rem;
-        vertical-align: middle;
-        text-align: center;
-    }
-    
-    .action-btn {
-        min-width: 90px;
-        height: 36px;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .table th {
-        background: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-        color: white;
-    }
-</style>

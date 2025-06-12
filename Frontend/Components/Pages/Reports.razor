@@ -3,12 +3,13 @@
 @using Frontend.Helpers
 
 @inject HttpClient Http
+@inject ApiHelper apiHelper
 @inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
 
 @rendermode InteractiveServer
 
-<h2>Monthly Average Price Reports</h2>
+<h3>Relatórios de Preço Médio Mensal</h3>
 
 @if (!string.IsNullOrEmpty(UserSession.Username))
 {
@@ -21,18 +22,18 @@
 }
 
 <div class="mb-3 mt-3">
-    <button class="btn btn-primary me-2" @onclick="LoadCategoryCountryReport">Reports by Category and Country</button>
-    <button class="btn btn-primary" @onclick="LoadSkillReport">Reports by Skill</button>
+    <button class="btn btn-primary me-2" @onclick="LoadCategoryCountryReport">Ver Relatório por Categoria e País</button>
+    <button class="btn btn-secondary" @onclick="LoadSkillReport">Ver Relatório por Skill</button>
 </div>
 
 @if (categoryCountryReport?.Any() == true)
 {
-    <h4>Reports by Category and Country</h4>
-    <table class="table table-bordered">
+    <h4>Relatório por Categoria e País</h4>
+    <table class="table table-bordered table-striped">
         <thead>
             <tr>
-                <th>Category - Country</th>
-                <th>Average Monthly Price (€)</th>
+                <th>Categoria - País</th>
+                <th>Preço Médio Mensal (€)</th>
             </tr>
         </thead>
         <tbody>
@@ -49,12 +50,12 @@
 
 @if (skillReport?.Any() == true)
 {
-    <h4>Reports by Skill</h4>
-    <table class="table table-bordered">
+    <h4>Relatório por Skill</h4>
+    <table class="table table-bordered table-striped">
         <thead>
             <tr>
                 <th>Skill</th>
-                <th>Average Monthly Price (€)</th>
+                <th>Preço Médio Mensal (€)</th>
             </tr>
         </thead>
         <tbody>
@@ -169,65 +170,3 @@
         }
     }
 }
-
-<style>
-    h2 {
-        margin-bottom: 1.5rem;
-    }
-
-    h4 {
-        margin-top: 2rem;
-        margin-bottom: 1rem;
-    }
-
-    .mb-3 {
-        margin-bottom: 1rem !important;
-    }
-
-    .mt-3 {
-        margin-top: 1rem !important;
-    }
-
-    .btn {
-        padding: 0.4rem 0.75rem;
-        font-size: 0.9rem;
-        border-radius: 5px;
-        margin: 0.1rem;
-    }
-
-    .btn-primary {
-        background-color: #053167;
-        border-color: #053167;
-    }
-
-    .btn-primary:hover {
-        background-color: #042750;
-        border-color: #042750;
-    }
-
-    .me-2 {
-        margin-right: 0.5rem;
-    }
-
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 2rem;
-    }
-
-    .table th {
-        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-        color: white;
-        text-align: center;
-        vertical-align: middle;
-        padding: 0.75rem;
-        border: 1px solid #dee2e6;
-    }
-
-    .table td {
-        text-align: center;
-        vertical-align: middle;
-        padding: 0.75rem;
-        border: 1px solid #dee2e6;
-    }
-</style>
