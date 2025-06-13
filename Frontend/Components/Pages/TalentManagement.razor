@@ -110,8 +110,8 @@
                         </ul>
                     }
                 </div>
-                <div class="d-flex justify-content-end mt-3">
-                    <button class="btn btn-success mt-2" type="submit" disabled="@isLoading">
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-success mt-2 butsav" type="submit" disabled="@isLoading">
                         @(isEditing ? "Save Changes" : "Add Talent")
                     </button>
                     @if (isEditing)
@@ -132,55 +132,56 @@
 {
     <div class="alert alert-danger mt-3">@errorMessage</div>
 }
-<h5 class="mt-4">Pesquisar por Skills</h5>
+
+<h4 class="mt-4">Public Talent Profiles</h4>
+<h5 class="mt-4">Search for Skills</h5>
 <div class="row mb-3">
     <div class="col-md-6">
         <InputSelect class="form-control" @bind-Value="selectedSkillToSearch">
-            <option disabled value="">Selecione uma Skill</option>
+            <option disabled value="">Select a Skill</option>
             @foreach (var skill in availableSkills)
             {
-            <option value="@skill">@skill</option>
+                <option value="@skill">@skill</option>
             }
         </InputSelect>
     </div>
     <div class="col-md-3">
-        <button class="btn btn-outline-primary w-100" @onclick="AddSkillToSearch"
+        <button class="btn btn-primary w-100" @onclick="AddSkillToSearch"
                 disabled="@string.IsNullOrEmpty(selectedSkillToSearch)">
-            Adicionar Skill
+            Add Skill
         </button>
     </div>
     <div class="col-md-3">
         <button class="btn btn-success w-100" @onclick="SearchBySkills"
                 disabled="@(!searchSkills.Any())">
-            Pesquisar
+            Search
         </button>
     </div>
 </div>
 
 @if (searchSkills.Any())
 {
-<div class="mb-3">
-    <h6>Skills selecionadas:</h6>
-    @foreach (var skill in searchSkills)
-    {
-    <span class="badge bg-primary me-2">
+    <div class="mb-3">
+        <h6>Selected Skills:</h6>
+        @foreach (var skill in searchSkills)
+        {
+            <span class="badge bg-primary me-2">
                 @skill
-        <button class="btn-close btn-close-white btn-sm ms-1" @onclick="() => RemoveSkillFromSearch(skill)"></button>
+                <button class="btn-close btn-close-white btn-sm ms-1" @onclick="() => RemoveSkillFromSearch(skill)"></button>
             </span>
-    }
-</div>
+        }
+    </div>
 }
 
 @if (isLoadingSearch)
 {
-<div class="text-center mt-2">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Carregando...</span>
+    <div class="text-center mt-2">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </div>
-</div>
 }
 
-<h4 class="mt-4">Public Talent Profiles</h4>
 <div class="table-responsive">
     <table class="table table-bordered">
         <thead>
@@ -257,7 +258,7 @@
     private bool initialized;
     private string selectedSkillToSearch = "";
     private List<string> searchSkills = new();
-    private bool isLoadingSearch = false;
+    private bool isLoadingSearch;
 
     protected override void OnInitialized()
     {
@@ -323,7 +324,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao carregar perfis: {ex.Message}";
+            errorMessage = $"Error loading talents: {ex.Message}";
 
         }
         finally
@@ -355,7 +356,7 @@
                 await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?skill_name={Uri.EscapeDataString(s.SkillName)}&years_of_experience={s.YearsOfExperience}",null);
             foreach(var e in newProfile.Experiences)
                 await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
-            successMessage="Perfil criado com sucesso!"; await LoadProfiles(); ResetForm();
+            successMessage="Talente create successfully!"; await LoadProfiles(); ResetForm();
         }
         catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
@@ -377,7 +378,7 @@
             foreach(var e in updE) await Http.PutAsync($"/experiences/{e.ExperienceId}?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
             var addE=newProfile.Experiences.Where(n=>n.ExperienceId==0);
             foreach(var e in addE) await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
-            successMessage="Perfil atualizado com sucesso!"; await LoadProfiles(); ResetForm();
+            successMessage="Talent updated successfully!"; await LoadProfiles(); ResetForm();
         }
         catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
@@ -385,7 +386,7 @@
     private async Task DeleteProfile(string pn)
     {
         if(!await JsRuntime.InvokeAsync<bool>("confirm",$"Excluir {pn}?"))return; isLoading=true;
-        try{var r=await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(pn)}/delete"); if(r.IsSuccessStatusCode){successMessage="Perfil excluído!";await LoadProfiles();}else errorMessage=await r.Content.ReadAsStringAsync();}
+        try{var r=await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(pn)}/delete"); if(r.IsSuccessStatusCode){successMessage="Talent Removed!";await LoadProfiles();}else errorMessage=await r.Content.ReadAsStringAsync();}
         catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
 
@@ -448,7 +449,7 @@
         else
         {
 
-            errorMessage = "Por favor, preencha os dados corretamente: nome da empresa, anos válidos, e ano início menor que fim (se preenchido).";
+            errorMessage = "Please fill out the data correctly: company name, valid years, and start value lower then end value (if filled out).";
 
         }
     }
@@ -467,7 +468,7 @@
     {
         if (!searchSkills.Any())
         {
-            errorMessage = "Selecione pelo menos uma skill para pesquisar";
+            errorMessage = "Select at least one skills to begin search";
             return;
         }
 
@@ -489,7 +490,7 @@
             
                 if (profiles?.Count == 0)
                 {
-                    successMessage = "Nenhum perfil encontrado com as skills selecionadas";
+                    successMessage = "No talents found with the selected skills";
                 }
             }
             else
@@ -497,14 +498,14 @@
                 errorMessage = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(errorMessage))
                 {
-                    errorMessage = $"Erro na pesquisa: {response.StatusCode}";
+                    errorMessage = $"Error while searching: {response.StatusCode}";
                 }
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro na pesquisa: {ex.Message}";
-            Console.WriteLine($"Erro detalhado: {ex}");
+            errorMessage = $"Error while searching: {ex.Message}";
+            Console.WriteLine($"Detailed error: {ex}");
         }
         finally
         {
@@ -525,7 +526,7 @@
         }
         else if (searchSkills.Contains(selectedSkillToSearch))
         {
-            errorMessage = "Esta skill já foi adicionada";
+            errorMessage = "This skill has been added already.";
         }
     }
 
@@ -619,6 +620,10 @@
         border-radius: 6px;
         padding: 10px;
         margin: 8px;
+    }
+    
+    .butsav {
+        width: 150px;
     }
 
     .table th {
