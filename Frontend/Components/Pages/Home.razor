@@ -28,7 +28,10 @@
             <li>📂 Organize applications and hiring processes intuitively.</li>
             <li>⚡ Connect swiftly with the ideal candidates.</li>
         </ul>
-        <NavLink class="btn-primary mt-8" href="login">Get Started</NavLink>
+        @if (string.IsNullOrEmpty(UserSession.Username))
+        {
+            <NavLink class="btn-primary mt-8" href="login">Get Started</NavLink>
+        }
     </div>
 </section>
 
