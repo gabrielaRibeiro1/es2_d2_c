@@ -1,30 +1,21 @@
 ﻿@page "/update-user-info/{UserId:int}"
+
 @using Frontend.Helpers
 @using Frontend.Models
-@inject HttpClient Http
-@inject ApiHelper apiHelper
+
 @inject ApiHelper ApiHelper
-@rendermode InteractiveServer
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 
-<PageTitle>Atualizar User</PageTitle>
+@rendermode InteractiveServer
 
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-<div style="display: flex; justify-content: space-between; align-items: center;">
-    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-    <button class="btn btn-outline-danger" @onclick="Logout">
-        <span class="oi oi-account-logout"></span> Sair
-    </button>
-</div>
-}
+<h2>Update User</h2>
 
 @if (accessDenied)
 {
 <div class="alert alert-danger mt-5">
-    <h4>Acesso Negado</h4>
-    <p>Você não tem permissões suficientes para aceder a esta página.</p>
+    <h4>Access Denied</h4>
+    <p>You don't have enough permissions to access this page.</p>
 </div>
 }
 else
@@ -33,10 +24,10 @@ else
     <div class="row justify-content-center">
         <div class="col-lg-6 col-md-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header text-white">
                     <h3 class="mb-0">
                         <i class="bi bi-pencil-square me-2"></i>
-                        Atualizar Utilizador
+                        Update User
                     </h3>
                 </div>
 
@@ -47,7 +38,7 @@ else
                     }
                     else if (_user == null)
                     {
-                    <p class="text-center text-danger"><em>Não foi possível carregar os dados do utilizador.</em></p>
+                    <p class="text-center text-danger"><em>Failed to load user's data.</em></p>
                     }
                     else
                     {
@@ -66,12 +57,12 @@ else
 
                         @* Nova Password *@
                         <div class="mb-3">
-                            <label for="password" class="form-label">Nova Password</label>
+                            <label for="password" class="form-label">New Password</label>
                             <InputText id="password"
                                        type="password"
                                        class="form-control"
                                        @bind-Value="_newPassword"
-                                       placeholder="Deixe em branco para manter a password atual" />
+                                       placeholder="Leave unfilled to keep current password" />
                         </div>
                         
                         @if (!string.IsNullOrEmpty(_errorMessage))
@@ -103,13 +94,13 @@ else
                         </div>
                         
                         <div class="d-flex justify-content-end mt-4">
-                            <button type="submit" class="btn btn-primary me-2">
+                            <button type="submit" class="btn btn-warning me-2">
                                 <i class="bi bi-check-circle-fill me-1"></i>
-                                Atualizar
+                                Update
                             </button>
-                            <NavLink class="btn btn-outline-secondary" href="user-info">
+                            <NavLink class="btn btn-secondary" href="user-info">
                                 <i class="bi bi-x-circle-fill me-1"></i>
-                                Cancelar
+                                Cancel
                             </NavLink>
                         </div>
                     </EditForm>
@@ -128,9 +119,9 @@ else
     private string? _newPassword;
     private string? _errorMessage;
     private string? _successMessage;
-    private bool sessionChecked = false;
-    private bool accessDenied = false;  
-    private bool loadingUser = false; 
+    private bool sessionChecked;
+    private bool accessDenied;  
+    private bool loadingUser; 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -140,9 +131,9 @@ else
             
             if (UserSession.UserId == null)
             {
-                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+                var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
                 if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                     UserSession.UserId = uid;
@@ -156,7 +147,7 @@ else
             
             if (UserSession.UserId == null)
             {
-                Navigation.NavigateTo("/Login");
+                Navigation.NavigateTo("/login");
             }
             else
             {
@@ -191,16 +182,6 @@ else
         {
             loadingUser = false;
         }
-    }
-
-    private async Task Logout()
-    {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
     }
 
     private async Task HandleValidSubmit()
@@ -239,3 +220,9 @@ else
         }
     }
 }
+
+<style>
+    .card-header{
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    }
+</style>

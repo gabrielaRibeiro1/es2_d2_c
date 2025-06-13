@@ -1,26 +1,15 @@
 ﻿@page "/perfil"
-@inject IJSRuntime JSRuntime
+
 @using Frontend.Helpers
 @using global::Helpers.Models
-@inject HttpClient Http
-@inject ApiHelper apiHelper
-@using Microsoft.AspNetCore.Components.Authorization
-@inject ApiHelper ApiHelper
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@rendermode InteractiveServer
+
 @inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
+@inject ApiHelper ApiHelper
 
-<PageTitle>Perfil</PageTitle>
+@rendermode InteractiveServer
 
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Sair
-        </button>
-    </div>
-}
+<h2>Profile</h2>
 
 <div class="card shadow-sm">
     <div class="card-body">
@@ -41,7 +30,7 @@
         }
         else
         {
-            <h5 class="card-title">Os meus dados</h5>
+            <h5 class="card-title">My Info</h5>
             <div class="row">
                 <div class="col-md-6">
                     <dl class="row">
@@ -62,8 +51,8 @@
 @code {
     private UserViewModel? _currentUser;
     private string _errorMessage = string.Empty;
-    private bool _sessionChecked = false;
-    private bool _accessDenied = false;
+    private bool _sessionChecked;
+    private bool _accessDenied;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -73,9 +62,9 @@
             
             if (UserSession.UserId == null)
             {
-                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+                var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
                 if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                     UserSession.UserId = uid;
@@ -89,7 +78,7 @@
             
             if (UserSession.UserId == null)
             {
-                Navigation.NavigateTo("/Login");
+                Navigation.NavigateTo("/login");
                 return;
             }
             
@@ -121,15 +110,5 @@
         {
             _errorMessage = $"Error loading profile data: {ex.Message}";
         }
-    }
-
-    private async Task Logout()
-    {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
     }
 }

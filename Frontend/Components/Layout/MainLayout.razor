@@ -1,23 +1,110 @@
 ﻿@inherits LayoutComponentBase
+@using Frontend.Helpers
+
+@inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
+@inject LoginEventService LoginEvents
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu/>
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+  <div class="sidebar"><NavMenu/></div>
+  <main>
+    @if (_showTopBar)
+    {
+      <div class="top-row px-4">
+        <NavLink href="perfil">Profile</NavLink>
+        @if (_isLoggedIn)
+        {
+          <NavLink @onclick="Logout">Logout</NavLink>
+        }
+        else
+        {
+          <NavLink href="login">Login</NavLink>
+        }
+      </div>
+    }
+    <article class="content px-4">@Body</article>
+  </main>
 </div>
 
 <div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+  An unhandled error has occurred.
+  <a href="" class="reload">Reload</a>
+  <a class="dismiss">🗙</a>
 </div>
+
+@code {
+  private bool _isLoggedIn;
+  private bool _showTopBar;
+  private bool _rendererReady;
+
+  protected override void OnInitialized()
+  {
+    LoginEvents.OnLoginStatusChanged += TriggerSessionRefresh;
+    Navigation.LocationChanged       += OnLocationChanged;
+    UpdateTopBarVisibility();
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    if (firstRender)
+    {
+      _rendererReady = true;
+      await RefreshLoginStateAsync();
+      UpdateTopBarVisibility();
+    }
+  }
+
+  private void TriggerSessionRefresh()
+  {
+    if (_rendererReady)
+    {
+      _ = RefreshLoginStateAsync();
+    }
+  }
+
+  private async Task RefreshLoginStateAsync()
+  {
+    try
+    {
+      var userId = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+      _isLoggedIn = !string.IsNullOrEmpty(userId);
+      StateHasChanged();
+    }
+    catch
+    {
+      // swallow errors so the circuit doesn’t die
+    }
+  }
+
+  private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+  {
+    UpdateTopBarVisibility();
+    if (_rendererReady)
+    { 
+      _ = RefreshLoginStateAsync();
+    }
+    StateHasChanged();
+  }
+
+  private void UpdateTopBarVisibility()
+  {
+    var path = Navigation.ToBaseRelativePath(Navigation.Uri);
+    _showTopBar = !path.Equals("login", StringComparison.OrdinalIgnoreCase);
+  }
+
+  private async Task Logout()
+  {
+    await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "userId");
+    await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "username");
+    await JsRuntime.InvokeVoidAsync("sessionStorage.removeItem", "roleId");
+
+    LoginEvents.NotifyLoginStatusChanged();
+    Navigation.NavigateTo("/login");
+  }
+
+  public void Dispose()
+  {
+    LoginEvents.OnLoginStatusChanged -= TriggerSessionRefresh;
+    Navigation.LocationChanged       -= OnLocationChanged;
+  }
+}

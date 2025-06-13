@@ -1,26 +1,17 @@
 ﻿@page "/eligible-talents"
-@inject HttpClient Http
-@inject IJSRuntime JSRuntime
+
 @using System.ComponentModel.DataAnnotations
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @using Frontend.Helpers
+
+@inject HttpClient Http
+@inject IJSRuntime JsRuntime
 @inject NavigationManager Navigation
 
 @rendermode InteractiveServer
 
 <h3>Eligible Talents by Work Proposal</h3>
-
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-<div style="display: flex; justify-content: space-between; align-items: center;">
-    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-    <button class="btn btn-outline-danger" @onclick="Logout">
-        <span class="oi oi-account-logout"></span> Sair
-    </button>
-</div>
-}
-
 
 <div class="card mb-4">
     <div class="card-body">
@@ -29,9 +20,9 @@
             <ValidationSummary />
 
             <div class="form-group">
-                <label for="proposalSelect">Selecione a Proposta *</label>
+                <label for="proposalSelect">Select a Proposal *</label>
                 <InputSelect id="proposalSelect" @bind-Value="searchModel.ProposalId" class="form-control">
-                    <option value="">-- Escolha uma proposta --</option>
+                    <option value="">-- Choose a proposal --</option>
                     @foreach (var proposal in proposals)
                     {
                         <option value="@proposal.ProposalId">@proposal.ProposalName</option>
@@ -44,11 +35,11 @@
                 @if (isLoading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status"></span>
-                    <span> A procurar...</span>
+                    <span> Searching...</span>
                 }
                 else
                 {
-                    <span class="oi oi-magnifying-glass"></span> <span>Procurar</span>
+                    <span class="oi oi-magnifying-glass"></span> <span>Search</span>
                 }
             </button>
         </EditForm>
@@ -66,11 +57,11 @@
 
 @if (isLoading)
 {
-    <p>A carregar...</p>
+    <p>Loading...</p>
 }
 else if (talents is not null && talents.Any())
 {
-    <table class="table table-bordered">
+    <table class="table table-bordered custom-table">
         <thead>
             <tr>
                 <th>Name</th>
@@ -110,17 +101,17 @@ else if (talents is not null && talents.Any())
 }
 else if (talents != null)
 {
-    <p>Nenhum talento elegível encontrado.</p>
+    <p>No eligible talent found.</p>
 }
 
 @code {
     private SearchModel searchModel = new();
     private List<TalentProfileDto> talents;
     private List<WorkProposalDto> proposals = new();
-    private bool isLoading = false;
+    private bool isLoading;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
-    private bool sessionChecked = false;
+    private bool sessionChecked;
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -130,9 +121,9 @@ else if (talents != null)
 
             if (UserSession.UserId == null)
             {
-                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+                var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
                 if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                     UserSession.UserId = uid;
@@ -146,7 +137,7 @@ else if (talents != null)
 
             if (UserSession.UserId == null)
             {
-                Navigation.NavigateTo("/Login");
+                Navigation.NavigateTo("/login");
             }
             else
             {
@@ -197,16 +188,6 @@ else if (talents != null)
         }
     }
 
-    private async Task Logout()
-    {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
-    }
-
     protected override async Task OnInitializedAsync()
     {
         try
@@ -253,7 +234,7 @@ else if (talents != null)
                     .OrderByDescending(t => t.TotalValue)
                     .ToList();
 
-                successMessage = $"Were found {talents?.Count ?? 0} eligible talents.";
+                successMessage = $"There are {talents?.Count ?? 0} eligible talents.";
             }
             else
             {
@@ -319,3 +300,13 @@ else if (talents != null)
         public int EndYear { get; set; }
     }
 }
+
+<style>
+    .custom-table thead th {
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+        color: white;
+        text-align: center;
+        vertical-align: center;
+        padding: 0.75rem;
+    }
+</style>

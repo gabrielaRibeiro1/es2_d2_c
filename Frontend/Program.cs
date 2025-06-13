@@ -1,4 +1,3 @@
-
 using Frontend.Components;
 using Frontend.Helpers;
 using Helpers;
@@ -8,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Registre os serviços necessários, inclusive o serviço para Razor Pages e Blazor Server
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+
+builder.Services.AddSingleton<LoginEventService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

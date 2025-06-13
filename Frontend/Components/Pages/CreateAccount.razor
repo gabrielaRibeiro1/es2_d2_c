@@ -1,13 +1,14 @@
 ﻿@page "/create-account"
+
 @using System.ComponentModel.DataAnnotations
-@using Frontend.Helpers
 @using global::Helpers.Models
-@inject Frontend.Helpers.ApiHelper ApiHelper
+
+@inject Helpers.ApiHelper ApiHelper
 @rendermode InteractiveServer
 
 <div class="card mt-5 mx-auto" style="max-width: 500px;">
-    <div class="card-header" style="background-color:whitesmoke; color: black;">
-        <h3 class="mb-0">Criar Conta</h3>
+    <div class="card-header">
+        <h3 class="header-text mb-0">Create Account</h3>
     </div>
     <div class="card-body">
         <EditForm Model="@userModel" OnValidSubmit="HandleValidSubmit">
@@ -27,13 +28,13 @@
             </div>
 
             <div class="mb-3">
-                <label for="confirmPassword" class="form-label">Confirmar Password</label>
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
                 <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="userModel.ConfirmPassword"/>
                 <ValidationMessage For="() => userModel.ConfirmPassword"/>
             </div>
 
-            <button type="submit" class="btn btn-success me-2">Guardar</button>
-            <NavLink class="btn btn-secondary" href="/">Cancelar</NavLink>
+            <button type="submit" class="btn btn-success me-2">Create</button>
+            <NavLink class="btn btn-secondary" href="/">Cancel</NavLink>
         </EditForm>
 
         @if (!string.IsNullOrEmpty(successMessage))
@@ -91,5 +92,14 @@
         [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
         public string ConfirmPassword { get; set; }
     }
-
 }
+
+<style>
+    .card-header{
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    }
+    
+    .header-text{
+        color: white;
+    }
+</style>

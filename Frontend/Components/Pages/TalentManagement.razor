@@ -1,55 +1,50 @@
 ﻿@page "/talent-management"
-@inject HttpClient Http
-@inject IJSRuntime JSRuntime
-@inject NavigationManager NavigationManager
+
 @using System.ComponentModel.DataAnnotations
 @using System.Text.Json
-@using Frontend.Helpers
+
+@inject HttpClient Http
+@inject IJSRuntime JsRuntime
+@inject NavigationManager NavigationManager
+
 @rendermode InteractiveServer
 
-<h3 class="mt-3">Gestão de Talentos</h3>
+<h2>Talent Management</h2>
 
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <p class="mb-0">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Sair
-        </button>
-    </div>
-}
 @if (UserSession.RoleId != 3)
 {
     <div class="card mb-4">
-    <div class="card-body">
-        <h4>@(isEditing ? "Editar Perfil" : "Criar Novo Perfil")</h4>
-        <EditForm Model="@newProfile" OnValidSubmit="@(isEditing ? UpdateProfile : CreateProfile)">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <div class="card-body">
+            <h4>@(isEditing ? "Edit Talent Profile" : "Create New Talent")</h4>
+            <EditForm Model="@newProfile" OnValidSubmit="@(isEditing ? UpdateProfile : CreateProfile)">
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
 
-            <div class="row">
-                <!-- Profile details -->
-                <div class="col-md-6">
-                    <InputText class="form-control mb-2" placeholder="Nome do Perfil *" @bind-Value="newProfile.ProfileName" />
-                    <InputText class="form-control mb-2" placeholder="País *" @bind-Value="newProfile.Country" />
-                    <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email" />
-                    <label class="form-label">Preço (em EUR) *</label>
-                    <InputNumber class="form-control mb-2" placeholder="Preço em EUR" @bind-Value="newProfile.Price" aria-label="Preço em euros" />
-                    <InputText class="form-control mb-2" placeholder="Categoria" @bind-Value="newProfile.Category" />
-                    <InputSelect class="form-control mb-2" @bind-Value="newProfile.Privacy">
-                        <option value="0">Público</option>
-                        <option value="1">Privado</option>
-                    </InputSelect>
-                </div>
+                <div class="row">
+                    <!-- Profile details -->
+                    <div class="mb4">
+                        <InputText class="form-control mb-2" placeholder="Talent Name *" @bind-Value="newProfile.ProfileName"/>
+                        <InputText class="form-control mb-2" placeholder="Country *" @bind-Value="newProfile.Country"/>
+                        <InputText class="form-control mb-2" placeholder="Email *" @bind-Value="newProfile.Email"/>
+                        <label class="form-label">Price (in EUR) *</label>
+                        <InputNumber class="form-control mb-2" placeholder="Price *" @bind-Value="newProfile.Price"/>
+                        <InputText class="form-control mb-2" placeholder="Category" @bind-Value="newProfile.Category"/>
 
-                <!-- Skills & Experiences -->
-                <div class="col-md-6">
-                    <h5>Skills</h5>
-                    <div class="row">
+                        <InputSelect class="form-control mb-2" @bind-Value="newProfile.Privacy">
+                            <option value="0">Public</option>
+                            <option value="1">Private</option>
+                        </InputSelect>
+                    </div>
+
+                    <hr class="separator" />
+                    
+                    <!-- Skills -->
+                    <h4>Skills</h4>
+                    <div class="row align-items-start">
                         <div class="col-6">
-                            <label class="form-label invisible">Adicionar</label>
+                            <label class="form-label">Skill</label>
                             <InputSelect class="form-control mb-2" @bind-Value="newSkill.SkillName">
-                                <option disabled value="">Selecione uma Skill</option>
+                                <option disabled selected value="">Select a Skill</option>
                                 @foreach (var skill in availableSkills)
                                 {
                                     <option value="@skill">@skill</option>
@@ -57,11 +52,12 @@
                             </InputSelect>
                         </div>
                         <div class="col-3">
-                            <label class="form-label">Anos de Experiencia</label>
-                            <InputNumber class="form-control mb-2" placeholder="Anos de Experiência" @bind-Value="newSkill.YearsOfExperience"/>
+                            <label class="form-label">Years of Experience</label>
+                            <InputNumber class="form-control mb-2" placeholder="Years of Experience" @bind-Value="newSkill.YearsOfExperience"/>
                         </div>
-                        <div class="col-3 d-flex align-items-center">
-                            <button type="button" class="btn btn-outline-primary w-100" @onclick="AddSkill">Adicionar Skill</button>
+                        <div class="col-3">
+                            <label class="form-label invisible">Add Skill</label>
+                            <button type="button" class="btn btn-primary w-100" @onclick="AddSkill">Add Skill</button>
                         </div>
                     </div>
                     @if (newProfile.Skills.Any())
@@ -69,30 +65,36 @@
                         <ul class="list-group mb-3">
                             @foreach (var s in newProfile.Skills)
                             {
-                                <li class="list-group-item d-flex justify-content-between">
-                                    @s.SkillName (@s.YearsOfExperience) anos
-                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(s)">Remover</button>
+                                <li class="list-group-item d-flex justify-content-between item">
+                                    @s.SkillName (@s.YearsOfExperience) years
+                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveSkill(s)">Remove</button>
                                 </li>
                             }
                         </ul>
                     }
+
+                    <hr class="separator" />
                     
-                    <label class="form-label invisible">Adicionar</label>
-                    <h5>Experiências</h5>
+                    <!-- Experiences -->
+                    <h4>Experiences</h4>
                     <div class="row">
-                        <div class="col-6">
-                            <InputText class="form-control mb-2" placeholder="Empresa" @bind-Value="newExperience.CompanyName"/>
+                        <div class="col-md-9">
+                            <label class="form-label">Company</label>
+                            <InputText class="form-control mb-2" placeholder="Company" @bind-Value="newExperience.CompanyName"/>
                         </div>
-                        <div class="col-3">
-                            <label class="form-label">Ano de Início </label>
-                            <InputNumber class="form-control mb-2" placeholder="Ano Início" @bind-Value="newExperience.StartYear" aria-label="Ano de início da experiência (ex: 2020)" />
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" @onclick="AddExperience">Add Experience</button>
                         </div>
-                        <div class="col-3">
-                            <label class="form-label">Ano de Fim </label>
-                            <InputNumber @bind-Value="newExperience.EndYear" class="form-control mb-2" placeholder="Ano Fim" aria-label="Ano de fim da experiência (ex: 2022)" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Start Year</label>
+                            <InputNumber class="form-control mb-2" placeholder="Starting Year" @bind-Value="newExperience.StartYear" aria-label="Start year of the experience (ex: 2020)"/>
                         </div>
-                        <div class="col-12 d-flex justify-content-end">
-                            <button type="button" class="btn btn-outline-primary" @onclick="AddExperience">Adicionar Experiência</button>
+                        <div class="col-md-6">
+                            <label class="form-label">End Year</label>
+                            <InputNumber class="form-control mb-2" placeholder="End Year" @bind-Value="newExperience.EndYear" aria-label="End year of the experience (ex: 2022)"/>
                         </div>
                     </div>
                     @if (newProfile.Experiences.Any())
@@ -100,28 +102,26 @@
                         <ul class="list-group mb-2">
                             @foreach (var e in newProfile.Experiences)
                             {
-                                <li class="list-group-item d-flex justify-content-between">
+                                <li class="list-group-item d-flex justify-content-between item">
                                     @e.CompanyName (@e.StartYear - @e.EndYear)
-                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveExperience(e)">Remover</button>
+                                    <button class="btn btn-sm btn-danger" @onclick="() => RemoveExperience(e)">Remove</button>
                                 </li>
                             }
                         </ul>
                     }
                 </div>
-            </div>
-
-            <div class="d-flex justify-content-end mt-3">
-                <button class="btn btn-success px-4" type="submit" disabled="@isLoading">
-                    @(isEditing ? "Guardar Alterações" : "Criar Perfil")
-                </button>
-                @if (isEditing)
-                {
-                    <button type="button" class="btn btn-secondary ms-2" @onclick="CancelEdit">Cancelar</button>
-                }
-            </div>
-        </EditForm>
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-success mt-2 butsav" type="submit" disabled="@isLoading">
+                        @(isEditing ? "Save Changes" : "Add Talent")
+                    </button>
+                    @if (isEditing)
+                    {
+                        <button type="button" class="btn btn-secondary ms-2" @onclick="CancelEdit">Cancel</button>
+                    }
+                </div>
+            </EditForm>
+        </div>
     </div>
-</div>
 }
 
 @if (!string.IsNullOrEmpty(successMessage))
@@ -132,73 +132,74 @@
 {
     <div class="alert alert-danger mt-3">@errorMessage</div>
 }
-<h5 class="mt-4">Pesquisar por Skills</h5>
+
+<h4 class="mt-4">Public Talent Profiles</h4>
+<h5 class="mt-4">Search for Skills</h5>
 <div class="row mb-3">
     <div class="col-md-6">
         <InputSelect class="form-control" @bind-Value="selectedSkillToSearch">
-            <option disabled value="">Selecione uma Skill</option>
+            <option disabled value="">Select a Skill</option>
             @foreach (var skill in availableSkills)
             {
-            <option value="@skill">@skill</option>
+                <option value="@skill">@skill</option>
             }
         </InputSelect>
     </div>
     <div class="col-md-3">
-        <button class="btn btn-outline-primary w-100" @onclick="AddSkillToSearch"
+        <button class="btn btn-primary w-100" @onclick="AddSkillToSearch"
                 disabled="@string.IsNullOrEmpty(selectedSkillToSearch)">
-            Adicionar Skill
+            Add Skill
         </button>
     </div>
     <div class="col-md-3">
         <button class="btn btn-success w-100" @onclick="SearchBySkills"
                 disabled="@(!searchSkills.Any())">
-            Pesquisar
+            Search
         </button>
     </div>
 </div>
 
 @if (searchSkills.Any())
 {
-<div class="mb-3">
-    <h6>Skills selecionadas:</h6>
-    @foreach (var skill in searchSkills)
-    {
-    <span class="badge bg-primary me-2">
+    <div class="mb-3">
+        <h6>Selected Skills:</h6>
+        @foreach (var skill in searchSkills)
+        {
+            <span class="badge bg-primary me-2">
                 @skill
-        <button class="btn-close btn-close-white btn-sm ms-1" @onclick="() => RemoveSkillFromSearch(skill)"></button>
+                <button class="btn-close btn-close-white btn-sm ms-1" @onclick="() => RemoveSkillFromSearch(skill)"></button>
             </span>
-    }
-</div>
+        }
+    </div>
 }
 
 @if (isLoadingSearch)
 {
-<div class="text-center mt-2">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Carregando...</span>
+    <div class="text-center mt-2">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </div>
-</div>
 }
 
-<h4 class="mt-4">Talentos</h4>
 <div class="table-responsive">
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Nome</th><th>Email</th><th>País</th><th>Preço</th><th>Skills</th><th>Experiências</th> @if (UserSession.RoleId != 3) // Apenas Admin e UserManager veem esta coluna
+                <th>Name</th><th>Email</th><th>Country</th><th>Price</th><th>Skills</th><th>Experiences</th> @if (UserSession.RoleId != 3)
                 {
-                    <th>Ações</th>
+                    <th>Actions</th>
                 }
             </tr>
         </thead>
         <tbody>
             @if (profiles == null)
             {
-                <tr><td colspan="7">Carregando...</td></tr>
+                <tr><td colspan="7">Loading...</td></tr>
             }
             else if (!profiles.Any())
             {
-                <tr><td colspan="7">Nenhum perfil encontrado.</td></tr>
+                <tr><td colspan="6">No talent profiles found.</td></tr>
             }
             else
             {
@@ -219,23 +220,21 @@
                             @foreach (var e in p.Experiences)
                             {
                                 <span class="badge bg-secondary me-1">
-        @e.CompanyName [@e.StartYear - @(e.EndYear == 0 ? "" : e.EndYear.ToString())]
-    </span>
+                                    @e.CompanyName [@e.StartYear - @(e.EndYear == 0 ? "" : e.EndYear.ToString())]
+                                </span>
                             }
                         </td>
                         <td>
                             @if (
-
                                 UserSession.RoleId == 1 || 
                                 (UserSession.RoleId == 2 && (
                                     p.Privacy == 0 || 
                                     (p.Privacy == 1 && p.FkUserId == UserSession.UserId) 
-
                                 ))
                             )
                             {
-                                <button class="btn btn-sm btn-primary me-1" @onclick="() => EditProfile(p)">Editar</button>
-                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteProfile(p.ProfileName)">Excluir</button>
+                                <button class="btn btn-sm btn-warning me-1" @onclick="@(() => EditProfile(p))">Edit</button>
+                                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteProfile(p.ProfileName))">Delete</button>
                             }
                         </td>
                     </tr>
@@ -259,7 +258,7 @@
     private bool initialized;
     private string selectedSkillToSearch = "";
     private List<string> searchSkills = new();
-    private bool isLoadingSearch = false;
+    private bool isLoadingSearch;
 
     protected override void OnInitialized()
     {
@@ -282,12 +281,12 @@
 
     private async Task CheckSessionAsync()
     {
-        var uid = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-        var rid = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+        var uid = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+        var rid = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
         UserSession.UserId = int.TryParse(uid, out var u) ? u : null;
         UserSession.RoleId = int.TryParse(rid, out var r) ? r : null;
-        UserSession.Username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
-        if (UserSession.UserId == null) { NavigationManager.NavigateTo("/Login"); return; }
+        UserSession.Username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+        if (UserSession.UserId == null) { NavigationManager.NavigateTo("/login"); return; }
         newProfile.FkUserId = UserSession.UserId.Value;
         await LoadProfiles(); await LoadAvailableSkills();
     }
@@ -325,7 +324,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro ao carregar perfis: {ex.Message}";
+            errorMessage = $"Error loading talents: {ex.Message}";
 
         }
         finally
@@ -333,8 +332,7 @@
             isLoading = false;
         }
     }
-
-
+    
     private async Task LoadAvailableSkills()
     {
         try { var js = await Http.GetStreamAsync("/skills/list"); var sk = await JsonSerializer.DeserializeAsync<List<string>>(js); if (sk!=null) availableSkills=sk; }
@@ -358,7 +356,7 @@
                 await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_skill?skill_name={Uri.EscapeDataString(s.SkillName)}&years_of_experience={s.YearsOfExperience}",null);
             foreach(var e in newProfile.Experiences)
                 await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
-            successMessage="Perfil criado com sucesso!"; await LoadProfiles(); ResetForm();
+            successMessage="Talente create successfully!"; await LoadProfiles(); ResetForm();
         }
         catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
@@ -380,15 +378,15 @@
             foreach(var e in updE) await Http.PutAsync($"/experiences/{e.ExperienceId}?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
             var addE=newProfile.Experiences.Where(n=>n.ExperienceId==0);
             foreach(var e in addE) await Http.PostAsync($"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience?company_name={Uri.EscapeDataString(e.CompanyName)}&start_year={e.StartYear}&end_year={e.EndYear}",null);
-            successMessage="Perfil atualizado com sucesso!"; await LoadProfiles(); ResetForm();
+            successMessage="Talent updated successfully!"; await LoadProfiles(); ResetForm();
         }
         catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
 
     private async Task DeleteProfile(string pn)
     {
-        if(!await JSRuntime.InvokeAsync<bool>("confirm",$"Excluir {pn}?"))return; isLoading=true;
-        try{var r=await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(pn)}/delete"); if(r.IsSuccessStatusCode){successMessage="Perfil excluído!";await LoadProfiles();}else errorMessage=await r.Content.ReadAsStringAsync();}
+        if(!await JsRuntime.InvokeAsync<bool>("confirm",$"Excluir {pn}?"))return; isLoading=true;
+        try{var r=await Http.DeleteAsync($"/talent_profiles/{Uri.EscapeDataString(pn)}/delete"); if(r.IsSuccessStatusCode){successMessage="Talent Removed!";await LoadProfiles();}else errorMessage=await r.Content.ReadAsStringAsync();}
         catch(Exception ex){errorMessage=ex.Message;}finally{isLoading=false;}
     }
 
@@ -423,7 +421,6 @@
         {
             try
             {
-
                 string url = $"/talent_profiles/{Uri.EscapeDataString(newProfile.ProfileName)}/add_experience" +
                              $"?company_name={Uri.EscapeDataString(newExperience.CompanyName)}" +
                              $"&start_year={newExperience.StartYear}";
@@ -441,20 +438,18 @@
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-
                     errorMessage = $"Error: {errorContent}";
                 }
             }
             catch (Exception ex)
             {
-
                 errorMessage = $"Unexpected error: {ex.Message}";
             }
         }
         else
         {
 
-            errorMessage = "Por favor, preencha os dados corretamente: nome da empresa, anos válidos, e ano início menor que fim (se preenchido).";
+            errorMessage = "Please fill out the data correctly: company name, valid years, and start value lower then end value (if filled out).";
 
         }
     }
@@ -473,7 +468,7 @@
     {
         if (!searchSkills.Any())
         {
-            errorMessage = "Selecione pelo menos uma skill para pesquisar";
+            errorMessage = "Select at least one skills to begin search";
             return;
         }
 
@@ -495,7 +490,7 @@
             
                 if (profiles?.Count == 0)
                 {
-                    successMessage = "Nenhum perfil encontrado com as skills selecionadas";
+                    successMessage = "No talents found with the selected skills";
                 }
             }
             else
@@ -503,14 +498,14 @@
                 errorMessage = await response.Content.ReadAsStringAsync();
                 if (string.IsNullOrEmpty(errorMessage))
                 {
-                    errorMessage = $"Erro na pesquisa: {response.StatusCode}";
+                    errorMessage = $"Error while searching: {response.StatusCode}";
                 }
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Erro na pesquisa: {ex.Message}";
-            Console.WriteLine($"Erro detalhado: {ex}");
+            errorMessage = $"Error while searching: {ex.Message}";
+            Console.WriteLine($"Detailed error: {ex}");
         }
         finally
         {
@@ -531,7 +526,7 @@
         }
         else if (searchSkills.Contains(selectedSkillToSearch))
         {
-            errorMessage = "Esta skill já foi adicionada";
+            errorMessage = "This skill has been added already.";
         }
     }
 
@@ -541,25 +536,16 @@
         StateHasChanged();
     }
 
-    private async Task Logout()
-    {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId=null;UserSession.RoleId=null;UserSession.Username=null;
-        NavigationManager.NavigateTo("/Login");
-    }
-
     public class TalentProfileDto
     {
 
-        [Required(ErrorMessage = "O nome é obrigatório.")]
+        [Required(ErrorMessage = "The name is mandatory.")]
 
         public string ProfileName { get; set; } = "";
 
         public string Country { get; set; } = "";
         public string Email { get; set; } = "";
-
-        [Range(0.01, double.MaxValue, ErrorMessage = "O preço tem de ser maior que 0.")]
-
+        [Range(0.01, double.MaxValue, ErrorMessage = "The price must be greater than 0.")]
         public double Price { get; set; }
         public string Category { get; set; } = "";
         public int Privacy { get; set; }
@@ -592,8 +578,8 @@
             SkillName = this.SkillName,
             YearsOfExperience = this.YearsOfExperience
         };
-
     }
+
     
     public class ExperienceDto
     {
@@ -613,3 +599,77 @@
     
     public static class UserSession{public static int? UserId;public static int? RoleId;public static string? Username;}
 }
+
+<style>
+    h3 {
+        margin-bottom: 1.5rem;
+    }
+
+    .separator {
+        margin: 2rem 0;
+        border-top: 2px solid #ccc;
+    }
+
+    .card.mb-4 {
+        margin-bottom: 2rem !important;
+    }
+
+    .item {
+        max-width: 600px;
+        border: 1px solid #053167;
+        border-radius: 6px;
+        padding: 10px;
+        margin: 8px;
+    }
+    
+    .butsav {
+        width: 150px;
+    }
+
+    .table th {
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+        color: white;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 5px;
+        margin: 0.1rem;
+    }
+
+    .btn-primary {
+        background-color: #053167;
+        border-color: #053167;
+    }
+
+    .btn-primary:hover {
+        background-color: #042750;
+        border-color: #042750;
+    }
+
+    .btn-sm {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .me-1 {
+        margin-right: 0.5rem;
+    }
+
+    .form-label {
+        font-weight: bold;
+    }
+
+    .list-group-item button {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.6rem;
+    }
+</style>

@@ -1,32 +1,21 @@
 ﻿@page "/user-info"
-@inject IJSRuntime JSRuntime
+
 @using Frontend.Helpers
 @using global::Helpers.Models
-@inject HttpClient Http
-@inject ApiHelper apiHelper
-@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IJSRuntime JsRuntime
 @inject ApiHelper ApiHelper
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@rendermode InteractiveServer
 @inject NavigationManager Navigation
 
-<PageTitle>Informação Users</PageTitle>
+@rendermode InteractiveServer
 
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-<div style="display: flex; justify-content: space-between; align-items: center;">
-    <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-    <button class="btn btn-outline-danger" @onclick="Logout">
-        <span class="oi oi-account-logout"></span> Sair
-    </button>
-</div>
-}
+<h2>User's Info</h2>
 
 @if (accessDenied)
 {
 <div class="alert alert-danger mt-5">
-    <h4>Acceso Negado</h4>
-    <p>Você não tem permissões suficientes para aceder a esta página.</p>
+    <h4>Access Denied</h4>
+    <p>You don't have enough permissions to access this page.</p>
 </div>
 }
 else
@@ -34,23 +23,25 @@ else
 
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Lista de Utilizadores</h2>
+        <h2 class="mb-0">User List</h2>
         <NavLink class="btn btn-success" href="add-user">
             <i class="bi bi-plus-circle-fill me-1"></i>
-            Adicionar Utilizador
+            Add New User
         </NavLink>
     </div>
 
+    <hr class="separator" />
+    
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="input-group">
                 <input type="text"
                        class="form-control"
-                       placeholder="Pesquisar por username..."
+                       placeholder="Search by username..."
                        @bind="SearchUsername"
                        @bind:event="oninput" />
                 <button class="btn btn-outline-primary" @onclick="SearchUser">
-                    <i class="bi bi-search"></i> Pesquisar
+                    <i class="bi bi-search"></i> Search
                 </button>
             </div>
             @if (!string.IsNullOrEmpty(searchErrorMessage))
@@ -74,18 +65,18 @@ else
             else if (!_users.Any())
             {
             <div class="text-center py-4">
-                <p class="text-muted mb-0">Nenhum utilizador encontrado.</p>
+                <p class="text-muted mb-0">No users found.</p>
             </div>
             }
             else
             {
             <div class="table-responsive">
-                <table class="table table-striped table-hover table-bordered mb-0">
+                <table class="table table-bordered mb-0">
                     <thead class="table-dark">
                     <tr>
                         <th>Username</th>
                         <th>Role</th>
-                        <th class="text-center">Ações</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -97,16 +88,16 @@ else
                         <td class="text-center">
                             <div class="d-inline-flex gap-2">
                                
-                                <NavLink class="btn btn-sm btn-outline-secondary"
+                                <NavLink class="btn btn-sm btn-warning"
                                          href="@($"update-user-info/{user.User_id}")"
-                                         title="Editar">
+                                         title="Edit">
                                     <i class="bi bi-pencil-fill"></i>
                                 </NavLink>
 
                                 
-                                <button class="btn btn-sm btn-outline-danger"
+                                <button class="btn btn-sm btn-danger"
                                         @onclick="() => DeleteUserById(user.User_id)"
-                                        title="Excluir">
+                                        title="Delete">
                                     <i class="bi bi-trash-fill"></i>
                                 </button>
                             </div>
@@ -125,8 +116,8 @@ else
 @code {
     private List<UserViewModel>? _users;
     private string errorMessage = string.Empty;
-    private bool sessionChecked = false;
-    private bool accessDenied = false; 
+    private bool sessionChecked;
+    private bool accessDenied; 
     
     private string searchUsername = string.Empty;
     private string searchErrorMessage = string.Empty;
@@ -141,9 +132,9 @@ else
             
             if (UserSession.UserId == null)
             {
-                var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-                var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-                var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+                var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+                var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+                var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
                 if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                 UserSession.UserId = uid;
@@ -157,7 +148,7 @@ else
             
             if (UserSession.UserId == null)
             {
-                Navigation.NavigateTo("/Login");
+                Navigation.NavigateTo("/login");
             }
             else
             {
@@ -191,17 +182,6 @@ else
         }
     }
 
-
-    private async Task Logout()
-    {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
-    }
-
     private async Task DeleteUserById(int userId)
     {
         try
@@ -212,11 +192,11 @@ else
             {
                 _users.RemoveAll(u => u.User_id == userId);
                 StateHasChanged();
-                await JSRuntime.InvokeVoidAsync("alert", "User deleted successfully!");
+                await JsRuntime.InvokeVoidAsync("alert", "User deleted successfully!");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error deleting user!");
+                await JsRuntime.InvokeVoidAsync("alert", "Error deleting user!");
             }
         }
         catch (Exception ex)
@@ -313,3 +293,25 @@ else
         }
     }
 }
+
+<style>
+    h2 {
+        text-align: center;
+    }
+    table {
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .table th, .table td {
+        padding: 0.35rem 0.5rem;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .table th {
+        background: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+        color: white;
+    }
+</style>

@@ -1,51 +1,40 @@
-﻿@page "/SkillManagement"
-@using Microsoft.AspNetCore.Components.Web
+﻿@page "/skill-management"
+
 @using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.WebUtilities
-@using Frontend.Helpers
+
 @inject HttpClient Http
-@inject IJSRuntime JSRuntime
-@inject ApiHelper apiHelper
+@inject IJSRuntime JsRuntime
 @inject NavigationManager Navigation
+
 @rendermode InteractiveServer
 
-<h3>Gestão de Skills</h3>
-
-@if (!string.IsNullOrEmpty(UserSession.Username))
-{
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <p style="margin: 0;">Bem-vindo, <strong>@UserSession.Username</strong>!</p>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Sair
-        </button>
-    </div>
-}
+<h3>Skill Management</h3>
 
 @if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
 {
     <div class="card mb-4">
         <div class="card-body">
-            <h4>@(isEditing ? "Editar Skill" : "Criar Nova Skill")</h4>
+            <h4>@(isEditing ? "Edit Skill" : "Create New Skill")</h4>
 
             <EditForm Model="@newSkill" OnValidSubmit="@((isEditing) ? UpdateSkill : CreateSkill)" FormName="createSkillForm">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 
                 <div class="form-group">
-                    <label for="skillName">Nome *</label>
+                    <label for="skillName">Name *</label>
                     <InputText id="skillName"
                                @bind-Value="newSkill.name"
                                class="form-control"
-                               placeholder="Digite o nome da skill" />
+                               placeholder="Type the skill's name" />
                     <ValidationMessage For="@(() => newSkill.name)" />
                 </div>
 
                 <div class="form-group">
-                    <label for="skillArea">Área *</label>
+                    <label for="skillArea">Area *</label>
                     <InputText id="skillArea"
                                @bind-Value="newSkill.area"
                                class="form-control"
-                               placeholder="Digite a área da skill" />
+                               placeholder="Type the skill's applicable area" />
                     <ValidationMessage For="@(() => newSkill.area)" />
                 </div>
 
@@ -53,17 +42,17 @@
                     @if (isLoading)
                     {
                         <span class="spinner-border spinner-border-sm" role="status"></span>
-                        <span> A Guardar...</span>
+                        <span> Saving...</span>
                     }
                     else
                     {
                         @if (isEditing)
                         {
-                            <span class="oi oi-check"></span> @("Guardar Alterações")
+                            <span class="oi oi-check"></span> @("Save Changes")
                         }
                         else
                         {
-                            <span class="oi oi-plus"></span> @("Criar Skill")
+                            <span class="oi oi-plus"></span> @("Add Skill")
                         }
                     }
                 </button>
@@ -81,16 +70,16 @@
     </div>
 }
 
-<h4 class="mt-5">Lista de Skills</h4>
+<h4 class="mt-5">Existing Skill List</h4>
 
-<table class="table table-striped table-hover">
+<table class="table table-bordered">
     <thead class="thead-dark">
     <tr>
-        <th>Nome</th>
-        <th>Área</th>
+        <th>Name</th>
+        <th>Area</th>
         @if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
         {
-            <th>Ações</th>
+            <th>Actions</th>
         }
     </tr>
     </thead>
@@ -100,14 +89,14 @@
         <tr>
             <td colspan="@(UserSession.RoleId == 1 || UserSession.RoleId == 2 ? 3 : 2)" class="text-center text-muted">
                 <span class="spinner-border spinner-border-sm" role="status"></span>
-                Carregando...
+                Loading...
             </td>
         </tr>
     }
     else if (skills == null || !skills.Any())
     {
         <tr>
-            <td colspan="@(UserSession.RoleId == 1 || UserSession.RoleId == 2 ? 3 : 2)" class="text-center text-muted">Nenhuma skill encontrada</td>
+            <td colspan="@(UserSession.RoleId == 1 || UserSession.RoleId == 2 ? 3 : 2)" class="text-center text-muted">No skills found.</td>
         </tr>
     }
     else
@@ -120,11 +109,11 @@
                 @if (UserSession.RoleId == 1 || UserSession.RoleId == 2)
                 {
                     <td>
-                        <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-primary mr-2">
-                            <span class="oi oi-pencil"></span> Editar
+                        <button @onclick="@(() => EditSkill(skill))" class="btn btn-sm btn-warning mr-2">
+                            <span class="oi oi-pencil"></span> Edit
                         </button>
                         <button @onclick="@(() => DeleteSkill(skill.skill_id))" class="btn btn-sm btn-danger">
-                            <span class="oi oi-trash"></span> Excluir
+                            <span class="oi oi-trash"></span> Delete
                         </button>
                     </td>
                 }
@@ -137,11 +126,11 @@
 @code {
     private List<Skill>? skills;
     private Skill newSkill = new();
-    private bool isLoading = false;
-    private bool isEditing = false;
+    private bool isLoading;
+    private bool isEditing;
     private string errorMessage = string.Empty;
     private string successMessage = string.Empty;
-    private bool sessionChecked = false;
+    private bool sessionChecked;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -149,9 +138,9 @@
         {
             sessionChecked = true;
 
-            var userIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-            var roleIdStr = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
-            var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+            var userIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var roleIdStr = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+            var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
 
             if (!string.IsNullOrEmpty(userIdStr) && int.TryParse(userIdStr, out var uid))
                 UserSession.UserId = uid;
@@ -172,7 +161,7 @@
             {
                 UserSession.Username = string.Empty;
                 UserSession.RoleId = null;
-                Navigation.NavigateTo("/Login", forceLoad: true);
+                Navigation.NavigateTo("/login", forceLoad: true);
             }
             else
             {
@@ -180,16 +169,6 @@
                 StateHasChanged();
             }
         }
-    }
-
-    private async Task Logout()
-    {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
-
-        Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
     }
 
     private async Task LoadSkills()
@@ -308,7 +287,7 @@
     {
         try
         {
-            if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this skill?"))
+            if (await JsRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this skill?"))
             {
                 isLoading = true;
                 StateHasChanged();
@@ -357,3 +336,62 @@
         public static string Username { get; set; } = string.Empty;
     }
 }
+
+<style>
+    h3 {
+        margin-bottom: 1.5rem;
+    }
+
+    .header-session {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .logout-btn {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    .card.mb-4 {
+        margin-bottom: 2rem !important;
+    }
+
+    .table th {
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+        color: white;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 5px;
+        margin: 0.1rem;
+    }
+
+    .btn-sm {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .me-1 {
+        margin-right: 0.5rem;
+    }
+
+    .form-label {
+        font-weight: bold;
+    }
+
+    .list-group-item button {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.6rem;
+    }
+</style>

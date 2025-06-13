@@ -1,4 +1,4 @@
-﻿@page "/WorkProposal"
+﻿@page "/work-proposal"
 
 @using System.ComponentModel.DataAnnotations
 @using System.Text.Json
@@ -8,115 +8,18 @@
 
 @inject ApiHelper ApiHelper
 @inject NavigationManager Navigation
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JsRuntime
 
 <h2 class="titles">Work Proposals</h2>
 
-@if (!string.IsNullOrEmpty(_username))
-{
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <p style="margin: 0;">Bem-vindo, <strong>@_username</strong>!</p>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Sair
-        </button>
-    </div>
-}
-else if (_loadingUser)
+@if (_loadingUser)
 {
     <p>Loading user info...</p>
 }
-else
+else if (string.IsNullOrEmpty(_username))
 {
-    <p style="color: red;">Usuário não autenticado. A redirecionar para login...</p>
+    <p style="color: red;">User not authenticated. Redirecting to login...</p>
 }
-
-<hr class="separator" />
-
-<div class="responsive-table">
-<h4 class="titles">All Work Proposals</h4>
-@if (!string.IsNullOrEmpty(_tableMessage))
-{
-    <p style="color:@_tableMessageColor;">@_tableMessage</p>
-}
-@if (_workProposals is null)
-{
-    <p>Loading proposals...</p>
-}
-else if (_workProposals.Count == 0)
-{
-    <p>No proposals found.</p>
-}
-else
-{
-    <table class="wptable">
-        <thead>
-            <tr>
-                <th style="width: 15%;">Name</th>
-                <th style="width: 15%;">Category</th>
-                <th style="width: 20%;">Skills</th>
-                <th style="width: 10%;">Experience</th>
-                <th style="width: 25%;">Description</th>
-                <th style="width: 10%;">Hours</th>
-                <th style="width: 15%;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var proposal in _workProposals)
-            {
-                int currentId = ((JsonElement)proposal["proposal_id"]).GetInt32();
-                bool isEditingRow = currentId == _editingRowId;
-
-                <tr>
-                    @if (isEditingRow)
-                    {
-                        <td><input @bind="_editingProposal.proposal_name" class="form-control" /></td>
-                        <td><input @bind="_editingProposal.category" class="form-control" /></td>
-                        <td><input @bind="_editingProposal.necessary_skills" class="form-control" /></td>
-                        <td><input type="number" @bind="_editingProposal.years_of_experience" class="form-control" /></td>
-                        <td><input @bind="_editingProposal.description" class="form-control" /></td>
-                        <td><input type="number" @bind="_editingProposal.total_hours" class="form-control" /></td>
-                        <td>
-                            <button class="btn btn-success" @onclick="UpdateProposal">Save</button>
-                            <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
-                        </td>
-                    }
-                    else
-                    {
-                        <td>@proposal["proposal_name"]</td>
-                        <td>@proposal["category"]</td>
-                        <td>@proposal["necessary_skills"]</td>
-                        <td>@proposal["years_of_experience"]</td>
-                        <td>@proposal["description"]</td>
-                        <td>@proposal["total_hours"]</td>
-                        <td>
-                            @{
-                                int creatorId = ((JsonElement)proposal["fk_user_id"]).GetInt32();
-                                int creatorRole = proposal.TryGetValue("fk_user_role_id", out var r) ? ((JsonElement)r).GetInt32() : 0;
-
-                                bool canEditOrDelete = _roleId switch
-                                {
-                                    1 => true,
-                                    2 => creatorId == _loggedInUserId || (_userIdsRole3.Contains(creatorId) && creatorId != 0),
-                                    3 => creatorId == _loggedInUserId,
-                                    _ => false
-                                };
-                            }
-
-                            @if (canEditOrDelete)
-                            {
-                                <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
-                                <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
-                            }
-                        </td>
-                    }
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-</div>
-    
-<hr class="separator" />
 
 <div class="form-wrapper">
     <div class="form-container">
@@ -161,12 +64,100 @@ else
                 <InputNumber @bind-Value="_proposal.total_hours" class="form-control" required />
             </div>
 
-            <button class="btn btn-success mt-3" type="submit">Criar</button>
+            <button class="btn btn-success mt-3" type="submit">Add</button>
         </EditForm>
     </div>
 </div>
 
+<hr class="separator" />
 
+<div class="responsive-table">
+    <h4 class="titles">All Work Proposals</h4>
+    @if (!string.IsNullOrEmpty(_tableMessage))
+    {
+        <p style="color:@_tableMessageColor;">@_tableMessage</p>
+    }
+    @if (_workProposals is null)
+    {
+        <p>Loading proposals...</p>
+    }
+    else if (_workProposals.Count == 0)
+    {
+        <p>No proposals found.</p>
+    }
+    else
+    {
+        <table class="wptable">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Name</th>
+                    <th style="width: 15%;">Category</th>
+                    <th style="width: 20%;">Skills</th>
+                    <th style="width: 10%;">Experience</th>
+                    <th style="width: 25%;">Description</th>
+                    <th style="width: 10%;">Hours</th>
+                    <th style="width: 15%;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var proposal in _workProposals)
+                {
+                    int currentId = ((JsonElement)proposal["proposal_id"]).GetInt32();
+                    bool isEditingRow = currentId == _editingRowId;
+
+                <tr>
+                    @if (isEditingRow)
+                    {
+                        <td><input @bind="_editingProposal.proposal_name" class="form-control" /></td>
+                        <td><input @bind="_editingProposal.category" class="form-control" /></td>
+                        <td><input @bind="_editingProposal.necessary_skills" class="form-control" /></td>
+                        <td><input type="number" @bind="_editingProposal.years_of_experience" class="form-control" /></td>
+                        <td><input @bind="_editingProposal.description" class="form-control" /></td>
+                        <td><input type="number" @bind="_editingProposal.total_hours" class="form-control" /></td>
+                        <td>
+                            <div class="button-group">
+                                <button class="btn btn-success" @onclick="UpdateProposal">Save</button>
+                                <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                            </div>
+                        </td>
+                    }
+                    else
+                    {
+                        <td>@proposal["proposal_name"]</td>
+                        <td>@proposal["category"]</td>
+                        <td>@proposal["necessary_skills"]</td>
+                        <td>@proposal["years_of_experience"]</td>
+                        <td>@proposal["description"]</td>
+                        <td>@proposal["total_hours"]</td>
+                        <td>
+                            @{
+                                int creatorId = ((JsonElement)proposal["fk_user_id"]).GetInt32();
+                                int creatorRole = proposal.TryGetValue("fk_user_role_id", out var r) ? ((JsonElement)r).GetInt32() : 0;
+
+                                bool canEditOrDelete = _roleId switch
+                                {
+                                    1 => true,
+                                    2 => creatorId == _loggedInUserId || (_userIdsRole3.Contains(creatorId) && creatorId != 0),
+                                    3 => creatorId == _loggedInUserId,
+                                    _ => false
+                                };
+                            }
+
+                            @if (canEditOrDelete)
+                            {
+                                <div class="button-group">
+                                    <button class="btn btn-warning" @onclick="() => EditProposal(proposal)">Edit</button>
+                                    <button class="btn btn-danger" @onclick="() => DeleteProposal(proposal)">Delete</button>
+                                </div>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+</div>
 
 @code {
     private WorkProposalModel _proposal = new();
@@ -187,9 +178,9 @@ else
     {
         if (firstRender)
         {
-            var idString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-            var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
-            var roleString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+            var idString = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+            var roleString = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
 
             if (int.TryParse(idString, out int userId) &&
                 !string.IsNullOrEmpty(username) &&
@@ -220,41 +211,48 @@ else
         switch (_roleId)
         {
             case 1:
-                _workProposals = allProposals
-                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
-                    .ToList();
+                if (allProposals != null)
+                    _workProposals = allProposals
+                        .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                        .ToList();
                 break;
 
             case 2:
                 var allUsers = await ApiHelper.GetFromApiAsync<List<Dictionary<string, object>>>("/get_all_users");
 
-                var userIdsRole3 = allUsers
-                    .Where(u => u.TryGetValue("fk_role_id", out var roleVal) && ((JsonElement)roleVal).GetInt32() == 3)
-                    .Select(u => u.TryGetValue("user_id", out var idVal) ? ((JsonElement)idVal).GetInt32() : 0)
-                    .Where(id => id != 0)
-                    .ToHashSet();
-                _userIdsRole3 = userIdsRole3;
+                if (allUsers != null)
+                {
+                    var userIdsRole3 = allUsers
+                        .Where(u => u.TryGetValue("fk_role_id", out var roleVal) && ((JsonElement)roleVal).GetInt32() == 3)
+                        .Select(u => u.TryGetValue("user_id", out var idVal) ? ((JsonElement)idVal).GetInt32() : 0)
+                        .Where(id => id != 0)
+                        .ToHashSet();
+                    _userIdsRole3 = userIdsRole3;
 
-                _workProposals = allProposals
-                    .Where(p =>
-                        p.TryGetValue("fk_user_id", out var userIdElement) &&
-                        (
-                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||
-                            userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())
-                        )
-                    )
-                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
-                    .ToList();
+                    if (allProposals != null)
+                        _workProposals = allProposals
+                            .Where(p =>
+                                p.TryGetValue("fk_user_id", out var userIdElement) &&
+                                (
+                                    ((JsonElement)userIdElement).GetInt32() == _loggedInUserId ||
+                                    userIdsRole3.Contains(((JsonElement)userIdElement).GetInt32())
+                                )
+                            )
+                            .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                            .ToList();
+                }
+
                 break;
 
             case 3:
-                _workProposals = allProposals
-                    .Where(p =>
-                        p.TryGetValue("fk_user_id", out var userIdElement) &&
-                        ((JsonElement)userIdElement).GetInt32() == _loggedInUserId
-                    )
-                    .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
-                    .ToList();
+                if (allProposals != null)
+                    _workProposals = allProposals
+                        .Where(p =>
+                            p.TryGetValue("fk_user_id", out var userIdElement) &&
+                            ((JsonElement)userIdElement).GetInt32() == _loggedInUserId
+                        )
+                        .OrderBy(p => p.TryGetValue("proposal_name", out var name) ? name.ToString() : "")
+                        .ToList();
                 break;
 
             default:
@@ -323,7 +321,7 @@ else
     {
         try
         {
-            if (proposal.TryGetValue("proposal_id", out var idObj) && idObj is not null)
+            if (proposal.TryGetValue("proposal_id", out var idObj))
             {
                 int id = ((JsonElement)idObj).GetInt32();
                 var success = await ApiHelper.DeleteFromApiAsync($"/work_proposals/{id}");
@@ -372,13 +370,6 @@ else
         }
     }
 
-    private async Task Logout()
-    {
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "userId");
-        await JSRuntime.InvokeVoidAsync("sessionStorage.removeItem", "username");
-        Navigation.NavigateTo("/login");
-    }
-
     private async Task ShowFormMessage(string message, string color)
     {
         _formMessage = message;
@@ -424,3 +415,82 @@ else
         public int fk_user_id { get; set; }
     }
 }
+
+<style>
+    .titles {
+        margin-bottom: 1rem;
+    }
+
+    .separator {
+        margin: 2rem 0;
+        border-top: 2px solid #ccc;
+    }
+
+    .responsive-table {
+        overflow-x: auto;
+        margin-bottom: 2rem;
+    }
+
+    .wptable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .wptable th, .wptable td {
+        padding: 0.75rem;
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .wptable th {
+        background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+        color: white;
+    }
+
+    .btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.85rem;
+        border-radius: 5px;
+        margin: 0.1rem;
+        white-space: nowrap;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+    
+    .form-wrapper {
+        padding: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-bottom: 2rem;
+    }
+
+    .form-container > div {
+        margin-bottom: 1rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .form-container button[type="submit"] {
+        display: block;
+        margin: 1rem auto 0 auto;
+        width: 150px;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+
+    td > button + button {
+        margin-left: 0.5rem;
+    }
+</style>
