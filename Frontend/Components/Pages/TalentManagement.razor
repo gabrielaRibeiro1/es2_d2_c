@@ -132,6 +132,53 @@
 {
     <div class="alert alert-danger mt-3">@errorMessage</div>
 }
+<h5 class="mt-4">Pesquisar por Skills</h5>
+<div class="row mb-3">
+    <div class="col-md-6">
+        <InputSelect class="form-control" @bind-Value="selectedSkillToSearch">
+            <option disabled value="">Selecione uma Skill</option>
+            @foreach (var skill in availableSkills)
+            {
+            <option value="@skill">@skill</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-outline-primary w-100" @onclick="AddSkillToSearch"
+                disabled="@string.IsNullOrEmpty(selectedSkillToSearch)">
+            Adicionar Skill
+        </button>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-success w-100" @onclick="SearchBySkills"
+                disabled="@(!searchSkills.Any())">
+            Pesquisar
+        </button>
+    </div>
+</div>
+
+@if (searchSkills.Any())
+{
+<div class="mb-3">
+    <h6>Skills selecionadas:</h6>
+    @foreach (var skill in searchSkills)
+    {
+    <span class="badge bg-primary me-2">
+                @skill
+        <button class="btn-close btn-close-white btn-sm ms-1" @onclick="() => RemoveSkillFromSearch(skill)"></button>
+            </span>
+    }
+</div>
+}
+
+@if (isLoadingSearch)
+{
+<div class="text-center mt-2">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Carregando...</span>
+    </div>
+</div>
+}
 
 <h4 class="mt-4">Public Talent Profiles</h4>
 <div class="table-responsive">
@@ -208,6 +255,9 @@
     private string successMessage = "";
     private string errorMessage = "";
     private bool initialized;
+    private string selectedSkillToSearch = "";
+    private List<string> searchSkills = new();
+    private bool isLoadingSearch = false;
 
     protected override void OnInitialized()
     {
@@ -247,33 +297,41 @@
             isLoading = true;
             var allProfiles = await Http.GetFromJsonAsync<List<TalentProfileDto>>("/talent_profiles/list");
 
-            if (UserSession.RoleId == 1) 
+
+            List<TalentProfileDto> filteredProfiles;
+
+            if (UserSession.RoleId == 1) // admin
             {
-                profiles = allProfiles;
+                filteredProfiles = allProfiles;
             }
-            else if (UserSession.RoleId == 2) 
+            else if (UserSession.RoleId == 2) // usermanager
             {
-                profiles = allProfiles
+                filteredProfiles = allProfiles
                     .Where(p => p.Privacy == 0 || p.FkUserId == UserSession.UserId)
                     .ToList();
             }
             else // user
             {
-                profiles = allProfiles
+
+                filteredProfiles = allProfiles
                     .Where(p => p.Privacy == 0)
                     .ToList();
             }
+
+            // Ordenar os perfis alfabeticamente pelo nome
+            profiles = filteredProfiles.OrderBy(p => p.ProfileName).ToList();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error loading profiles: {ex.Message}";
+            errorMessage = $"Erro ao carregar perfis: {ex.Message}";
+
         }
         finally
         {
             isLoading = false;
         }
     }
-
+    
     private async Task LoadAvailableSkills()
     {
         try { var js = await Http.GetStreamAsync("/skills/list"); var sk = await JsonSerializer.DeserializeAsync<List<string>>(js); if (sk!=null) availableSkills=sk; }
@@ -389,7 +447,9 @@
         }
         else
         {
-            errorMessage = "\nPlease fill in the data correctly: company name, valid years, and start year less than end (if completed).";
+
+            errorMessage = "Por favor, preencha os dados corretamente: nome da empresa, anos válidos, e ano início menor que fim (se preenchido).";
+
         }
     }
     private void RemoveExperience(ExperienceDto e) => newProfile.Experiences.Remove(e);
@@ -402,10 +462,84 @@
         originalProfile = new TalentProfileDto();
         newSkill = new SkillDto(); newExperience = new ExperienceDto(); isEditing=false;
     }
+    
+    private async Task SearchBySkills()
+    {
+        if (!searchSkills.Any())
+        {
+            errorMessage = "Selecione pelo menos uma skill para pesquisar";
+            return;
+        }
+
+        try
+        {
+            isLoadingSearch = true;
+            errorMessage = "";
+            successMessage = "";
+            StateHasChanged();
+
+            // Versão com GET
+            var query = string.Join(",", searchSkills.Select(Uri.EscapeDataString));
+            var response = await Http.GetAsync($"/talent_profiles/search_by_skills?skill_names={query}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<List<TalentProfileDto>>();
+                profiles = result?.OrderBy(p => p.ProfileName).ToList();
+            
+                if (profiles?.Count == 0)
+                {
+                    successMessage = "Nenhum perfil encontrado com as skills selecionadas";
+                }
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = $"Erro na pesquisa: {response.StatusCode}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro na pesquisa: {ex.Message}";
+            Console.WriteLine($"Erro detalhado: {ex}");
+        }
+        finally
+        {
+            isLoadingSearch = false;
+            StateHasChanged(); 
+        }
+    }
+
+    private void AddSkillToSearch()
+    {
+        if (!string.IsNullOrEmpty(selectedSkillToSearch) &&
+            !searchSkills.Contains(selectedSkillToSearch))
+        {
+            searchSkills.Add(selectedSkillToSearch);
+            selectedSkillToSearch = "";
+            errorMessage = "";
+            StateHasChanged();
+        }
+        else if (searchSkills.Contains(selectedSkillToSearch))
+        {
+            errorMessage = "Esta skill já foi adicionada";
+        }
+    }
+
+    private void RemoveSkillFromSearch(string skill)
+    {
+        searchSkills.Remove(skill);
+        StateHasChanged();
+    }
 
     public class TalentProfileDto
     {
-        [Required(ErrorMessage = "Name is required.")]
+
+        [Required(ErrorMessage = "The name is mandatory.")]
+
         public string ProfileName { get; set; } = "";
 
         public string Country { get; set; } = "";
