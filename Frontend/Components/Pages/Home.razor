@@ -1,22 +1,32 @@
 ﻿@page "/"
-@using Frontend.Helpers
-
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
 @inject NavigationManager Navigation
-@inject IJSRuntime JsRuntime
+@inject HttpClient Http
+@using Frontend.Helpers
 
 <PageTitle>Home</PageTitle>
 
+@if (!_sessionChecked)
+{
+<div class="text-center py-4">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+}
+else
+{
 @if (!string.IsNullOrEmpty(UserSession.Username))
 {
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
-        <h2>Welcome, <strong>@UserSession.Username</strong>!</h2>
-        <button class="btn btn-outline-danger" @onclick="Logout">
-            <span class="oi oi-account-logout"></span> Logout
-        </button>
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px">
+    <h2>Welcome, <strong>@UserSession.Username</strong>!</h2>
+    <button class="btn btn-outline-danger" @onclick="Logout">
+        <span class="oi oi-account-logout"></span> Logout
+    </button>
+</div>
 }
 
-<!-- Hero Section -->
 <section class="hero">
     <div class="hero-content px-6 py-24">
         <h1 class="hero-title">Welcome to ITalent</h1>
@@ -30,7 +40,7 @@
         </ul>
         @if (string.IsNullOrEmpty(UserSession.Username))
         {
-            <NavLink class="btn-primary mt-8" href="login">Get Started</NavLink>
+        <NavLink class="btn-primary mt-8" href="login">Get Started</NavLink>
         }
     </div>
 </section>
@@ -44,45 +54,54 @@
         If you’re looking for opportunities in IT, sign up and create your profile in minutes. If you’re a recruiter, post jobs and manage the entire hiring process in one place.
     </p>
 </article>
+}
 
-@code
-{
-    private int _loggedInUserId;
-    private string _username = "";
-    private bool _loadingUser = true;
-    
+@code {
+    private bool _sessionChecked = false;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && !_sessionChecked)
         {
-            var idString = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
-            var username = await JsRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+            _sessionChecked = true;
 
-            if (int.TryParse(idString, out int userId) && !string.IsNullOrEmpty(username))
-            {
-                _loggedInUserId = userId;
-                _username = username;
-                _loadingUser = false;
-                StateHasChanged();
-            }
-            else
-            {
-                _loadingUser = false;
-                StateHasChanged();
-                Navigation.NavigateTo("/login", true);
-            }
+            var idString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "userId");
+            var username = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "username");
+            var roleIdString = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "roleId");
+
+            if (!string.IsNullOrEmpty(idString) && int.TryParse(idString, out var uid))
+                UserSession.UserId = uid;
+
+            if (!string.IsNullOrEmpty(roleIdString) && int.TryParse(roleIdString, out var roleId))
+                UserSession.RoleId = roleId;
+
+            if (!string.IsNullOrEmpty(username))
+                UserSession.Username = username;
+
+            StateHasChanged();
         }
     }
-    
+
     private async Task Logout()
     {
-        await JsRuntime.InvokeVoidAsync("sessionStorage.clear");
-        UserSession.UserId = null;
-        UserSession.Username = string.Empty;
-        UserSession.RoleId = null;
+        try
+        {
+            var response = await Http.PostAsync("logout", null);
+            response.EnsureSuccessStatusCode();
 
-        Navigation.NavigateTo("/login?logout=true", forceLoad: true);
+            await JSRuntime.InvokeVoidAsync("sessionStorage.clear");
+            UserSession.UserId = null;
+            UserSession.Username = string.Empty;
+            UserSession.RoleId = null;
+
+            Navigation.NavigateTo("/Login?logout=true", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao fazer logout: {ex.Message}");
+        }
     }
+
 }
 
 <style>
