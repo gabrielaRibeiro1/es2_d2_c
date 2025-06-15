@@ -108,7 +108,7 @@ else if (string.IsNullOrEmpty(_username))
                 <tr>
                     @if (isEditingRow)
                     {
-                        <td><input @bind="_editingProposal.proposal_name" class="form-control" /></td>
+                        <td><input @bind="_editingProposal.proposal_name" class="form-control" placeholder="Proposal Name" /></td>
                         <td><input @bind="_editingProposal.category" class="form-control" /></td>
                         <td><input @bind="_editingProposal.necessary_skills" class="form-control" /></td>
                         <td><input type="number" @bind="_editingProposal.years_of_experience" class="form-control" /></td>
